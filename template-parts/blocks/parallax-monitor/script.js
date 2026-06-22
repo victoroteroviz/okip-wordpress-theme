@@ -2,28 +2,29 @@
  * Bloque Parallax Monitor (Bloque 2) — comportamiento.
  * Scope por instancia via [data-okip-pm].
  *
- * TRANSICIÓN por PROGRESO de scroll (vanilla, sin GSAP, sin pin):
- *   start = heroTop + heroHeight * overlap_start (≈0.85)
- *   end   = heroTop + heroHeight
- *   progress = clamp((scrollY - start) / (end - start), 0, 1)
- * Con ese progreso:
- *   - el bloque sube SOBRE el Hero (counter-transform del overlap → 0),
- *   - las 3 capas entran en RITMOS distintos (rangos coreografiados),
- *   - el Hero se hunde/aleja ligeramente (solo si no hay GSAP),
- *   - parallax real por capas (drift según posición en viewport).
+ * Transición Hero → Bloque 2 y parallax por capas.
  *
- * IntersectionObserver SOLO activa/desactiva el bucle rAF (rendimiento). Mientras
- * está activo se calcula todo con getBoundingClientRect(). No bloquea scroll, no
- * duplica listeners, respeta prefers-reduced-motion y reduce/desactiva en móvil.
+ *  - Con GSAP + ScrollTrigger (local): dos timelines scrubbed (suaves):
+ *      1) TRANSICIÓN: el bloque sube sobre el Hero (overlap) y el Hero se hunde,
+ *         empezando ≈85% del Hero y terminando +15vh más allá (suavidad).
+ *      2) PARALLAX: drift por capa (fondo/computadora/texto) a distinta velocidad.
+ *    El REVEAL de cada capa se latchea por CLASE (is-bg/computer/text-revealed) en
+ *    el nodo INTERIOR (transición CSS), separado del transform de parallax que va
+ *    en el nodo EXTERIOR → el texto nunca queda en estado intermedio.
  *
- * Soporte GSAP futuro: el hundimiento del Hero se omite si GSAP está presente
- * (lo gestiona el scroll_3d del Hero); el resto es independiente de GSAP.
+ *  - Sin GSAP: fallback vanilla con requestAnimationFrame + lerp (damping), mismo
+ *    sistema de clases de reveal. IntersectionObserver solo activa/desactiva el
+ *    bucle; al pausarlo se fija un estado coherente (inicial o final).
+ *
+ * Respeta prefers-reduced-motion y reduce/desactiva en móvil. No bloquea scroll,
+ * no duplica listeners. El hundimiento del Hero lo controla este bloque (el
+ * scroll_3d del Hero está desactivado en Home para no duplicar transform).
  */
 (function () {
     'use strict';
 
-    var BASE = 100; // px de drift de parallax por capa (× su data-speed)
-    var ENTER_OFFSET = { background: 40, computer: 68, text: 26 }; // px de slide de entrada
+    var DRIFT = 64; // px de drift de parallax por capa (× su data-speed)
+    var LERP = 0.09; // suavizado del fallback vanilla
 
     var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     var isSmall = !!(window.matchMedia && window.matchMedia('(max-width: 880px)').matches);
@@ -31,11 +32,11 @@
     function gsapReady() {
         return !!(window.okipGsap && window.okipGsap.ready && window.gsap);
     }
+    function stReady() {
+        return gsapReady() && window.okipGsap.hasScrollTrigger && window.ScrollTrigger;
+    }
 
-    /* ---------- Utilidades de mapeo ---------- */
     function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
-    function map(v, a, b) { return (b === a) ? (v >= b ? 1 : 0) : clamp((v - a) / (b - a), 0, 1); }
-    function smoothstep(t) { return t * t * (3 - 2 * t); }
     function lerp(a, b, t) { return a + (b - a) * t; }
 
     function parseRange(str, defA, defB) {
@@ -53,15 +54,21 @@
         return [a, b];
     }
 
+    var REVEAL_CLASS = {
+        background: 'is-bg-revealed',
+        computer: 'is-computer-revealed',
+        text: 'is-text-revealed'
+    };
+
     function initPm(section) {
         if (section.__okipPmInit) { return; }
         section.__okipPmInit = true;
 
         var d = section.dataset;
-        var animOn      = d.anim === '1';
-        var transition  = d.transition === '1';
-        var parallaxOn  = d.parallax === '1';
-        var textReveal  = d.textReveal === '1';
+        var animOn     = d.anim === '1';
+        var transition = d.transition === '1';
+        var parallaxOn = d.parallax === '1';
+        var textReveal = d.textReveal === '1';
 
         var startProg = parseFloat(d.overlapStart);
         if (isNaN(startProg)) { startProg = 0.85; }
@@ -69,7 +76,7 @@
 
         var hero = document.querySelector('[data-okip-hero]');
 
-        // Capas reales (background / computer / text).
+        // Capas reales (nodos EXTERIORES = parallax). Reveal va por clase latcheada.
         var layers = [];
         section.querySelectorAll('[data-okip-pm-layer]').forEach(function (el) {
             var name = el.getAttribute('data-okip-pm-layer');
@@ -77,8 +84,8 @@
                 el: el,
                 name: name,
                 speed: parseFloat(el.dataset.speed) || 0,
-                range: parseRange(el.dataset.enter, 0, 1),
-                offset: ENTER_OFFSET[name] || 30
+                trigger: Math.max(parseRange(el.dataset.enter, 0, 1)[0], 0.03),
+                revealClass: REVEAL_CLASS[name] || ('is-' + name + '-revealed')
             });
         });
 
@@ -91,8 +98,8 @@
         function playComputer() {
             if (!cmpVideo || cmpStarted) { return; }
             cmpStarted = true;
-            var p = cmpVideo.play();
-            if (p && typeof p.catch === 'function') { p.catch(function () {}); }
+            var pr = cmpVideo.play();
+            if (pr && typeof pr.catch === 'function') { pr.catch(function () {}); }
         }
         function resetComputer() {
             if (!cmpVideo || !cmpStarted) { return; }
@@ -100,20 +107,47 @@
             try { cmpVideo.pause(); cmpVideo.currentTime = 0; } catch (e) {}
         }
 
+        // Reveal latcheado por clase (compartido GSAP + vanilla).
+        function setReveal(p) {
+            for (var i = 0; i < layers.length; i++) {
+                var L = layers[i];
+                if (p >= L.trigger) { section.classList.add(L.revealClass); }
+                else if (p <= 0.02) { section.classList.remove(L.revealClass); }
+            }
+            if (cmpAutoplay) {
+                if (section.classList.contains('is-computer-revealed')) { playComputer(); }
+                else if (p <= 0.02) { resetComputer(); }
+            }
+        }
+        function revealAll() {
+            layers.forEach(function (L) { section.classList.add(L.revealClass); });
+            if (cmpAutoplay) { playComputer(); }
+        }
+
+        function vh() { return window.innerHeight || document.documentElement.clientHeight; }
+        function overlapPx() { return (overlapVh / 100) * vh(); }
+
+        function applyHeroRecede(p) {
+            if (!hero) { return; }
+            if (p <= 0.001) {
+                hero.style.transform = '';
+                hero.style.opacity = '';
+                return;
+            }
+            hero.style.transformOrigin = 'center top';
+            hero.style.transform = 'translate3d(0,' + lerp(0, 26, p).toFixed(2) + 'px,0) scale(' + lerp(1, 0.94, p).toFixed(4) + ')';
+            hero.style.opacity = lerp(1, 0.62, p).toFixed(3);
+        }
+
         var canTransition = animOn && transition && !reduceMotion && !isSmall && !!hero && layers.length > 0;
 
         /* ============================================================
            MODO ESTÁTICO: móvil / reduce-motion / sin transición.
-           Sin overlap ni parallax: solo revelado de entrada por IO.
+           Sin overlap ni parallax: reveal latcheado al entrar (IO).
            ============================================================ */
         if (!canTransition) {
             section.classList.add('is-static');
-
-            function staticReveal() {
-                section.classList.add('is-revealed');
-                if (cmpAutoplay) { playComputer(); }
-            }
-
+            function staticReveal() { revealAll(); }
             if (!animOn || reduceMotion || !textReveal) {
                 staticReveal();
             } else if ('IntersectionObserver' in window) {
@@ -129,109 +163,149 @@
             return;
         }
 
-        /* ============================================================
-           MODO TRANSICIÓN (desktop, sin reduce-motion).
-           ============================================================ */
         section.classList.add('is-transitioning');
-        var heroRecede = !gsapReady(); // si hay GSAP, el Hero lo anima su scroll_3d
 
-        function vh() { return window.innerHeight || document.documentElement.clientHeight; }
-
-        function transitionProgress() {
-            var rect = hero.getBoundingClientRect();
-            var topDoc = rect.top + window.scrollY;
-            var h = hero.offsetHeight || rect.height || vh();
-            var start = topDoc + h * startProg;
-            var end = topDoc + h;
-            if (end <= start) { return window.scrollY >= start ? 1 : 0; }
-            return clamp((window.scrollY - start) / (end - start), 0, 1);
-        }
-
-        function driftProgress() {
-            var rect = section.getBoundingClientRect();
-            var denom = (vh() + rect.height) / 2;
-            if (denom <= 0) { return 0; }
-            return clamp(((vh() / 2) - (rect.top + rect.height / 2)) / denom, -1, 1);
-        }
-
-        function applyHero(p) {
-            if (!heroRecede || !hero) { return; }
-            if (p <= 0) {
-                hero.style.transform = '';
-                hero.style.opacity = '';
-                return;
-            }
-            hero.style.transformOrigin = 'center top';
-            hero.style.transform = 'translate3d(0,' + (lerp(0, 28, p)).toFixed(2) + 'px,0) scale(' + lerp(1, 0.94, p).toFixed(4) + ')';
-            hero.style.opacity = lerp(1, 0.6, p).toFixed(3);
-        }
-
-        function render() {
-            var p = transitionProgress();
-            var overlapPx = (overlapVh / 100) * vh();
-
-            // El bloque sube sobre el Hero: counter-transform de overlap → 0.
-            section.style.transform = 'translate3d(0,' + ((1 - p) * overlapPx).toFixed(2) + 'px,0)';
-            // Solo interactuable cuando ya es la escena (evita robar clics en la transición).
-            section.style.pointerEvents = p > 0.6 ? 'auto' : 'none';
-
-            var dp = parallaxOn ? driftProgress() : 0;
-            var cmpLp = 0;
-
-            for (var i = 0; i < layers.length; i++) {
-                var L = layers[i];
-                var lp = smoothstep(map(p, L.range[0], L.range[1]));
-                if (L.name === 'computer') { cmpLp = lp; }
-                var enterY = (1 - lp) * L.offset;
-                var driftY = dp * L.speed * BASE;
-                var ty = enterY + driftY;
-                var sc = lerp(0.965, 1, lp);
-                L.el.style.opacity = lp.toFixed(3);
-                L.el.style.transform = 'translate3d(0,' + ty.toFixed(2) + 'px,0) scale(' + sc.toFixed(4) + ')';
-            }
-
-            // Autoplay de la computadora cuando su capa ya entró; reset al volver.
-            if (cmpAutoplay) {
-                if (cmpLp > 0.6) { playComputer(); }
-                else if (p < layers.reduce(function (m, L) { return L.name === 'computer' ? L.range[0] : m; }, 0.25)) { resetComputer(); }
-            }
-
-            applyHero(p);
-        }
-
-        /* ---------- Activación del bucle por IO (rendimiento) ---------- */
-        var active = false;
-        var rafId = 0;
-        function loop() {
-            if (!active) { rafId = 0; return; }
-            render();
-            rafId = window.requestAnimationFrame(loop);
-        }
-        function setActive(v) {
-            if (v && !active) { active = true; if (!rafId) { rafId = window.requestAnimationFrame(loop); } }
-            else { active = v; }
-        }
-
-        if ('IntersectionObserver' in window) {
-            var visibleSet = { hero: false, section: false };
-            var io = new IntersectionObserver(function (entries) {
-                entries.forEach(function (e) {
-                    if (e.target === hero) { visibleSet.hero = e.isIntersecting; }
-                    else if (e.target === section) { visibleSet.section = e.isIntersecting; }
-                });
-                setActive(visibleSet.hero || visibleSet.section);
-            }, { threshold: 0, rootMargin: '30% 0px 30% 0px' });
-            io.observe(section);
-            if (hero) { io.observe(hero); }
+        if (stReady()) {
+            initGsapTransition();
         } else {
-            // Sin IO: bucle continuo (coste bajo) + recálculo en scroll/resize.
-            active = true;
-            window.requestAnimationFrame(loop);
+            initVanillaTransition();
         }
 
-        // Primer frame inmediato (estado inicial coherente) y en resize.
-        render();
-        window.addEventListener('resize', function () { isSmall = !!(window.matchMedia && window.matchMedia('(max-width: 880px)').matches); render(); }, { passive: true });
+        /* ============================================================
+           GSAP + ScrollTrigger: dos timelines scrubbed (suaves).
+           ============================================================ */
+        function initGsapTransition() {
+            var gsap = window.gsap;
+
+            // 1) TRANSICIÓN Hero → Bloque 2 (overlap + hundimiento del Hero).
+            gsap.timeline({
+                scrollTrigger: {
+                    trigger: hero,
+                    start: function () { return 'top+=' + (startProg * hero.offsetHeight) + ' top'; },
+                    end: function () { return 'top+=' + (hero.offsetHeight + 0.15 * vh()) + ' top'; },
+                    scrub: 0.6,
+                    invalidateOnRefresh: true,
+                    onUpdate: function (self) {
+                        setReveal(self.progress);
+                        section.style.pointerEvents = self.progress > 0.55 ? 'auto' : 'none';
+                    },
+                    onLeave: function () { setReveal(1); },
+                    onLeaveBack: function () { setReveal(0); }
+                }
+            })
+            .fromTo(section,
+                { y: function () { return overlapPx(); } },
+                { y: 0, ease: 'none' }, 0)
+            .to(hero,
+                { y: 26, scale: 0.94, opacity: 0.62, transformOrigin: 'center top', ease: 'none' }, 0);
+
+            // 2) PARALLAX por capas (una sola timeline, drift paralelo por capa).
+            if (parallaxOn) {
+                var driftTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top bottom',
+                        end: 'bottom top',
+                        scrub: 0.6,
+                        invalidateOnRefresh: true
+                    }
+                });
+                layers.forEach(function (L) {
+                    if (!L.speed) { return; }
+                    driftTl.fromTo(L.el, { y: L.speed * DRIFT }, { y: -L.speed * DRIFT, ease: 'none' }, 0);
+                });
+            }
+
+            // Estado inicial coherente.
+            setReveal(0);
+
+            // Resize: recalcular medidas (start/end son funciones).
+            var rt;
+            window.addEventListener('resize', function () {
+                window.clearTimeout(rt);
+                rt = window.setTimeout(function () { window.ScrollTrigger.refresh(); }, 200);
+            }, { passive: true });
+        }
+
+        /* ============================================================
+           Fallback VANILLA: rAF + lerp (damping). Mismo sistema de clases.
+           ============================================================ */
+        function initVanillaTransition() {
+            var current = 0;
+
+            function targetProgress() {
+                var h = hero.offsetHeight;
+                if (!h || h <= 0) { return 0; }
+                var rect = hero.getBoundingClientRect();
+                var topDoc = rect.top + window.scrollY;
+                var start = topDoc + h * startProg;
+                var end = topDoc + h + vh() * 0.15; // ventana ampliada (suaviza)
+                if (end <= start) { return window.scrollY >= start ? 1 : 0; }
+                return clamp((window.scrollY - start) / (end - start), 0, 1);
+            }
+            function driftProgress() {
+                var rect = section.getBoundingClientRect();
+                var denom = (vh() + rect.height) / 2;
+                if (denom <= 0) { return 0; }
+                return clamp(((vh() / 2) - (rect.top + rect.height / 2)) / denom, -1, 1);
+            }
+
+            function applyFrame(p) {
+                section.style.transform = 'translate3d(0,' + ((1 - p) * overlapPx()).toFixed(2) + 'px,0)';
+                section.style.pointerEvents = p > 0.55 ? 'auto' : 'none';
+                var dp = parallaxOn ? driftProgress() : 0;
+                for (var i = 0; i < layers.length; i++) {
+                    var L = layers[i];
+                    L.el.style.transform = 'translate3d(0,' + (dp * L.speed * DRIFT).toFixed(2) + 'px,0)';
+                }
+                setReveal(p);
+                applyHeroRecede(p);
+            }
+            function render() {
+                var target = targetProgress();
+                current = lerp(current, target, LERP);
+                if (Math.abs(current - target) < 0.001) { current = target; }
+                applyFrame(current);
+            }
+
+            var active = false, rafId = 0;
+            function loop() {
+                if (!active) { rafId = 0; return; }
+                render();
+                rafId = window.requestAnimationFrame(loop);
+            }
+            function setActive(v) {
+                if (v) {
+                    if (!active) { active = true; if (!rafId) { rafId = window.requestAnimationFrame(loop); } }
+                } else if (active) {
+                    active = false;
+                    current = targetProgress(); // estado coherente al pausar
+                    applyFrame(current);
+                }
+            }
+
+            if ('IntersectionObserver' in window) {
+                var vis = { hero: false, section: false };
+                var io = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (e) {
+                        if (e.target === hero) { vis.hero = e.isIntersecting; }
+                        else if (e.target === section) { vis.section = e.isIntersecting; }
+                    });
+                    setActive(vis.hero || vis.section);
+                }, { threshold: 0, rootMargin: '30% 0px 30% 0px' });
+                io.observe(section);
+                if (hero) { io.observe(hero); }
+            } else {
+                active = true;
+                window.requestAnimationFrame(loop);
+            }
+
+            applyFrame(0);
+            window.addEventListener('resize', function () {
+                isSmall = !!(window.matchMedia && window.matchMedia('(max-width: 880px)').matches);
+                render();
+            }, { passive: true });
+        }
     }
 
     function init() {

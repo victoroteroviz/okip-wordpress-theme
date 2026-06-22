@@ -50,7 +50,7 @@ $okip_navbar_class = 'okip-navbar' . ($okip_start_hidden ? ' okip-navbar--start-
     data-hide-on-hero="<?php echo ! empty($okip_reveal['hide_on_hero']) ? '1' : '0'; ?>"
     data-use-io="<?php echo ! empty($okip_reveal['use_intersection_observer']) ? '1' : '0'; ?>"
     role="banner">
-    <div class="okip-navbar__inner okip-container">
+    <div class="okip-navbar__inner">
 
         <a class="okip-navbar__brand" href="<?php echo esc_url(home_url('/')); ?>" aria-label="<?php esc_attr_e('OKIP — inicio', 'okip'); ?>">
             <?php if (has_custom_logo()) : ?>

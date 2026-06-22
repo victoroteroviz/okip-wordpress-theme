@@ -19,53 +19,69 @@
     transition: background .3s ease, transform .4s var(--okip-ease);
 }
 
+/* Distribución full-bleed: logo izquierda · menú centrado · hamburguesa derecha.
+   Sin contenedor angosto: padding lateral amplio (ref navbar.png). */
 .okip-navbar__inner {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
     gap: var(--okip-space-4);
+    width: 100%;
+    padding-inline: clamp(1.25rem, 4vw, 3rem);
 }
 
 .okip-navbar__brand {
+    grid-column: 1;
     display: inline-flex;
     align-items: center;
     font-weight: 800;
-    letter-spacing: .04em;
+    letter-spacing: .06em;
 }
 
 .okip-navbar__logo-text {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     color: var(--okip-color-text);
 }
 
 .okip-navbar__logo {
-    max-height: 40px;
+    max-height: 38px;
     width: auto;
 }
 
-/* Menú (desktop) */
+/* Menú centrado (desktop) */
+.okip-navbar__nav {
+    grid-column: 2;
+    display: flex;
+    justify-content: center;
+}
 .okip-navbar__menu {
     display: flex;
     align-items: center;
-    gap: var(--okip-space-4);
+    gap: clamp(1.25rem, 3vw, 2.75rem);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.okip-navbar__link {
+/* Enlaces: se estilizan por `a` para funcionar con wp_nav_menu Y con el
+   fallback de config (que además lleva .okip-navbar__link). */
+.okip-navbar__menu a {
     position: relative;
     color: var(--okip-color-text-muted);
     font-size: .95rem;
+    white-space: nowrap;
     transition: color .2s ease;
 }
-.okip-navbar__link:hover,
-.okip-navbar__menu .current-menu-item > .okip-navbar__link {
+.okip-navbar__menu a:hover,
+.okip-navbar__menu .current-menu-item > a,
+.okip-navbar__menu .current_page_item > a,
+.okip-navbar__menu .current-menu-ancestor > a {
     color: var(--okip-color-text);
 }
 /* Subrayado del enlace activo (referencia: navbar.png) */
-.okip-navbar__menu .current-menu-item > .okip-navbar__link::after {
+.okip-navbar__menu .current-menu-item > a::after,
+.okip-navbar__menu .current_page_item > a::after,
+.okip-navbar__menu .current-menu-ancestor > a::after {
     content: "";
     position: absolute;
     left: 0;
@@ -75,8 +91,9 @@
     background: currentColor;
 }
 
-/* Hamburguesa (oculta en desktop) */
+/* Hamburguesa: OCULTA en desktop; visible solo en tablet/móvil (<=1024px). */
 .okip-navbar__toggle {
+    grid-column: 3;
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -86,6 +103,8 @@
     padding: 0;
     background: transparent;
     border: 0;
+    cursor: pointer;
+    justify-self: end;
 }
 .okip-navbar__toggle-bar {
     display: block;
@@ -115,15 +134,17 @@
 
 /* Sombra/realce al hacer scroll */
 .okip-navbar.is-scrolled {
-    background: rgba(2, 7, 17, .8);
+    background: rgba(2, 5, 12, .97);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .45);
 }
 
-/* ---- Tablet / móvil ---- */
-@media (max-width: 880px) {
+/* ---- Tablet / móvil (<=1024px) ---- */
+@media (max-width: 1024px) {
     .okip-navbar__toggle {
         display: flex;
     }
     .okip-navbar__nav {
+        display: block;
         position: fixed;
         inset-block-start: var(--okip-navbar-h);
         inset-inline: 0;

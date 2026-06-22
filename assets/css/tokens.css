@@ -13,9 +13,9 @@
     --okip-color-line: rgba(255, 255, 255, .12);
 
     /* Navbar */
-    --okip-navbar-h: 72px;
-    --okip-navbar-bg: rgba(4, 9, 18, .55);
-    --okip-navbar-blur: 14px;
+    --okip-navbar-h: 68px;
+    --okip-navbar-bg: rgba(3, 6, 13, .92); /* negro casi sólido (ref navbar.png) */
+    --okip-navbar-blur: 8px;               /* blur sutil */
 
     /* Espaciado */
     --okip-space-1: .25rem;

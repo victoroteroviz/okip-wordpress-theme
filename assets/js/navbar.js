@@ -55,9 +55,12 @@
             var navTicking = false;
             var evalNav = function () {
                 navTicking = false;
+                var h = hero.offsetHeight;
+                // Guard: si el Hero aún no tiene altura (layout no listo), mantener
+                // OCULTO. Nunca mostrar por una medida inválida.
+                if (!h || h <= 0) { hide(); return; }
                 var rect = hero.getBoundingClientRect();
                 var topDoc = rect.top + window.scrollY;
-                var h = hero.offsetHeight || rect.height || window.innerHeight;
                 var start = topDoc + h * startProg - offset;
                 var end = topDoc + h;
                 var p = (end <= start) ? (window.scrollY >= start ? 1 : 0)

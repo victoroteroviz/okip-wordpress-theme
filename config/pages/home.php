@@ -43,6 +43,12 @@ return array(
                 'strategy'        => 'video_end',
                 'replay_on_enter' => true,
             ),
+            'animation' => array(
+                // El hundimiento del Hero durante la transición lo controla el
+                // Bloque 2 (parallax-monitor) para evitar doble transform con GSAP.
+                'enabled'   => true,
+                'scroll_3d' => false,
+            ),
             // Las tarjetas se muestran desde el MVP aunque aún no exista media real:
             // sin media → placeholder temporal; al añadir 'media' (ruta/URL/ID válido)
             // el placeholder se sustituye automáticamente por el archivo real.

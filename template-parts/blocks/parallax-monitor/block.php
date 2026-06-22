@@ -155,40 +155,44 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
 
     <div class="okip-pm__inner">
 
-        <!-- Capa 3: texto (z3, entra al final, queda arriba) -->
+        <!-- Capa 3: texto (z3, entra al final, queda arriba).
+             Wrapper exterior = PARALLAX (transform por JS) · interior = REVEAL
+             (opacidad/translate por CLASE latcheada). Nunca el mismo nodo. -->
         <div class="okip-pm__text"
             data-okip-pm-layer="text"
             data-speed="<?php echo esc_attr((string) $txt_speed); ?>"
             data-enter="<?php echo esc_attr($range_str($txt_range)); ?>">
-            <?php if (! empty($content['eyebrow'])) : ?>
-                <p class="okip-pm__eyebrow"><?php echo esc_html($content['eyebrow']); ?></p>
-            <?php endif; ?>
+            <div class="okip-pm__text-reveal">
+                <?php if (! empty($content['eyebrow'])) : ?>
+                    <p class="okip-pm__eyebrow"><?php echo esc_html($content['eyebrow']); ?></p>
+                <?php endif; ?>
 
-            <?php if ($title !== '') : ?>
-                <h2 class="okip-pm__title">
-                    <?php
-                    // Resaltado seguro: parte el título alrededor de la subcadena.
-                    $pos = ($hl !== '') ? stripos($title, $hl) : false;
-                    if ($pos !== false) {
-                        echo esc_html(substr($title, 0, $pos));
-                        echo '<span class="okip-pm__highlight">' . esc_html(substr($title, $pos, strlen($hl))) . '</span>';
-                        echo esc_html(substr($title, $pos + strlen($hl)));
-                    } else {
-                        echo esc_html($title);
-                    }
-                    ?>
-                </h2>
-            <?php endif; ?>
+                <?php if ($title !== '') : ?>
+                    <h2 class="okip-pm__title">
+                        <?php
+                        // Resaltado seguro: parte el título alrededor de la subcadena.
+                        $pos = ($hl !== '') ? stripos($title, $hl) : false;
+                        if ($pos !== false) {
+                            echo esc_html(substr($title, 0, $pos));
+                            echo '<span class="okip-pm__highlight">' . esc_html(substr($title, $pos, strlen($hl))) . '</span>';
+                            echo esc_html(substr($title, $pos + strlen($hl)));
+                        } else {
+                            echo esc_html($title);
+                        }
+                        ?>
+                    </h2>
+                <?php endif; ?>
 
-            <?php if (! empty($content['description'])) : ?>
-                <p class="okip-pm__desc"><?php echo wp_kses_post($content['description']); ?></p>
-            <?php endif; ?>
+                <?php if (! empty($content['description'])) : ?>
+                    <p class="okip-pm__desc"><?php echo wp_kses_post($content['description']); ?></p>
+                <?php endif; ?>
 
-            <?php if ($cta_on) : ?>
-                <a class="okip-button okip-pm__cta" href="<?php echo esc_url($cta['url']); ?>">
-                    <?php echo esc_html($cta['label']); ?>
-                </a>
-            <?php endif; ?>
+                <?php if ($cta_on) : ?>
+                    <a class="okip-button okip-pm__cta" href="<?php echo esc_url($cta['url']); ?>">
+                        <?php echo esc_html($cta['label']); ?>
+                    </a>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Capa 2: computadora/monitor (z2, entra tras el fondo). Glow detrás. -->
@@ -197,25 +201,29 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
             data-speed="<?php echo esc_attr((string) $cmp_speed); ?>"
             data-enter="<?php echo esc_attr($range_str($cmp_range)); ?>"
             data-autoplay-on-enter="<?php echo $cmp_auto ? '1' : '0'; ?>">
-            <div class="okip-pm__screen">
-                <?php if ($cmp_has && $cmp_type === 'video') : ?>
-                    <video class="okip-pm__screen-media" muted loop playsinline preload="metadata" data-okip-pm-screen-video
-                        <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
-                        <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
-                    </video>
-                <?php elseif ($cmp_has) : ?>
-                    <img class="okip-pm__screen-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
-                <?php elseif ($ph_on) : ?>
-                    <!-- Placeholder geométrico de pantalla (sin media real). -->
-                    <span class="okip-pm__screen-ph" aria-hidden="true">
-                        <span class="okip-pm__screen-ph-bar"></span>
-                        <span class="okip-pm__screen-ph-grid"></span>
-                    </span>
-                <?php else : ?>
-                    <!-- Sin media de pantalla: queda el marco/pantalla neutra (CSS). -->
-                <?php endif; ?>
+            <!-- Wrapper interior = REVEAL (clase latcheada). El glow vive en el
+                 nodo exterior (parallax), no aquí. -->
+            <div class="okip-pm__computer-reveal">
+                <div class="okip-pm__screen">
+                    <?php if ($cmp_has && $cmp_type === 'video') : ?>
+                        <video class="okip-pm__screen-media" muted loop playsinline preload="metadata" data-okip-pm-screen-video
+                            <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
+                            <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
+                        </video>
+                    <?php elseif ($cmp_has) : ?>
+                        <img class="okip-pm__screen-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
+                    <?php elseif ($ph_on) : ?>
+                        <!-- Placeholder geométrico de pantalla (sin media real). -->
+                        <span class="okip-pm__screen-ph" aria-hidden="true">
+                            <span class="okip-pm__screen-ph-bar"></span>
+                            <span class="okip-pm__screen-ph-grid"></span>
+                        </span>
+                    <?php else : ?>
+                        <!-- Sin media de pantalla: queda el marco/pantalla neutra (CSS). -->
+                    <?php endif; ?>
+                </div>
+                <span class="okip-pm__stand" aria-hidden="true"></span>
             </div>
-            <span class="okip-pm__stand" aria-hidden="true"></span>
         </div>
 
     </div>

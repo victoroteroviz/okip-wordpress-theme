@@ -202,55 +202,65 @@
 }
 
 /* ============================================================
-   TRANSICIÓN dirigida por JS (progreso de scroll).
-   Estado inicial (con JS): capas invisibles y bloque counter-transformado
-   hacia abajo para NO tapar el Hero al cargar. El JS aplica transform/opacity.
+   ANIMACIÓN: separación de responsabilidades (evita "letras atascadas").
+     - PARALLAX → transform INLINE (rAF) en el nodo EXTERIOR (.okip-pm__bg,
+       .okip-pm__monitor, .okip-pm__text). Drift continuo y pequeño.
+     - REVEAL  → opacidad/translate por CLASE latcheada (CSS transition) en el
+       nodo INTERIOR (.okip-pm__computer-reveal, .okip-pm__text-reveal) y la
+       opacidad del fondo. Nunca se mezclan en el mismo nodo, así el contenido
+       no se congela en un estado intermedio si el rAF se pausa.
    ============================================================ */
-.okip-js .okip-pm--transition .okip-pm__bg,
-.okip-js .okip-pm--transition .okip-pm__monitor,
-.okip-js .okip-pm--transition .okip-pm__text {
+
+/* Estado inicial (con JS): contenido oculto hasta que el JS latchea el reveal. */
+.okip-js .okip-pm--animated .okip-pm__bg {
     opacity: 0;
 }
-/* Mientras el JS controla (transición/parallax) anulamos transiciones CSS. */
-.okip-pm.is-transitioning .okip-pm__bg,
-.okip-pm.is-transitioning .okip-pm__monitor,
-.okip-pm.is-transitioning .okip-pm__text,
-.okip-pm.is-transitioning {
-    transition: none;
+.okip-js .okip-pm--animated .okip-pm__computer-reveal {
+    opacity: 0;
+    transform: translateY(34px) scale(.975);
+}
+.okip-js .okip-pm--animated .okip-pm__text-reveal > * {
+    opacity: 0;
+    transform: translateY(22px);
+}
+/* El glow no debe verse antes de que entre la computadora. */
+.okip-js .okip-pm--animated .okip-pm__monitor--glow::before {
+    opacity: 0;
 }
 
-/* Modo estático (móvil / reduce-motion / sin transición): el JS marca is-static.
-   Las capas se revelan con un fade simple al entrar (is-revealed); sin parallax. */
+/* Reveal latcheado (CSS transition suave; lo dispara el JS por progreso o IO). */
+.okip-pm.is-bg-revealed .okip-pm__bg {
+    opacity: 1;
+    transition: opacity .9s ease;
+}
+.okip-pm.is-computer-revealed .okip-pm__computer-reveal {
+    opacity: 1;
+    transform: none;
+    transition: opacity .8s ease, transform .9s var(--okip-ease);
+}
+.okip-pm.is-computer-revealed .okip-pm__monitor--glow::before {
+    opacity: var(--okip-pm-glow, 0.6);
+    transition: opacity .9s ease;
+}
+.okip-pm.is-text-revealed .okip-pm__text-reveal > * {
+    opacity: 1;
+    transform: none;
+    transition: opacity .75s ease, transform .85s var(--okip-ease);
+}
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(2) { transition-delay: .08s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(3) { transition-delay: .16s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(4) { transition-delay: .24s; }
+
+/* El parallax (GSAP/rAF) escribe `transform` inline en los nodos EXTERIORES, que
+   NO tienen transición CSS de transform → no hay conflicto. El reveal (opacidad/
+   translate) vive en nodos INTERIORES con su propia transición CSS, intacta. */
+
+/* Modo estático (móvil / reduce-motion / sin overlap): sin parallax.
+   El JS marca is-static y latchea los reveals igual (vía IO). */
 .okip-pm.is-static .okip-pm__bg,
 .okip-pm.is-static .okip-pm__monitor,
 .okip-pm.is-static .okip-pm__text {
     transform: none !important;
-}
-.okip-pm.is-static.is-revealed .okip-pm__bg,
-.okip-pm.is-static.is-revealed .okip-pm__monitor,
-.okip-pm.is-static.is-revealed .okip-pm__text {
-    opacity: 1;
-    transition: opacity .7s ease;
-}
-.okip-pm.is-static.is-revealed .okip-pm__monitor { transition-delay: .1s; }
-.okip-pm.is-static.is-revealed .okip-pm__text { transition-delay: .2s; }
-
-/* ---- Revelado simple (cuando el bloque NO usa la transición de overlap) ---- */
-.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__text > *,
-.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__monitor {
-    opacity: 0;
-}
-.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__text > * {
-    transform: translateY(24px);
-}
-.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__monitor {
-    transform: translateY(40px);
-}
-.okip-pm:not(.okip-pm--transition).is-revealed .okip-pm__text > *,
-.okip-pm:not(.okip-pm--transition).is-revealed .okip-pm__monitor {
-    opacity: 1;
-    transform: none;
-    transition: opacity .7s ease, transform .7s cubic-bezier(.22, 1, .36, 1);
 }
 
 /* ============================================================
@@ -293,13 +303,14 @@
 
 /* ---- Accesibilidad: reduce motion ---- */
 @media (prefers-reduced-motion: reduce) {
-    .okip-js .okip-pm--transition .okip-pm__bg,
-    .okip-js .okip-pm--transition .okip-pm__monitor,
-    .okip-js .okip-pm--transition .okip-pm__text,
-    .okip-js .okip-pm--animated .okip-pm__text > *,
-    .okip-js .okip-pm--animated .okip-pm__monitor {
-        opacity: 1;
-        transform: none;
+    .okip-js .okip-pm--animated .okip-pm__bg,
+    .okip-js .okip-pm--animated .okip-pm__computer-reveal,
+    .okip-js .okip-pm--animated .okip-pm__text-reveal > * {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+    .okip-js .okip-pm--animated .okip-pm__monitor--glow::before {
+        opacity: var(--okip-pm-glow, 0.6) !important;
     }
     .okip-pm__bg-media {
         top: 0;

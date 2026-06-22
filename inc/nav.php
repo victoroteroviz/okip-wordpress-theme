@@ -28,6 +28,26 @@ function okip_navbar_config()
 }
 
 /**
+ * Añade la clase `okip-navbar__link` a los <a> que genera wp_nav_menu en la
+ * location "primary", para que los estilos del navbar apliquen igual que con el
+ * menú de respaldo. (El CSS también targetea `.okip-navbar__menu a` por robustez.)
+ *
+ * @param array    $atts Atributos del <a>.
+ * @param WP_Post  $item Item del menú.
+ * @param stdClass $args Args de wp_nav_menu.
+ * @return array
+ */
+function okip_nav_menu_link_attributes($atts, $item, $args)
+{
+    if (isset($args->theme_location) && $args->theme_location === 'primary') {
+        $existing = isset($atts['class']) ? $atts['class'] . ' ' : '';
+        $atts['class'] = trim($existing . 'okip-navbar__link');
+    }
+    return $atts;
+}
+add_filter('nav_menu_link_attributes', 'okip_nav_menu_link_attributes', 10, 3);
+
+/**
  * Imprime el menú primario, o el fallback si no hay menú asignado.
  *
  * @param string $menu_id   Id del <ul> (para aria-controls).
