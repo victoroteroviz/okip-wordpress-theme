@@ -1,0 +1,17 @@
+/*
+Theme Name: OKIP Theme
+Theme URI: https://okip.mx
+Author: OKIP
+Description: Tema clásico, escalable y multipágina para OKIP. Sistema propio de bloques modulares (sin Gutenberg, sin ACF, sin page builders), con GSAP local para animaciones.
+Version: 0.1.0
+Requires at least: 6.0
+Requires PHP: 8.0
+Text Domain: okip
+Tags: custom-theme, classic
+*/
+
+/*
+ * Este archivo es solo la cabecera del tema (lo exige WordPress).
+ * Los estilos reales viven en assets/css/ (tokens, base, layout, components)
+ * y en cada bloque (template-parts/blocks/{type}/style.css).
+ */

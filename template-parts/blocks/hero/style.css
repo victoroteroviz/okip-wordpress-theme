@@ -1,0 +1,237 @@
+/*
+ * Bloque Hero — estilos.
+ * Carga condicional: solo si la página usa el bloque `hero`.
+ *
+ * Regla del fondo: el media (video/image/svg) es el fondo limpio. El gradiente
+ * CSS SOLO aparece como fallback: tipo `gradient` (sin media) o `.is-bg-failed`
+ * (el video falló). El overlay es una capa separada y opcional.
+ */
+
+.okip-hero {
+    position: relative;
+    min-height: 100svh;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--okip-color-text, #f4f7fb);
+    perspective: 1200px; /* para el efecto 3D al hacer scroll */
+}
+
+/* ---- Capa 1: fondo (limpio) ---- */
+.okip-hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: transparent; /* sin gradiente encima del media */
+}
+
+.okip-hero__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Fallback de gradiente: solo sin media o si el video falla */
+.okip-hero__bg--gradient,
+.okip-hero.is-bg-failed .okip-hero__bg {
+    background:
+        radial-gradient(120% 120% at 70% 10%, rgba(20, 60, 120, .35), transparent 60%),
+        radial-gradient(100% 100% at 20% 90%, rgba(255, 90, 20, .15), transparent 55%),
+        linear-gradient(160deg, #03060f 0%, #05101f 55%, #020711 100%);
+}
+
+/* Degradado/desenfoque suave del fondo fallido (pause_or_blur_on_fail) */
+.okip-hero.is-bg-failed .okip-hero__media {
+    filter: blur(8px) brightness(.7);
+    transition: filter .6s ease;
+}
+
+/* ---- Capa 2: overlay ---- */
+.okip-hero__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ---- Capa 3: tarjetas flotantes ---- */
+.okip-hero__cards {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.okip-hero__card {
+    position: absolute;
+    left: var(--okip-card-x, 50%);
+    top: var(--okip-card-y, 50%);
+    width: clamp(120px, 14vw, 220px);
+    transform: translate(-50%, -50%); /* centrado: NO se anima (lo animamos en el media) */
+    pointer-events: auto;
+}
+
+.okip-hero__card-media {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .12);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
+}
+
+.okip-hero__card-media img,
+.okip-hero__card-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.okip-hero__card-placeholder {
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, .04) 0 8px, rgba(255, 255, 255, .02) 8px 16px),
+        linear-gradient(160deg, #0a1830, #0a2038);
+}
+
+.okip-hero__card--glow .okip-hero__card-media {
+    box-shadow:
+        0 0 0 1px rgba(80, 160, 255, .35),
+        0 0 28px rgba(60, 140, 255, .35),
+        0 20px 50px rgba(0, 0, 0, .5);
+}
+
+/* Scanline (solo CSS) */
+.okip-hero__card-scan {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 30%;
+    background: linear-gradient(180deg, rgba(120, 200, 255, .25), transparent);
+    transform: translateY(-100%);
+}
+.okip-hero__card--scanline .okip-hero__card-scan {
+    animation: okip-hero-scan 3.2s linear infinite;
+}
+@keyframes okip-hero-scan {
+    0%   { transform: translateY(-100%); }
+    100% { transform: translateY(400%); }
+}
+
+/* Hover (solo punteros finos) — se anima el media para no tocar el centrado */
+@media (hover: hover) and (pointer: fine) {
+    .okip-hero__card-media {
+        transition: transform .4s cubic-bezier(.22, 1, .36, 1), box-shadow .4s ease;
+    }
+    .okip-hero__card:hover .okip-hero__card-media {
+        transform: scale(1.05);
+    }
+}
+
+/* ---- Capa 4: contenido ---- */
+.okip-hero__content {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+    max-width: var(--okip-hero-maxw, 1000px);
+    margin-inline: auto;
+    padding: 0 var(--okip-space-4, 1.5rem);
+    text-align: center;
+}
+.okip-hero__content--left  { text-align: left; }
+.okip-hero__content--right { text-align: right; }
+
+.okip-hero__title {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+.okip-hero__title-line { display: block; }
+
+.okip-hero__desc {
+    margin-top: var(--okip-space-3, 1rem);
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--okip-color-text-muted, #b9c4d4);
+}
+
+/* ============================================================
+   Estados de animación (solo con JS: clase okip-js en <html>).
+   El fondo NO se oculta (debe verse/cargar primero). Se ocultan
+   tarjetas (su media interno) y texto, que revela el script por fases.
+   ============================================================ */
+.okip-js .okip-hero--animated .okip-hero__card-media,
+.okip-js .okip-hero--animated .okip-hero__title-line,
+.okip-js .okip-hero--animated .okip-hero__desc {
+    opacity: 0;
+    will-change: transform, opacity;
+}
+.okip-js .okip-hero--animated .okip-hero__card-media {
+    transform: translateY(24px) scale(.96);
+}
+.okip-js .okip-hero--animated .okip-hero__title-line,
+.okip-js .okip-hero--animated .okip-hero__desc {
+    transform: translateY(28px);
+}
+
+/* Revelado por CSS (fallback sin GSAP) — las clases las pone script.js */
+.okip-hero.is-cards-revealed .okip-hero__card-media {
+    opacity: 1;
+    transform: none;
+    transition: opacity .6s ease, transform .6s cubic-bezier(.22, 1, .36, 1);
+}
+.okip-hero.is-text-revealed .okip-hero__title-line,
+.okip-hero.is-text-revealed .okip-hero__desc {
+    opacity: 1;
+    transform: none;
+    transition: opacity .7s ease, transform .7s cubic-bezier(.22, 1, .36, 1);
+}
+.okip-hero.is-text-revealed .okip-hero__title-line:nth-child(2) { transition-delay: .12s; }
+.okip-hero.is-text-revealed .okip-hero__desc { transition-delay: .24s; }
+
+/* ---- Responsive: móvil/tablet ---- */
+@media (max-width: 768px) {
+    .okip-hero {
+        min-height: auto;
+        padding-block: 18vh 8vh;
+    }
+    .okip-hero__cards {
+        position: static;
+        display: flex;
+        gap: var(--okip-space-3, 1rem);
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: var(--okip-space-4, 1.5rem);
+        margin-top: var(--okip-space-4, 1.5rem);
+    }
+    .okip-hero__card {
+        position: static;
+        transform: none;
+        width: clamp(100px, 38vw, 160px);
+    }
+}
+
+/* ---- Accesibilidad: reduce motion ---- */
+@media (prefers-reduced-motion: reduce) {
+    .okip-js .okip-hero--animated .okip-hero__card-media,
+    .okip-js .okip-hero--animated .okip-hero__title-line,
+    .okip-js .okip-hero--animated .okip-hero__desc {
+        opacity: 1;
+        transform: none;
+    }
+    .okip-hero__card--scanline .okip-hero__card-scan {
+        animation: none;
+    }
+    .okip-hero.is-bg-failed .okip-hero__media {
+        transition: none;
+    }
+}

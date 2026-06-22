@@ -1,0 +1,35 @@
+/*
+ * Layout global: contenedor, main, footer, espaciados estructurales.
+ */
+.okip-container {
+    width: 100%;
+    max-width: var(--okip-container);
+    margin-inline: auto;
+    padding-inline: var(--okip-container-pad);
+}
+
+.okip-main {
+    /* El navbar es fixed; el Hero ocupa toda la altura, así que no forzamos
+       padding-top global. Las páginas internas lo añaden donde haga falta. */
+    display: block;
+}
+
+/* Páginas internas (no-home) deben respetar el navbar fixed. */
+.okip-page,
+.okip-single,
+.okip-archive,
+.okip-404 {
+    padding-top: calc(var(--okip-navbar-h) + var(--okip-space-5));
+    padding-bottom: var(--okip-space-6);
+}
+
+.okip-footer {
+    border-top: 1px solid var(--okip-color-line);
+    padding-block: var(--okip-space-5);
+    color: var(--okip-color-text-muted);
+}
+
+.okip-footer__copy {
+    margin: 0;
+    font-size: .9rem;
+}

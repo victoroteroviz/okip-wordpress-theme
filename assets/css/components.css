@@ -1,0 +1,179 @@
+/*
+ * Componentes globales reutilizables: navbar y botón.
+ * (Los estilos específicos de cada bloque viven en su propia carpeta.)
+ */
+
+/* ============================ Navbar ============================ */
+.okip-navbar {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: var(--okip-z-navbar);
+    height: var(--okip-navbar-h);
+    display: flex;
+    align-items: center;
+    background: var(--okip-navbar-bg);
+    -webkit-backdrop-filter: blur(var(--okip-navbar-blur));
+    backdrop-filter: blur(var(--okip-navbar-blur));
+    border-bottom: 1px solid var(--okip-color-line);
+    transition: background .3s ease, transform .4s var(--okip-ease);
+}
+
+.okip-navbar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: var(--okip-space-4);
+}
+
+.okip-navbar__brand {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.okip-navbar__logo-text {
+    font-size: 1.4rem;
+    color: var(--okip-color-text);
+}
+
+.okip-navbar__logo {
+    max-height: 40px;
+    width: auto;
+}
+
+/* Menú (desktop) */
+.okip-navbar__menu {
+    display: flex;
+    align-items: center;
+    gap: var(--okip-space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.okip-navbar__link {
+    position: relative;
+    color: var(--okip-color-text-muted);
+    font-size: .95rem;
+    transition: color .2s ease;
+}
+.okip-navbar__link:hover,
+.okip-navbar__menu .current-menu-item > .okip-navbar__link {
+    color: var(--okip-color-text);
+}
+/* Subrayado del enlace activo (referencia: navbar.png) */
+.okip-navbar__menu .current-menu-item > .okip-navbar__link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    background: currentColor;
+}
+
+/* Hamburguesa (oculta en desktop) */
+.okip-navbar__toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+.okip-navbar__toggle-bar {
+    display: block;
+    width: 24px;
+    height: 2px;
+    margin-inline: auto;
+    background: var(--okip-color-text);
+    transition: transform .3s var(--okip-ease), opacity .2s ease;
+}
+.okip-navbar__toggle[aria-expanded="true"] .okip-navbar__toggle-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.okip-navbar__toggle[aria-expanded="true"] .okip-navbar__toggle-bar:nth-child(2) {
+    opacity: 0;
+}
+.okip-navbar__toggle[aria-expanded="true"] .okip-navbar__toggle-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Visibilidad (la controla navbar.js; sin JS el navbar es siempre visible).
+   - start-hidden: estado inicial server-side en Home con Hero (evita parpadeo).
+   - is-hidden: oculto dinámicamente mientras se ve el Hero. */
+.okip-js .okip-navbar--start-hidden,
+.okip-navbar.is-hidden {
+    transform: translateY(-100%);
+}
+
+/* Sombra/realce al hacer scroll */
+.okip-navbar.is-scrolled {
+    background: rgba(2, 7, 17, .8);
+}
+
+/* ---- Tablet / móvil ---- */
+@media (max-width: 880px) {
+    .okip-navbar__toggle {
+        display: flex;
+    }
+    .okip-navbar__nav {
+        position: fixed;
+        inset-block-start: var(--okip-navbar-h);
+        inset-inline: 0;
+        background: rgba(2, 7, 17, .96);
+        -webkit-backdrop-filter: blur(var(--okip-navbar-blur));
+        backdrop-filter: blur(var(--okip-navbar-blur));
+        border-bottom: 1px solid var(--okip-color-line);
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height .35s var(--okip-ease);
+    }
+    .okip-navbar__nav.is-open {
+        max-height: 80vh;
+    }
+    .okip-navbar__menu {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: var(--okip-space-3) var(--okip-container-pad);
+    }
+    .okip-navbar__menu > li {
+        border-bottom: 1px solid var(--okip-color-line);
+    }
+    .okip-navbar__link {
+        display: block;
+        padding-block: var(--okip-space-3);
+        font-size: 1.05rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* Sigue ocultándose en el Hero, pero sin transición (cambio inmediato). */
+    .okip-navbar {
+        transition: background .3s ease;
+    }
+}
+
+/* ============================ Botón ============================ */
+.okip-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .8rem 1.4rem;
+    border-radius: 999px;
+    background: var(--okip-color-accent);
+    color: #fff;
+    font-weight: 600;
+    transition: transform .2s var(--okip-ease), filter .2s ease;
+}
+.okip-button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+}
