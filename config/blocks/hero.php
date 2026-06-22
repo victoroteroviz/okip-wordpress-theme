@@ -6,10 +6,17 @@
  * La data de cada instancia (config/pages/*.php) se mezcla sobre estos defaults,
  * así una instancia parcial nunca rompe el render.
  *
+ * Escena de entrada (dos videos):
+ *   1. `intro`  → video introductorio que se reproduce UNA vez al cargar.
+ *   2. `loop`   → video en bucle que toma el relevo (crossfade, sin parpadeo).
+ * Mientras corre el intro las tarjetas y el texto permanecen ocultos; al terminar
+ * el intro se hace crossfade al loop, luego se revelan tarjetas y después texto.
+ * El loop queda vivo en bucle. La escena NO se reinicia al volver al Hero
+ * (replay_on_enter = false): el intro solo se repite recargando la página.
+ *
  * Whitelists:
  *   background.type  : video | image | svg | gradient   (gradient = fallback)
  *   card.type        : video | image | svg
- *   reveal.strategy  : video_end | delay | canplay
  *
  * Regla del fondo: el fondo real es el MEDIA (video/image/svg) limpio. El
  * gradiente CSS solo actúa como fallback (sin media o si el video falla). El
@@ -65,30 +72,44 @@ if (! function_exists('okip_normalize_hero_data')) {
      */
     function okip_normalize_hero_data($data)
     {
-        $align_allowed    = array('left', 'center', 'right');
-        $bg_allowed       = array('video', 'image', 'svg', 'gradient');
-        $card_allowed     = array('video', 'image', 'svg');
-        $strategy_allowed = array('video_end', 'delay', 'canplay');
-        $play_allowed     = array('hover', 'tap', 'manual');
+        $align_allowed = array('left', 'center', 'right');
+        $bg_allowed    = array('video', 'image', 'svg', 'gradient');
+        $card_allowed  = array('video', 'image', 'svg');
+        $play_allowed  = array('hover', 'tap', 'manual');
 
         // Contenido.
         $data['content']['alignment'] = okip_one_of($data['content']['alignment'], $align_allowed, 'center');
 
-        // Fondo.
+        // Fondo (media-driven: intro + loop + fallback).
         $data['background']['type'] = okip_one_of($data['background']['type'], $bg_allowed, 'gradient');
+
+        // Intro (video introductorio, una sola vez).
+        $data['intro']['enabled']      = okip_bool($data['intro']['enabled']);
+        $data['intro']['play_once']    = okip_bool($data['intro']['play_once']);
+        $data['intro']['fail_timeout'] = okip_clamp_int($data['intro']['fail_timeout'], 0, 20000);
+
+        // Loop (video de bucle).
+        $data['loop']['enabled']     = okip_bool($data['loop']['enabled']);
+        $data['loop']['muted']       = okip_bool($data['loop']['muted']);
+        $data['loop']['playsinline'] = okip_bool($data['loop']['playsinline']);
+        $data['loop']['autoplay']    = okip_bool($data['loop']['autoplay']);
+        $data['loop']['loop']        = okip_bool($data['loop']['loop']);
 
         // Overlay (capa separada).
         $data['overlay']['enabled'] = okip_bool($data['overlay']['enabled']);
         $data['overlay']['opacity'] = okip_clamp_float($data['overlay']['opacity'], 0, 1);
 
-        // Reveal.
-        $data['reveal']['strategy']           = okip_one_of($data['reveal']['strategy'], $strategy_allowed, 'video_end');
-        $data['reveal']['image_reveal_delay'] = okip_clamp_int($data['reveal']['image_reveal_delay'], 0, 20000);
-        $data['reveal']['video_fail_timeout'] = okip_clamp_int($data['reveal']['video_fail_timeout'], 0, 20000);
-        $data['reveal']['cards_reveal_delay'] = okip_clamp_int($data['reveal']['cards_reveal_delay'], 0, 10000);
-        $data['reveal']['text_reveal_delay']  = okip_clamp_int($data['reveal']['text_reveal_delay'], 0, 10000);
-        $data['reveal']['replay_on_enter']    = okip_bool($data['reveal']['replay_on_enter']);
-        $data['reveal']['pause_or_blur_on_fail'] = okip_bool($data['reveal']['pause_or_blur_on_fail']);
+        // Reveal (tiempos medidos tras el intro).
+        $data['reveal']['reveal_after_intro']      = okip_bool($data['reveal']['reveal_after_intro']);
+        $data['reveal']['image_reveal_delay']      = okip_clamp_int($data['reveal']['image_reveal_delay'], 0, 20000);
+        $data['reveal']['cards_delay_after_intro'] = okip_clamp_int($data['reveal']['cards_delay_after_intro'], 0, 10000);
+        $data['reveal']['text_delay_after_intro']  = okip_clamp_int($data['reveal']['text_delay_after_intro'], 0, 10000);
+        $data['reveal']['replay_on_enter']         = okip_bool($data['reveal']['replay_on_enter']);
+        $data['reveal']['pause_or_blur_on_fail']   = okip_bool($data['reveal']['pause_or_blur_on_fail']);
+
+        // Transición intro → loop.
+        $data['transition']['intro_to_loop_crossfade'] = okip_bool($data['transition']['intro_to_loop_crossfade']);
+        $data['transition']['crossfade_duration']      = okip_clamp_int($data['transition']['crossfade_duration'], 0, 5000);
 
         // Animación.
         $data['animation']['enabled']   = okip_bool($data['animation']['enabled']);
@@ -135,10 +156,27 @@ return array(
         'max_width'    => '1000px',
     ),
     'background' => array(
-        'type'            => 'gradient', // video | image | svg | gradient (gradient = fallback)
-        'media'           => '',         // ruta a assets/, URL o ID de attachment
-        'poster'          => '',         // imagen de respaldo para video
+        'type'            => 'video', // video | image | svg | gradient (gradient = fallback)
+        'media'           => '',      // compat: media único (si no hay intro/loop, se usa como loop)
+        'intro_media'     => '',      // ruta/URL/ID del video introductorio
+        'loop_media'      => '',      // ruta/URL/ID del video de bucle
+        'poster'          => '',      // imagen de respaldo para los videos
+        'fallback_image'  => '',      // imagen estática si los videos no cargan
         'object_position' => 'center center',
+    ),
+    'intro' => array(
+        'enabled'      => true,
+        'media'        => '',   // override del intro (si vacío → background.intro_media)
+        'fail_timeout' => 2500, // ms: si el intro no arranca, saltar al loop/fallback
+        'play_once'    => true,
+    ),
+    'loop' => array(
+        'enabled'     => true,
+        'media'       => '',    // override del loop (si vacío → background.loop_media)
+        'muted'       => true,
+        'playsinline' => true,
+        'autoplay'    => true,
+        'loop'        => true,
     ),
     'overlay' => array(
         'enabled' => true,
@@ -146,13 +184,16 @@ return array(
         'opacity' => 0.35,  // 0..1 — capa ligera, no reemplaza el fondo
     ),
     'reveal' => array(
-        'strategy'              => 'video_end', // video_end | delay | canplay
-        'image_reveal_delay'    => 1500,        // ms (image/svg/gradient o strategy=delay)
-        'video_fail_timeout'    => 2000,        // ms (si el video no arranca)
-        'cards_reveal_delay'    => 200,         // ms tras el fondo
-        'text_reveal_delay'     => 200,         // ms tras las tarjetas
-        'replay_on_enter'       => true,        // reiniciar la escena al volver al Hero
-        'pause_or_blur_on_fail' => true,        // al fallar el video: pausar + degradar el fondo
+        'reveal_after_intro'      => true,  // revelar tarjetas/texto al terminar el intro
+        'image_reveal_delay'      => 1500,  // ms (image/svg/gradient o cuando no hay intro)
+        'cards_delay_after_intro' => 300,   // ms tras el fin del intro → tarjetas
+        'text_delay_after_intro'  => 600,   // ms tras el fin del intro → texto
+        'replay_on_enter'         => false, // NO reiniciar la escena al volver al Hero
+        'pause_or_blur_on_fail'   => true,  // al fallar sin loop/fallback: degradar el fondo
+    ),
+    'transition' => array(
+        'intro_to_loop_crossfade' => true, // crossfade suave intro → loop (sin parpadeo)
+        'crossfade_duration'      => 700,  // ms del crossfade
     ),
     'cards' => array(
         // Lista de tarjetas multimedia flotantes (ver okip_hero_card_defaults()).

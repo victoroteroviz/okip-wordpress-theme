@@ -12,10 +12,13 @@
     --okip-color-accent-2: #3c8cff;     /* azul tecnológico */
     --okip-color-line: rgba(255, 255, 255, .12);
 
-    /* Navbar */
+    /* Navbar (los valores configurables se sobreescriben inline desde navbar.php) */
     --okip-navbar-h: 68px;
-    --okip-navbar-bg: rgba(3, 6, 13, .92); /* negro casi sólido (ref navbar.png) */
-    --okip-navbar-blur: 8px;               /* blur sutil */
+    --okip-navbar-bg: rgba(0, 0, 0, .86);          /* negro casi sólido (ref navbar.png) */
+    --okip-navbar-blur: 14px;                       /* blur gaussiano (backdrop-filter) */
+    --okip-navbar-border: rgba(255, 255, 255, .12); /* borde inferior */
+    --okip-navbar-text: #ffffff;                    /* color de enlaces */
+    --okip-navbar-active: #ffffff;                  /* subrayado del enlace activo */
 
     /* Espaciado */
     --okip-space-1: .25rem;

@@ -29,9 +29,13 @@ return array(
                 'alignment'    => 'center',
             ),
             'background' => array(
-                // Sin medio real todavía → fallback de gradiente oscuro.
-                // Para usar video: 'type' => 'video', 'media' => 'video/hero.mp4'
-                'type' => 'gradient',
+                // Escena de entrada con dos videos. Sin media real todavía → fondo
+                // neutro (color sólido) y reveal tras image_reveal_delay.
+                // Para activarla, coloca los archivos en assets/video/ y descomenta:
+                //   'intro_media'    => 'video/hero-intro.mp4',
+                //   'loop_media'     => 'video/hero-loop.mp4',
+                //   'fallback_image' => 'img/hero-fallback.jpg',
+                'type' => 'video',
             ),
             'overlay' => array(
                 'enabled' => true,
@@ -39,9 +43,8 @@ return array(
                 'opacity' => 0.35,
             ),
             'reveal' => array(
-                // gradient/imagen → revela tras image_reveal_delay (1.5s).
-                'strategy'        => 'video_end',
-                'replay_on_enter' => true,
+                // El intro se reproduce una sola vez; al volver al Hero NO se reinicia.
+                'replay_on_enter' => false,
             ),
             'animation' => array(
                 // El hundimiento del Hero durante la transición lo controla el

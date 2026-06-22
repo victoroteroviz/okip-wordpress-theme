@@ -32,6 +32,31 @@ $okip_reveal = wp_parse_args($okip_reveal, array(
     'use_intersection_observer' => true,
 ));
 
+// Apariencia: fondo negro configurable + blur gaussiano. Se expone como variables
+// CSS inline seguras (preparado para edición desde el futuro panel admin).
+$okip_appearance = isset($okip_nav['appearance']) && is_array($okip_nav['appearance']) ? $okip_nav['appearance'] : array();
+$okip_appearance = wp_parse_args($okip_appearance, array(
+    'background_color'       => '#000000',
+    'background_opacity'     => 0.86,
+    'blur'                   => 14,
+    'border_opacity'         => 0.12,
+    'text_color'             => '#ffffff',
+    'active_underline_color' => '#ffffff',
+));
+
+$okip_nav_text   = sanitize_hex_color($okip_appearance['text_color']) ? sanitize_hex_color($okip_appearance['text_color']) : '#ffffff';
+$okip_nav_active = sanitize_hex_color($okip_appearance['active_underline_color']) ? sanitize_hex_color($okip_appearance['active_underline_color']) : '#ffffff';
+$okip_nav_blur   = okip_clamp_int($okip_appearance['blur'], 0, 60);
+
+$okip_nav_style = sprintf(
+    '--okip-navbar-bg:%s;--okip-navbar-blur:%dpx;--okip-navbar-border:%s;--okip-navbar-text:%s;--okip-navbar-active:%s;',
+    okip_hex_to_rgba($okip_appearance['background_color'], $okip_appearance['background_opacity'], '#000000'),
+    (int) $okip_nav_blur,
+    okip_hex_to_rgba($okip_appearance['text_color'], $okip_appearance['border_opacity'], '#ffffff'),
+    esc_attr($okip_nav_text),
+    esc_attr($okip_nav_active)
+);
+
 // ¿Estamos en Home y la Home incluye un Hero? Solo entonces ocultamos de inicio.
 $okip_home_has_hero = is_front_page()
     && in_array('hero', okip_used_block_types(okip_get_page_blocks('home')), true);
@@ -49,6 +74,7 @@ $okip_navbar_class = 'okip-navbar' . ($okip_start_hidden ? ' okip-navbar--start-
     data-reveal-offset="<?php echo esc_attr((string) (int) $okip_reveal['reveal_offset']); ?>"
     data-hide-on-hero="<?php echo ! empty($okip_reveal['hide_on_hero']) ? '1' : '0'; ?>"
     data-use-io="<?php echo ! empty($okip_reveal['use_intersection_observer']) ? '1' : '0'; ?>"
+    style="<?php echo esc_attr($okip_nav_style); ?>"
     role="banner">
     <div class="okip-navbar__inner">
 

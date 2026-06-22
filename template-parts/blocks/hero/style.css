@@ -35,6 +35,28 @@
     object-fit: cover;
 }
 
+/* ---- Crossfade intro → loop (sin parpadeo negro) ----
+   Tres posibles capas apiladas: intro (encima), loop y fallback (debajo).
+   El loop/fallback se reproducen/cargan detrás y el intro se desvanece por
+   opacidad, revelándolos suavemente. Las clases las latchea script.js. */
+.okip-hero__media--intro,
+.okip-hero__media--loop,
+.okip-hero__media--fallback {
+    transition: opacity var(--okip-hero-xfade, 700ms) ease;
+}
+.okip-hero__media--intro    { opacity: 0; z-index: 2; }  /* mostrado por JS */
+.okip-hero__media--loop     { opacity: 1; z-index: 1; }
+.okip-hero__media--fallback { opacity: 0; z-index: 1; }
+
+/* Con JS activo: el intro lidera y el loop espera el crossfade. */
+.okip-js .okip-hero--animated .okip-hero__media--intro { opacity: 1; }
+.okip-js .okip-hero--animated .okip-hero__media--loop  { opacity: 0; }
+
+/* Latches del crossfade (los pone script.js). */
+.okip-hero.is-loop-visible .okip-hero__media--loop      { opacity: 1; }
+.okip-hero.is-intro-hidden .okip-hero__media--intro     { opacity: 0; }
+.okip-hero.is-fallback-shown .okip-hero__media--fallback { opacity: 1; }
+
 /* Fallback NEUTRO: sin media real o si el video falla.
    Solo un color sólido oscuro, sin gradiente decorativo, patrón ni glow falso. */
 .okip-hero__bg--missing,
@@ -262,6 +284,14 @@
     .okip-js .okip-hero--animated .okip-hero__desc {
         opacity: 1;
         transform: none;
+    }
+    /* Sin crossfade: mostrar el loop/fallback (estático) y ocultar el intro. */
+    .okip-js .okip-hero--animated .okip-hero__media--loop  { opacity: 1; }
+    .okip-js .okip-hero--animated .okip-hero__media--intro { opacity: 0; }
+    .okip-hero__media--intro,
+    .okip-hero__media--loop,
+    .okip-hero__media--fallback {
+        transition: none;
     }
     .okip-hero__card--scanline .okip-hero__card-scan {
         animation: none;

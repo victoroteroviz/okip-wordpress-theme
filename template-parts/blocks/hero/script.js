@@ -1,16 +1,20 @@
 /*
  * Bloque Hero — comportamiento (scope por instancia via [data-okip-hero]).
  *
- * Secuencia de entrada controlada por JS: fondo → tarjetas → texto.
- *   - video: revela según reveal-strategy (video_end | delay | canplay).
- *   - image/svg/gradient: revela tras image-delay (1.5s por defecto).
- *   - si el video falla o no arranca antes de video-fail-timeout (2s):
- *     fallback limpio (gradiente + blur), pausa el video y revela el contenido.
+ * Escena de entrada con DOS videos:
+ *   1. intro: se reproduce UNA vez. Tarjetas y texto permanecen ocultos.
+ *   2. loop : al terminar el intro se hace crossfade (sin parpadeo) y queda en
+ *      bucle como fondo vivo. Luego se revelan tarjetas (cards_delay) y después
+ *      texto (text_delay), medidos desde el fin del intro.
  *
- * Reentrada (IntersectionObserver): al volver al Hero se reinicia la escena
- * (video a 0, tarjetas/texto se ocultan y vuelven a animarse). Fallback por
- * scrollY si no hay IO. Usa GSAP si está disponible; si no, clases CSS.
- * Respeta prefers-reduced-motion. Sin listeners duplicados.
+ * Sin intro: arranca el loop (o imagen/svg) y revela tras image_reveal_delay.
+ * Fallo del intro (timeout/error): salta al loop; sin loop usa fallback_image;
+ * sin fallback, fondo neutro. Nunca rompe.
+ *
+ * La escena NO se reinicia al volver al Hero (replay_on_enter=false por defecto):
+ * el loop sigue vivo y tarjetas/texto permanecen visibles. El intro solo se
+ * repite recargando la página. Usa GSAP para el reveal si está disponible; si no,
+ * clases CSS. Respeta prefers-reduced-motion. Sin listeners duplicados.
  */
 (function () {
     'use strict';
@@ -26,32 +30,35 @@
         hero.__okipHeroInit = true;
 
         var d = hero.dataset;
-        var animOn   = d.anim === '1';
-        var scroll3d = d.scroll3d === '1';
-        var bgType   = d.bgType || 'gradient';
-        var strategy = d.revealStrategy || 'video_end';
-        var imgDelay = parseInt(d.imageDelay, 10) || 1500;
-        var failTo   = parseInt(d.videoFailTimeout, 10) || 2000;
+        var animOn    = d.anim === '1';
+        var scroll3d  = d.scroll3d === '1';
+        var imgDelay  = parseInt(d.imageDelay, 10) || 1500;
         var cardsDelay = parseInt(d.cardsDelay, 10) || 0;
         var textDelay  = parseInt(d.textDelay, 10) || 0;
-        var replay   = d.replay === '1';
-        var pauseBlur = d.pauseBlur === '1';
+        var introFail  = parseInt(d.introFail, 10) || 2500;
+        var crossfade  = d.crossfade === '1';
+        var crossfadeMs = parseInt(d.crossfadeMs, 10) || 700;
+        var pauseBlur  = d.pauseBlur === '1';
+        var hasFallback = d.hasFallback === '1';
 
-        var video = hero.querySelector('[data-okip-hero-bg] video');
+        var intro = hero.querySelector('[data-okip-hero-intro]');
+        var loop  = hero.querySelector('[data-okip-hero-loop]');
         var cardMedia = hero.querySelectorAll('.okip-hero__card-media');
         var lines = hero.querySelectorAll('.okip-hero__title-line, .okip-hero__desc');
 
         var timers = [];
         var tl = null;
-        var done = false;       // ¿ya se reveló en esta escena?
-        var revealedOnce = false;
+        var done = false;          // ¿ya se reveló el contenido?
+        var loopStarted = false;   // ¿ya se hizo el relevo intro → loop/fallback?
 
-        function clearTimers() {
-            timers.forEach(clearTimeout);
-            timers = [];
+        function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+        function safePlay(v) {
+            if (!v) { return; }
+            var p = v.play();
+            if (p && typeof p.catch === 'function') { p.catch(function () {}); }
         }
 
-        /* ---------- Revelado (tarjetas → texto) ---------- */
+        /* ---------- Revelado (tarjetas → texto, tiempos desde el fin del intro) ---------- */
         function doReveal() {
             if (reduceMotion || !animOn) {
                 hero.classList.add('is-cards-revealed', 'is-text-revealed');
@@ -64,110 +71,103 @@
                     tl.to(cardMedia, { opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.12 }, cardsDelay / 1000);
                 }
                 if (lines.length) {
-                    tl.to(lines, { opacity: 1, y: 0, duration: 0.7, stagger: 0.12 }, '+=' + (textDelay / 1000));
+                    tl.to(lines, { opacity: 1, y: 0, duration: 0.7, stagger: 0.12 }, textDelay / 1000);
                 }
             } else {
-                timers.push(setTimeout(function () {
-                    hero.classList.add('is-cards-revealed');
-                }, cardsDelay));
-                timers.push(setTimeout(function () {
-                    hero.classList.add('is-text-revealed');
-                }, cardsDelay + 600 + textDelay));
+                timers.push(setTimeout(function () { hero.classList.add('is-cards-revealed'); }, cardsDelay));
+                timers.push(setTimeout(function () { hero.classList.add('is-text-revealed'); }, textDelay));
             }
         }
-
         function finishReveal() {
             if (done) { return; }
             done = true;
-            revealedOnce = true;
             doReveal();
         }
 
-        function failReveal() {
-            if (done) { return; }
-            done = true;
-            revealedOnce = true;
-            if (pauseBlur) {
+        /* ---------- Relevo intro → loop (crossfade) / fallback / neutro ---------- */
+        function startLoop() {
+            if (loopStarted) { return; }
+            loopStarted = true;
+
+            if (loop) {
+                safePlay(loop);
+                // Crossfade: el loop ya está reproduciéndose detrás; al ocultar el
+                // intro (opacidad) se revela el loop sin parpadeo negro.
+                requestAnimationFrame(function () {
+                    hero.classList.add('is-loop-visible', 'is-intro-hidden');
+                });
+                if (intro) {
+                    // Pausar el intro tras el crossfade (libera recursos).
+                    timers.push(setTimeout(function () {
+                        try { intro.pause(); } catch (e) {}
+                    }, crossfadeMs + 80));
+                }
+            } else if (hasFallback) {
+                hero.classList.add('is-fallback-shown', 'is-intro-hidden');
+                if (intro) {
+                    timers.push(setTimeout(function () { try { intro.pause(); } catch (e) {} }, crossfadeMs + 80));
+                }
+            } else if (intro) {
+                // El intro es el único fondo: se queda en su último fotograma.
+                // No lo ocultamos ni degradamos.
+            } else if (pauseBlur) {
                 hero.classList.add('is-bg-failed');
-                if (video) { try { video.pause(); } catch (e) {} }
-            }
-            doReveal();
-        }
-
-        /* ---------- Reinicio (reentrada al Hero) ---------- */
-        function resetHidden() {
-            done = false;
-            clearTimers();
-            hero.classList.remove('is-cards-revealed', 'is-text-revealed', 'is-bg-failed');
-            if (gsapReady()) {
-                if (tl) { tl.kill(); tl = null; }
-                if (cardMedia.length) { window.gsap.set(cardMedia, { opacity: 0, y: 24, scale: 0.96 }); }
-                if (lines.length) { window.gsap.set(lines, { opacity: 0, y: 28 }); }
             }
         }
 
-        /* ---------- Fondo + disparo de la secuencia ---------- */
-        function startBackground() {
-            done = false;
-            if (bgType === 'video' && video) {
-                try { video.currentTime = 0; } catch (e) {}
-                if (video.paused) {
-                    var p = video.play();
-                    if (p && typeof p.catch === 'function') { p.catch(function () {}); }
+        /* ---------- Camino de fallo del intro ---------- */
+        function introFailPath() {
+            if (loopStarted && done) { return; }
+            startLoop();
+            finishReveal();
+        }
+
+        /* ---------- Intro: reproducir una vez, precargar loop ---------- */
+        function beginIntro() {
+            if (loop) { try { loop.load(); } catch (e) {} } // precarga del loop
+            safePlay(intro);
+
+            intro.addEventListener('ended', function () {
+                startLoop();
+                finishReveal();
+            }, { once: true });
+            intro.addEventListener('error', introFailPath, { once: true });
+
+            // Salvaguarda: si el intro no progresa a tiempo, saltar al loop/fallback.
+            timers.push(setTimeout(function () {
+                if (done) { return; }
+                if (intro.error || intro.readyState < 2 || (intro.paused && intro.currentTime === 0) || intro.currentTime === 0) {
+                    introFailPath();
                 }
-                if (strategy === 'delay') {
-                    timers.push(setTimeout(finishReveal, imgDelay));
-                }
-                // Salvaguarda: si el video no progresa a tiempo, fallback.
-                timers.push(setTimeout(function () {
-                    if (done) { return; }
-                    if (video.readyState < 2 || video.paused || video.error) {
-                        failReveal();
-                    }
-                }, failTo));
-            } else {
-                // image | svg | gradient
-                timers.push(setTimeout(finishReveal, imgDelay));
-            }
+            }, introFail));
         }
 
-        function playScene() {
-            resetHidden();
-            if (video) {
-                hero.classList.remove('is-bg-failed');
-                try { video.pause(); video.currentTime = 0; } catch (e) {}
-            }
-            // Doble rAF: garantiza que el estado oculto se pinte antes de animar.
-            requestAnimationFrame(function () {
-                requestAnimationFrame(startBackground);
-            });
-        }
-
-        /* ---------- Listeners del video (una sola vez) ---------- */
-        if (video) {
-            video.loop = (strategy === 'canplay' || strategy === 'delay');
-            video.addEventListener('ended', function () {
-                if (strategy === 'video_end') { finishReveal(); }
-            });
-            video.addEventListener('canplay', function () {
-                if (strategy === 'canplay') { finishReveal(); }
-            });
-            video.addEventListener('error', failReveal);
-        }
-
-        /* ---------- Arranque inicial ---------- */
+        /* ---------- Arranque ---------- */
         if (!animOn || reduceMotion) {
             hero.classList.add('is-cards-revealed', 'is-text-revealed');
-            revealedOnce = true;
-            if (video) {
-                var pi = video.play();
-                if (pi && typeof pi.catch === 'function') { pi.catch(function () {}); }
+            done = true;
+            loopStarted = true;
+            if (hasFallback) {
+                hero.classList.add('is-fallback-shown', 'is-intro-hidden');
+            } else if (loop) {
+                hero.classList.add('is-loop-visible', 'is-intro-hidden');
+                if (!reduceMotion) { safePlay(loop); } // reduce-motion: fotograma estático
             }
+            // intro como único fondo → se queda visible (primer fotograma).
+        } else if (intro) {
+            beginIntro();
+        } else if (loop) {
+            loopStarted = true;
+            safePlay(loop);
+            requestAnimationFrame(function () { hero.classList.add('is-loop-visible'); });
+            timers.push(setTimeout(finishReveal, imgDelay));
         } else {
-            startBackground();
+            // image | svg | fallback único | missing
+            if (hasFallback) { hero.classList.add('is-fallback-shown'); }
+            timers.push(setTimeout(finishReveal, imgDelay));
         }
 
-        /* ---------- Efecto 3D al hacer scroll ---------- */
+        /* ---------- Efecto 3D al hacer scroll (desactivado en Home) ---------- */
         if (scroll3d && !reduceMotion && gsapReady() && window.okipGsap.hasScrollTrigger) {
             var content = hero.querySelector('[data-okip-hero-content]');
             var bg = hero.querySelector('[data-okip-hero-bg]');
@@ -178,40 +178,12 @@
             });
         }
 
-        /* ---------- Reentrada: reinicia la escena ---------- */
-        if (replay && animOn && !reduceMotion) {
-            if ('IntersectionObserver' in window) {
-                var hasLeft = false;
-                var io = new IntersectionObserver(function (entries) {
-                    var e = entries[0];
-                    if (!e.isIntersecting || e.intersectionRatio < 0.05) {
-                        hasLeft = true;
-                    } else if (e.intersectionRatio > 0.6 && hasLeft) {
-                        hasLeft = false;
-                        if (revealedOnce) { playScene(); }
-                    }
-                }, { threshold: [0, 0.05, 0.6, 1] });
-                io.observe(hero);
-            } else {
-                // Fallback por scrollY: detecta salida/regreso usando la altura.
-                var wasOut = false;
-                window.addEventListener('scroll', function () {
-                    var rect = hero.getBoundingClientRect();
-                    var out = rect.bottom < window.innerHeight * 0.1;
-                    var inView = rect.top > -rect.height * 0.4 && rect.bottom > window.innerHeight * 0.6;
-                    if (out) { wasOut = true; }
-                    else if (inView && wasOut) { wasOut = false; if (revealedOnce) { playScene(); } }
-                }, { passive: true });
-            }
-        }
-
         setupCards(hero);
     }
 
     /* ---------- Tarjetas: SOLO se activan por interacción (nunca autoplay) ----------
      * play_mode: hover (puntero fino) | tap (táctil) | manual (click siempre).
-     * Por defecto NO se reinicia/pausa al salir del hover (reset_on_leave=0):
-     * una vez activada, la tarjeta puede seguir reproduciéndose.
+     * Por defecto NO se reinicia/pausa al salir del hover (reset_on_leave=0).
      * Los placeholders (sin <video>) se ignoran sin lanzar errores. */
     function setupCards(hero) {
         var cards = hero.querySelectorAll('[data-okip-hero-card]');
@@ -223,7 +195,6 @@
 
             var playMode = card.getAttribute('data-play-mode') || 'hover';
             var resetOnLeave = card.getAttribute('data-reset-on-leave') === '1';
-            // Compat con flags previos:
             var allowHover = playMode === 'hover' && card.getAttribute('data-hover') !== '0';
             var allowTap = (playMode === 'tap' || playMode === 'manual') ? true
                 : card.getAttribute('data-tap') !== '0';
@@ -241,7 +212,6 @@
                 card.addEventListener('mouseenter', play);
                 card.addEventListener('mouseleave', leave);
             }
-            // Tap/click: en táctil siempre; en desktop solo si play_mode = tap|manual.
             if ((!finePointer && allowTap) || (finePointer && (playMode === 'tap' || playMode === 'manual'))) {
                 card.addEventListener('click', function () {
                     if (video.paused) { play(); }

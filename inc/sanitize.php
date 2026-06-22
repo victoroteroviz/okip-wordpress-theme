@@ -67,6 +67,35 @@ function okip_sanitize_instance_id($value, $default = 'okip-block')
 }
 
 /**
+ * Convierte un color hex (#rgb o #rrggbb) en una cadena rgba() con la opacidad
+ * dada. Útil para exponer colores configurables como variables CSS seguras.
+ *
+ * @param mixed $hex     Color hex (con o sin #). Si es inválido → $fallback_hex.
+ * @param mixed $opacity Opacidad 0..1.
+ * @param string $fallback_hex Color por defecto si $hex no es válido.
+ * @return string p.ej. "rgba(0,0,0,0.86)"
+ */
+function okip_hex_to_rgba($hex, $opacity, $fallback_hex = '#000000')
+{
+    $valid = function_exists('sanitize_hex_color') ? sanitize_hex_color((string) $hex) : '';
+    if (! $valid) {
+        $valid = function_exists('sanitize_hex_color') ? sanitize_hex_color($fallback_hex) : $fallback_hex;
+    }
+    $valid = ltrim((string) $valid, '#');
+    if (strlen($valid) === 3) {
+        $valid = $valid[0] . $valid[0] . $valid[1] . $valid[1] . $valid[2] . $valid[2];
+    }
+    if (strlen($valid) !== 6) {
+        $valid = '000000';
+    }
+    $r = hexdec(substr($valid, 0, 2));
+    $g = hexdec(substr($valid, 2, 2));
+    $b = hexdec(substr($valid, 4, 2));
+    $a = okip_clamp_float($opacity, 0, 1);
+    return sprintf('rgba(%d,%d,%d,%s)', $r, $g, $b, rtrim(rtrim(number_format($a, 3, '.', ''), '0'), '.'));
+}
+
+/**
  * Convierte distintas formas de "verdadero" en bool.
  *
  * @param mixed $value

@@ -15,7 +15,7 @@
     background: var(--okip-navbar-bg);
     -webkit-backdrop-filter: blur(var(--okip-navbar-blur));
     backdrop-filter: blur(var(--okip-navbar-blur));
-    border-bottom: 1px solid var(--okip-color-line);
+    border-bottom: 1px solid var(--okip-navbar-border);
     transition: background .3s ease, transform .4s var(--okip-ease);
 }
 
@@ -40,7 +40,7 @@
 
 .okip-navbar__logo-text {
     font-size: 1.5rem;
-    color: var(--okip-color-text);
+    color: var(--okip-navbar-text);
 }
 
 .okip-navbar__logo {

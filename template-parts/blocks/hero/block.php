@@ -25,21 +25,58 @@ $okip_data     = isset($args['data']) && is_array($args['data']) ? $args['data']
 
 $content    = isset($okip_data['content']) ? $okip_data['content'] : array();
 $background = isset($okip_data['background']) ? $okip_data['background'] : array();
+$intro      = isset($okip_data['intro']) ? $okip_data['intro'] : array();
+$loop       = isset($okip_data['loop']) ? $okip_data['loop'] : array();
 $overlay    = isset($okip_data['overlay']) ? $okip_data['overlay'] : array();
 $reveal     = isset($okip_data['reveal']) ? $okip_data['reveal'] : array();
+$transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
 $cards      = isset($okip_data['cards']) && is_array($okip_data['cards']) ? $okip_data['cards'] : array();
 $animation  = isset($okip_data['animation']) ? $okip_data['animation'] : array();
 
-$bg_type   = isset($background['type']) ? $background['type'] : 'gradient';
-$bg_url    = isset($background['media']) ? okip_media_url($background['media']) : '';
-$poster    = isset($background['poster']) ? okip_media_url($background['poster']) : '';
-$obj_pos   = isset($background['object_position']) ? $background['object_position'] : 'center center';
+$bg_type = isset($background['type']) ? $background['type'] : 'gradient';
+$poster  = isset($background['poster']) && okip_media_exists($background['poster']) ? okip_media_url($background['poster']) : '';
+$obj_pos = isset($background['object_position']) ? $background['object_position'] : 'center center';
 
-// Media-driven: solo es fondo real si el tipo es media Y el archivo existe.
-// Si no, fallback neutro ('missing'): color sólido oscuro, sin diseño falso.
-$has_media = in_array($bg_type, array('video', 'image', 'svg'), true)
+// --- Resolución de medios (intro / loop / fallback / imagen) ---
+// Cada uno admite override en su grupo; si no, cae al de background.
+$intro_src = ! empty($intro['media']) ? $intro['media'] : (isset($background['intro_media']) ? $background['intro_media'] : '');
+$loop_src  = ! empty($loop['media'])  ? $loop['media']  : (isset($background['loop_media'])  ? $background['loop_media']  : '');
+// Compat: media único de background → se trata como loop si no hay intro ni loop.
+if ($loop_src === '' && $intro_src === '' && $bg_type === 'video' && ! empty($background['media'])) {
+    $loop_src = $background['media'];
+}
+
+$intro_on = ! empty($intro['enabled']) && $bg_type === 'video' && okip_media_exists($intro_src);
+$loop_on  = ! empty($loop['enabled'])  && $bg_type === 'video' && okip_media_exists($loop_src);
+
+$intro_url = $intro_on ? okip_media_url($intro_src) : '';
+$loop_url  = $loop_on  ? okip_media_url($loop_src)  : '';
+
+$fallback_src = isset($background['fallback_image']) ? $background['fallback_image'] : '';
+$fallback_on  = okip_media_exists($fallback_src);
+$fallback_url = $fallback_on ? okip_media_url($fallback_src) : '';
+
+$has_video_layer = ($intro_url !== '' || $loop_url !== '');
+
+// Imagen/SVG estática (cuando el tipo es image|svg) o fallback como única capa.
+$img_on  = in_array($bg_type, array('image', 'svg'), true)
     && okip_media_exists(isset($background['media']) ? $background['media'] : '');
-$bg_render = $has_media ? $bg_type : 'missing';
+$img_url = $img_on ? okip_media_url($background['media']) : '';
+$single_img_url = '';
+if ($img_on) {
+    $single_img_url = $img_url;
+} elseif (! $has_video_layer && $fallback_url !== '') {
+    $single_img_url = $fallback_url; // sin videos pero con fallback → es el fondo
+}
+
+// Render del fondo: video | image | svg | missing (neutro).
+if ($has_video_layer) {
+    $bg_render = 'video';
+} elseif ($single_img_url !== '') {
+    $bg_render = ($bg_type === 'svg') ? 'svg' : 'image';
+} else {
+    $bg_render = 'missing';
+}
 
 $align     = isset($content['alignment']) ? $content['alignment'] : 'center';
 $max_width = isset($content['max_width']) ? $content['max_width'] : '1000px';
@@ -51,19 +88,29 @@ $overlay_opacity = isset($overlay['opacity']) ? (float) $overlay['opacity'] : 0.
 $anim_on  = ! empty($animation['enabled']);
 $scroll3d = ! empty($animation['scroll_3d']);
 
-$strategy   = isset($reveal['strategy']) ? $reveal['strategy'] : 'video_end';
-$img_delay  = isset($reveal['image_reveal_delay']) ? (int) $reveal['image_reveal_delay'] : 1500;
-$fail_to    = isset($reveal['video_fail_timeout']) ? (int) $reveal['video_fail_timeout'] : 2000;
-$cards_d    = isset($reveal['cards_reveal_delay']) ? (int) $reveal['cards_reveal_delay'] : 200;
-$text_d     = isset($reveal['text_reveal_delay']) ? (int) $reveal['text_reveal_delay'] : 200;
-$replay     = ! empty($reveal['replay_on_enter']);
-$pause_blur = ! empty($reveal['pause_or_blur_on_fail']);
+$img_delay   = isset($reveal['image_reveal_delay']) ? (int) $reveal['image_reveal_delay'] : 1500;
+$cards_d     = isset($reveal['cards_delay_after_intro']) ? (int) $reveal['cards_delay_after_intro'] : 300;
+$text_d      = isset($reveal['text_delay_after_intro']) ? (int) $reveal['text_delay_after_intro'] : 600;
+$replay      = ! empty($reveal['replay_on_enter']);
+$pause_blur  = ! empty($reveal['pause_or_blur_on_fail']);
+$intro_fail  = isset($intro['fail_timeout']) ? (int) $intro['fail_timeout'] : 2500;
+
+$crossfade    = ! empty($transition['intro_to_loop_crossfade']);
+$crossfade_ms = isset($transition['crossfade_duration']) ? (int) $transition['crossfade_duration'] : 700;
+
+// Fallback de fondo disponible para el crossfade de FALLO (solo en modo video).
+$has_fallback_layer = $has_video_layer && $fallback_url !== '';
 
 $overlay_style = sprintf(
     'background-color:%s;opacity:%s;',
     esc_attr(sanitize_hex_color($overlay_color) ? sanitize_hex_color($overlay_color) : '#020711'),
     esc_attr((string) max(0, min(1, $overlay_opacity)))
 );
+
+$loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
+    . (! empty($loop['loop']) ? ' loop' : '')
+    . (! empty($loop['playsinline']) ? ' playsinline' : '')
+    . (! empty($loop['autoplay']) ? ' autoplay' : '');
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
@@ -73,27 +120,48 @@ $overlay_style = sprintf(
     data-bg-type="<?php echo esc_attr($bg_render); ?>"
     data-anim="<?php echo $anim_on ? '1' : '0'; ?>"
     data-scroll3d="<?php echo $scroll3d ? '1' : '0'; ?>"
-    data-reveal-strategy="<?php echo esc_attr($strategy); ?>"
+    data-has-intro="<?php echo $intro_url !== '' ? '1' : '0'; ?>"
+    data-has-loop="<?php echo $loop_url !== '' ? '1' : '0'; ?>"
+    data-has-fallback="<?php echo $has_fallback_layer ? '1' : '0'; ?>"
     data-image-delay="<?php echo esc_attr((string) $img_delay); ?>"
-    data-video-fail-timeout="<?php echo esc_attr((string) $fail_to); ?>"
     data-cards-delay="<?php echo esc_attr((string) $cards_d); ?>"
     data-text-delay="<?php echo esc_attr((string) $text_d); ?>"
+    data-intro-fail="<?php echo esc_attr((string) $intro_fail); ?>"
+    data-crossfade="<?php echo $crossfade ? '1' : '0'; ?>"
+    data-crossfade-ms="<?php echo esc_attr((string) $crossfade_ms); ?>"
     data-replay="<?php echo $replay ? '1' : '0'; ?>"
-    data-pause-blur="<?php echo $pause_blur ? '1' : '0'; ?>">
+    data-pause-blur="<?php echo $pause_blur ? '1' : '0'; ?>"
+    style="--okip-hero-xfade:<?php echo esc_attr((string) $crossfade_ms); ?>ms;">
 
-    <!-- Capa 1: fondo media-driven. Sin media real → fallback neutro (solo color). -->
+    <!-- Capa 1: fondo media-driven. Intro (una vez) → crossfade → loop (bucle).
+         Sin videos: imagen/svg o fallback neutro (solo color). -->
     <div class="okip-hero__bg okip-hero__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>" data-okip-hero-bg>
         <?php if ($bg_render === 'video') : ?>
-            <video class="okip-hero__media" muted autoplay playsinline preload="auto"
-                style="object-position:<?php echo esc_attr($obj_pos); ?>;"
-                <?php echo $poster ? 'poster="' . esc_url($poster) . '"' : ''; ?>>
-                <source src="<?php echo esc_url($bg_url); ?>" type="video/mp4">
-            </video>
+            <?php if ($intro_url !== '') : ?>
+                <video class="okip-hero__media okip-hero__media--intro" data-okip-hero-intro
+                    muted playsinline preload="auto"
+                    style="object-position:<?php echo esc_attr($obj_pos); ?>;"
+                    <?php echo $poster ? 'poster="' . esc_url($poster) . '"' : ''; ?>>
+                    <source src="<?php echo esc_url($intro_url); ?>" type="video/mp4">
+                </video>
+            <?php endif; ?>
+            <?php if ($loop_url !== '') : ?>
+                <video class="okip-hero__media okip-hero__media--loop" data-okip-hero-loop
+                    <?php echo $loop_attrs; ?> preload="auto"
+                    style="object-position:<?php echo esc_attr($obj_pos); ?>;"
+                    <?php echo $poster ? 'poster="' . esc_url($poster) . '"' : ''; ?>>
+                    <source src="<?php echo esc_url($loop_url); ?>" type="video/mp4">
+                </video>
+            <?php endif; ?>
+            <?php if ($has_fallback_layer) : ?>
+                <img class="okip-hero__media okip-hero__media--fallback" src="<?php echo esc_url($fallback_url); ?>"
+                    alt="" aria-hidden="true" style="object-position:<?php echo esc_attr($obj_pos); ?>;">
+            <?php endif; ?>
         <?php elseif ($bg_render === 'image') : ?>
-            <img class="okip-hero__media" src="<?php echo esc_url($bg_url); ?>" alt="" aria-hidden="true"
+            <img class="okip-hero__media" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true"
                 style="object-position:<?php echo esc_attr($obj_pos); ?>;">
         <?php elseif ($bg_render === 'svg') : ?>
-            <img class="okip-hero__media okip-hero__media--svg" src="<?php echo esc_url($bg_url); ?>" alt="" aria-hidden="true">
+            <img class="okip-hero__media okip-hero__media--svg" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true">
         <?php else : ?>
             <!-- bg-missing: sin media real configurado/encontrado. Fallback neutro por CSS. -->
         <?php endif; ?>

@@ -11,6 +11,9 @@
  *     reveal_offset             px de margen para el disparo (IntersectionObserver)
  *     hide_on_hero              true → oculto mientras se ve el Hero (solo Home)
  *     use_intersection_observer true → IO; false/sin soporte → fallback scrollY
+ * - appearance: fondo negro personalizable + blur gaussiano. Estos valores se
+ *   exponen como variables CSS inline seguras en template-parts/layout/navbar.php
+ *   y quedan preparados para que el futuro panel admin los edite.
  *
  * @package OKIP
  */
@@ -23,6 +26,14 @@ return array(
     'logo' => array(
         'text'  => 'OKIP',
         'image' => '', // ruta a assets/, URL o ID de attachment (futuro).
+    ),
+    'appearance' => array(
+        'background_color'       => '#000000', // fondo negro (ref navbar.png)
+        'background_opacity'     => 0.86,      // 0..1 — casi sólido
+        'blur'                   => 14,        // px del blur gaussiano (backdrop-filter)
+        'border_opacity'         => 0.12,      // 0..1 — borde inferior
+        'text_color'             => '#ffffff', // color de los enlaces
+        'active_underline_color' => '#ffffff', // subrayado del enlace activo
     ),
     'menu' => array(
         array('label' => 'Inteligencia mexicana', 'url' => '/#home-hero-main'),
