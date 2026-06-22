@@ -91,6 +91,51 @@
     display: block;
 }
 
+/* Placeholder temporal de tarjeta (cuando aún no hay media real).
+   Representación clara y geométrica, NO un media final falso. Marca la posición
+   y reserva el espacio; al configurar media real, este placeholder desaparece. */
+.okip-hero__card-ph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--okip-space-2, .5rem);
+    padding: var(--okip-space-3, 1rem);
+    text-align: center;
+    background:
+        repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, .05) 0,
+            rgba(255, 255, 255, .05) 1px,
+            transparent 1px,
+            transparent 9px
+        ),
+        #0a1422;
+}
+.okip-hero__card-ph-icon {
+    width: 34%;
+    aspect-ratio: 1;
+    border: 2px dashed rgba(120, 180, 255, .5);
+    border-radius: 8px;
+    position: relative;
+}
+.okip-hero__card-ph-icon::after {
+    content: "";
+    position: absolute;
+    inset: 22%;
+    border-radius: 4px;
+    background: rgba(120, 180, 255, .25);
+}
+.okip-hero__card-ph-label {
+    font-size: .68rem;
+    letter-spacing: .08em;
+    line-height: 1.25;
+    color: var(--okip-color-text-muted, #b9c4d4);
+    text-transform: uppercase;
+}
+
 .okip-hero__card--glow .okip-hero__card-media {
     box-shadow:
         0 0 0 1px rgba(80, 160, 255, .35),

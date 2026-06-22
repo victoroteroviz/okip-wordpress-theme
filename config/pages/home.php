@@ -43,11 +43,39 @@ return array(
                 'strategy'        => 'video_end',
                 'replay_on_enter' => true,
             ),
-            // Las tarjetas solo se renderizan con media REAL (ruta/URL/ID válido).
-            // Ejemplo para cuando exista el asset:
+            // Las tarjetas se muestran desde el MVP aunque aún no exista media real:
+            // sin media → placeholder temporal; al añadir 'media' (ruta/URL/ID válido)
+            // el placeholder se sustituye automáticamente por el archivo real.
+            // Ejemplo con media real:
             //   array('id'=>'card-1','type'=>'image','media'=>'img/card-1.jpg',
-            //         'alt'=>'…','x'=>80,'y'=>24,'glow'=>true,'scanline'=>true),
-            'cards' => array(),
+            //         'alt'=>'…','x'=>82,'y'=>26,'glow'=>true,'scanline'=>true),
+            'cards' => array(
+                array(
+                    'id'                => 'card-monitor',
+                    'type'              => 'video',
+                    'x'                 => 83,
+                    'y'                 => 28,
+                    'glow'              => true,
+                    'scanline'          => true,
+                    'placeholder_label' => 'Monitoreo en vivo',
+                ),
+                array(
+                    'id'                => 'card-analysis',
+                    'type'              => 'image',
+                    'x'                 => 16,
+                    'y'                 => 64,
+                    'glow'              => true,
+                    'placeholder_label' => 'Análisis',
+                ),
+                array(
+                    'id'                => 'card-alert',
+                    'type'              => 'image',
+                    'x'                 => 86,
+                    'y'                 => 74,
+                    'glow'              => true,
+                    'placeholder_label' => 'Alertas',
+                ),
+            ),
         ),
     ),
 

@@ -104,10 +104,12 @@ $overlay_style = sprintf(
         <div class="okip-hero__overlay" style="<?php echo $overlay_style; ?>" aria-hidden="true"></div>
     <?php endif; ?>
 
-    <!-- Capa 3: tarjetas multimedia. Solo se renderizan tarjetas con media REAL.
-         El contenedor puede quedar vacío, pero nunca se pintan tarjetas fake. -->
+    <!-- Capa 3: tarjetas multimedia flotantes.
+         Se renderizan desde config aunque aún no exista media real: en ese caso
+         la tarjeta muestra un PLACEHOLDER temporal claro (no un media final falso).
+         Cuando se configure media real existente, sustituye al placeholder. -->
     <?php
-    // Pre-filtrado: active + tipo válido + media existente.
+    // Pre-filtrado: active + tipo válido. Sin media → placeholder (si está habilitado).
     $okip_valid_cards = array();
     foreach ($cards as $card) {
         if (empty($card['active'])) {
@@ -117,7 +119,9 @@ $overlay_style = sprintf(
         if (! in_array($c_type, array('video', 'image', 'svg'), true)) {
             continue;
         }
-        if (! okip_media_exists(isset($card['media']) ? $card['media'] : '')) {
+        $card['__has_media'] = okip_media_exists(isset($card['media']) ? $card['media'] : '');
+        // Sin media real y placeholder deshabilitado → no se pinta la tarjeta.
+        if (! $card['__has_media'] && empty($card['placeholder_enabled'])) {
             continue;
         }
         $okip_valid_cards[] = $card;
@@ -126,8 +130,9 @@ $overlay_style = sprintf(
     <?php if (! empty($okip_valid_cards)) : ?>
         <div class="okip-hero__cards" data-okip-hero-cards aria-hidden="true">
             <?php foreach ($okip_valid_cards as $card) :
+                $c_has   = ! empty($card['__has_media']);
                 $c_type  = $card['type'];
-                $c_url   = okip_media_url($card['media']);
+                $c_url   = $c_has ? okip_media_url($card['media']) : '';
                 $c_post  = isset($card['poster']) ? okip_media_url($card['poster']) : '';
                 $c_alt   = isset($card['alt']) ? $card['alt'] : '';
                 $c_x     = isset($card['x']) ? (float) $card['x'] : 50;
@@ -136,25 +141,36 @@ $overlay_style = sprintf(
                 $c_scan  = ! empty($card['scanline']);
                 $c_hover = ! empty($card['autoplay_on_hover']);
                 $c_tap   = ! empty($card['play_on_tap']);
+                $c_label = isset($card['placeholder_label']) ? $card['placeholder_label'] : '';
 
                 $card_classes = 'okip-hero__card';
                 $card_classes .= $c_glow ? ' okip-hero__card--glow' : '';
                 $card_classes .= $c_scan ? ' okip-hero__card--scanline' : '';
+                $card_classes .= $c_has ? '' : ' okip-hero__card--placeholder';
             ?>
                 <div class="<?php echo esc_attr($card_classes); ?>"
                     data-okip-hero-card
                     data-card-type="<?php echo esc_attr($c_type); ?>"
+                    data-has-media="<?php echo $c_has ? '1' : '0'; ?>"
                     data-hover="<?php echo $c_hover ? '1' : '0'; ?>"
                     data-tap="<?php echo $c_tap ? '1' : '0'; ?>"
                     style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;">
                     <div class="okip-hero__card-media">
-                        <?php if ($c_type === 'video') : ?>
+                        <?php if ($c_has && $c_type === 'video') : ?>
                             <video class="okip-hero__card-video" muted loop playsinline preload="none"
                                 <?php echo $c_post ? 'poster="' . esc_url($c_post) . '"' : ''; ?>>
                                 <source src="<?php echo esc_url($c_url); ?>" type="video/mp4">
                             </video>
-                        <?php else : ?>
+                        <?php elseif ($c_has) : ?>
                             <img src="<?php echo esc_url($c_url); ?>" alt="<?php echo esc_attr($c_alt); ?>">
+                        <?php else : ?>
+                            <!-- Placeholder temporal (sin media real): marca dónde irá la tarjeta. -->
+                            <span class="okip-hero__card-ph" aria-hidden="true">
+                                <span class="okip-hero__card-ph-icon"></span>
+                                <?php if ($c_label !== '') : ?>
+                                    <span class="okip-hero__card-ph-label"><?php echo esc_html($c_label); ?></span>
+                                <?php endif; ?>
+                            </span>
                         <?php endif; ?>
                         <?php if ($c_scan) : ?><span class="okip-hero__card-scan" aria-hidden="true"></span><?php endif; ?>
                     </div>

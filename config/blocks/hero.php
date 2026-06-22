@@ -34,18 +34,20 @@ if (! function_exists('okip_hero_card_defaults')) {
     function okip_hero_card_defaults()
     {
         return array(
-            'id'                => '',
-            'active'            => true,
-            'type'              => 'image', // video | image | svg
-            'media'             => '',
-            'poster'            => '',
-            'alt'               => '',
-            'x'                 => 50.0,     // % (0..100) — solo desktop
-            'y'                 => 50.0,     // % (0..100) — solo desktop
-            'autoplay_on_hover' => true,
-            'play_on_tap'       => true,
-            'glow'              => true,
-            'scanline'          => false,
+            'id'                  => '',
+            'active'              => true,
+            'type'                => 'image', // video | image | svg
+            'media'               => '',
+            'poster'              => '',
+            'alt'                 => '',
+            'x'                   => 50.0,     // % (0..100) — solo desktop
+            'y'                   => 50.0,     // % (0..100) — solo desktop
+            'autoplay_on_hover'   => true,
+            'play_on_tap'         => true,
+            'glow'                => true,
+            'scanline'            => false,
+            'placeholder_label'   => '',      // texto del placeholder temporal
+            'placeholder_enabled' => true,    // mostrar placeholder si no hay media real
         );
     }
 }
@@ -101,10 +103,12 @@ if (! function_exists('okip_normalize_hero_data')) {
             $card['type']   = okip_one_of($card['type'], $card_allowed, 'image');
             $card['x']      = okip_clamp_float($card['x'], 0, 100);
             $card['y']      = okip_clamp_float($card['y'], 0, 100);
-            $card['autoplay_on_hover'] = okip_bool($card['autoplay_on_hover']);
-            $card['play_on_tap']       = okip_bool($card['play_on_tap']);
-            $card['glow']              = okip_bool($card['glow']);
-            $card['scanline']          = okip_bool($card['scanline']);
+            $card['autoplay_on_hover']   = okip_bool($card['autoplay_on_hover']);
+            $card['play_on_tap']         = okip_bool($card['play_on_tap']);
+            $card['glow']                = okip_bool($card['glow']);
+            $card['scanline']            = okip_bool($card['scanline']);
+            $card['placeholder_enabled'] = okip_bool($card['placeholder_enabled']);
+            $card['placeholder_label']   = is_string($card['placeholder_label']) ? $card['placeholder_label'] : '';
 
             $result[] = $card;
         }

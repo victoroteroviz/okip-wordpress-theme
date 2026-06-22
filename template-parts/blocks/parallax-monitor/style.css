@@ -2,31 +2,53 @@
  * Bloque Parallax Monitor (Bloque 2) — estilos.
  * Carga condicional: solo si la página usa el bloque `parallax-monitor`.
  *
+ * Escena oscura full-screen (>=100svh) que se SUPERPONE al bloque anterior
+ * durante el scroll. Texto grande a la izquierda, monitor grande a la derecha,
+ * glow azul sutil detrás del monitor (iluminación de la escena).
+ *
  * Fondo media-driven: sin media real, fallback NEUTRO (color sólido), nunca un
- * diseño decorativo encima del media. Texto izquierda, monitor derecha.
+ * diseño decorativo encima del media.
  */
 
 .okip-pm {
     position: relative;
+    min-height: var(--okip-pm-minh, 100svh);
+    display: flex;
+    align-items: center;
     overflow: hidden;
     isolation: isolate;
+    z-index: var(--okip-pm-z, 2);
     color: var(--okip-color-text, #f4f7fb);
     background: var(--okip-color-bg, #020711);
-    padding-block: clamp(4rem, 10vw, 8rem);
+    padding-block: clamp(5rem, 12vh, 9rem);
 }
 
-/* ---- Capa 1: fondo ---- */
+/* ---- Superposición sobre el bloque anterior (transición por capas) ----
+   Sube sobre el final del Hero y queda por encima (z-index). Borde superior
+   redondeado + sombra hacia arriba para sensación de panel que "entra". */
+.okip-pm--overlap {
+    margin-top: calc(-1 * var(--okip-pm-overlap, 0px));
+    padding-top: calc(clamp(5rem, 12vh, 9rem) + var(--okip-pm-overlap, 0px));
+    border-top-left-radius: clamp(18px, 3vw, 40px);
+    border-top-right-radius: clamp(18px, 3vw, 40px);
+    box-shadow: 0 -40px 80px rgba(0, 0, 0, .55);
+}
+
+/* ---- Capa 1: fondo (con headroom para el parallax) ---- */
 .okip-pm__bg {
     position: absolute;
     inset: 0;
     z-index: 1;
+    overflow: hidden;
     background: transparent; /* sin decoración encima del media */
+    will-change: transform;
 }
 .okip-pm__bg-media {
     position: absolute;
-    inset: 0;
+    left: 0;
+    top: -12%;
     width: 100%;
-    height: 100%;
+    height: 124%; /* margen extra para que el parallax no descubra los bordes */
     object-fit: cover;
 }
 /* Fallback neutro: solo color sólido (sin gradiente/patrón/glow falso) */
@@ -47,59 +69,67 @@
 .okip-pm__inner {
     position: relative;
     z-index: 3;
+    width: 100%;
+    max-width: var(--okip-pm-cw, 1200px);
+    margin-inline: auto;
+    padding-inline: var(--okip-container-pad, 1.5rem);
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.05fr 1fr;
     align-items: center;
-    gap: clamp(1.5rem, 5vw, 4rem);
+    gap: clamp(2rem, 6vw, 5rem);
 }
 
-/* ---- Capa 4: texto (izquierda) ---- */
+/* ---- Capa 5: texto (izquierda) ---- */
 .okip-pm__text {
-    max-width: 36rem;
+    max-width: 40rem;
+    will-change: transform;
 }
 .okip-pm__eyebrow {
-    margin: 0 0 1rem;
-    font-size: .8rem;
-    letter-spacing: .18em;
+    margin: 0 0 1.25rem;
+    font-size: .82rem;
+    letter-spacing: .2em;
     text-transform: uppercase;
     color: var(--okip-color-text-muted, #b9c4d4);
 }
 .okip-pm__title {
     margin: 0;
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    line-height: 1.1;
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    line-height: 1.06;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
 }
 .okip-pm__highlight {
     color: var(--okip-color-accent, #ff5a14);
 }
 .okip-pm__desc {
-    margin-top: 1.25rem;
-    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    margin-top: 1.5rem;
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
     color: var(--okip-color-text-muted, #b9c4d4);
+    max-width: 34rem;
 }
 .okip-pm__cta {
-    margin-top: 1.75rem;
+    margin-top: 2rem;
 }
 
-/* ---- Capa 3: monitor (derecha) ---- */
+/* ---- Capa 4: monitor (derecha, grande) ---- */
 .okip-pm__monitor {
     position: relative;
     justify-self: end;
     width: 100%;
-    max-width: 560px;
+    max-width: 680px;
+    will-change: transform;
 }
 .okip-pm__device {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     width: 100%;
     display: block;
 }
 .okip-pm__screen {
     position: relative;
+    z-index: 2;
     aspect-ratio: 16 / 10;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     background: #0a1422; /* pantalla neutra cuando no hay media real */
 }
@@ -110,33 +140,77 @@
     display: block;
 }
 
-/* Marco geométrico mínimo (no mockup falso): bisel + base del monitor */
+/* Marco geométrico mínimo (no mockup falso): bisel del monitor */
 .okip-pm__monitor--frame .okip-pm__screen {
-    border: 10px solid #0c1626;
-    border-radius: 14px;
+    border: clamp(8px, 1.2vw, 14px) solid #0c1626;
+    border-radius: 16px;
     box-shadow:
         0 0 0 1px rgba(255, 255, 255, .06),
-        0 30px 70px rgba(0, 0, 0, .5);
+        inset 0 0 0 1px rgba(255, 255, 255, .04),
+        0 40px 90px rgba(0, 0, 0, .55);
 }
-.okip-pm__monitor--frame::after {
-    content: "";
+/* Cuello + base del monitor (geometría mínima, no mockup) */
+.okip-pm__stand {
+    position: relative;
+    z-index: 1;
     display: block;
-    width: 22%;
-    height: 14px;
-    margin: 8px auto 0;
-    border-radius: 0 0 8px 8px;
+    width: 16%;
+    height: clamp(28px, 4vh, 52px);
+    margin: -2px auto 0;
+    background: linear-gradient(180deg, #0c1626, #0a1422);
+}
+.okip-pm__stand::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 320%;
+    height: 12px;
+    border-radius: 0 0 10px 10px;
     background: #0c1626;
 }
 
-/* Glow azul sutil tras el monitor (referencia bloque 2.png) — decorativo, no es
-   el fondo principal; vive detrás del monitor, no encima del media de fondo. */
-.okip-pm__monitor::before {
+/* Placeholder geométrico de pantalla (sin media real): tablero esquemático */
+.okip-pm__screen-ph {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, .04) 0 1px, transparent 1px 38px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, .04) 0 1px, transparent 1px 38px),
+        #0a1422;
+}
+.okip-pm__screen-ph-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 12%;
+    background: #0c1828;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.okip-pm__screen-ph-grid {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 26%;
+    bottom: 14%;
+    border: 1px dashed rgba(120, 180, 255, .35);
+    border-radius: 6px;
+}
+
+/* ---- Capa 3: glow azul sutil tras el monitor (iluminación de escena) ----
+   Decorativo; vive DETRÁS del monitor, no encima del media de fondo. Intensidad
+   configurable vía --okip-pm-glow. */
+.okip-pm__monitor--glow::before {
     content: "";
     position: absolute;
-    inset: -12% -8% -8% -8%;
+    inset: -18% -12% -6% -12%;
     z-index: 0;
-    background: radial-gradient(60% 60% at 50% 45%, rgba(60, 140, 255, .22), transparent 70%);
-    filter: blur(20px);
+    background: radial-gradient(58% 58% at 55% 42%, rgba(60, 140, 255, .55), transparent 70%);
+    opacity: var(--okip-pm-glow, 0.6);
+    filter: blur(26px);
     pointer-events: none;
 }
 
@@ -144,7 +218,6 @@
 .okip-js .okip-pm--animated .okip-pm__text > *,
 .okip-js .okip-pm--animated .okip-pm__monitor {
     opacity: 0;
-    will-change: transform, opacity;
 }
 .okip-js .okip-pm--animated .okip-pm__text > * {
     transform: translateY(24px);
@@ -152,7 +225,7 @@
 .okip-js .okip-pm--animated .okip-pm__monitor {
     transform: translateY(40px);
 }
-/* Revelado por CSS (fallback sin GSAP) */
+/* Revelado por CSS (fallback de revelado; el parallax lo gestiona el JS) */
 .okip-pm.is-revealed .okip-pm__text > *,
 .okip-pm.is-revealed .okip-pm__monitor {
     opacity: 1;
@@ -164,15 +237,35 @@
 .okip-pm.is-revealed .okip-pm__text > *:nth-child(4) { transition-delay: .24s; }
 .okip-pm.is-revealed .okip-pm__monitor { transition-delay: .12s; }
 
+/* Mientras el parallax (vanilla/GSAP) está activo, el JS controla el transform:
+   anulamos la transición de revelado para no pelear con el rAF. */
+.okip-pm.is-parallax .okip-pm__text,
+.okip-pm.is-parallax .okip-pm__monitor,
+.okip-pm.is-parallax .okip-pm__bg {
+    transition: none;
+}
+
 /* ---- Responsive: tablet/móvil → vertical (texto y luego monitor) ---- */
 @media (max-width: 880px) {
+    .okip-pm {
+        min-height: auto;
+        padding-block: clamp(3.5rem, 10vh, 6rem);
+    }
+    .okip-pm--overlap {
+        padding-top: calc(clamp(3.5rem, 10vh, 6rem) + var(--okip-pm-overlap, 0px));
+    }
     .okip-pm__inner {
         grid-template-columns: 1fr;
-        gap: clamp(2rem, 8vw, 3rem);
+        gap: clamp(2.5rem, 8vw, 3.5rem);
     }
     .okip-pm__monitor {
         justify-self: stretch;
         max-width: 100%;
+    }
+    /* En móvil el parallax fuerte se desactiva (lo hace el JS); sin headroom raro. */
+    .okip-pm__bg-media {
+        top: 0;
+        height: 100%;
     }
 }
 
@@ -182,5 +275,9 @@
     .okip-js .okip-pm--animated .okip-pm__monitor {
         opacity: 1;
         transform: none;
+    }
+    .okip-pm__bg-media {
+        top: 0;
+        height: 100%;
     }
 }
