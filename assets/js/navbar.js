@@ -24,7 +24,6 @@
         var revealMode = navbar.getAttribute('data-reveal-mode') || 'after_hero';
         var offset = parseInt(navbar.getAttribute('data-reveal-offset'), 10) || 0;
         var hideOnHero = navbar.getAttribute('data-hide-on-hero') === '1';
-        var useIO = navbar.getAttribute('data-use-io') === '1';
 
         var hero = document.querySelector('[data-okip-hero]');
         var autoHide = (revealMode === 'after_hero') && hideOnHero && !!hero;
@@ -44,24 +43,33 @@
             navbar.classList.add('is-hidden');
             navbar.classList.remove('okip-navbar--start-hidden');
 
-            if (useIO && 'IntersectionObserver' in window) {
-                var io = new IntersectionObserver(function (entries) {
-                    var e = entries[0];
-                    var inHero = e.isIntersecting && e.intersectionRatio >= 0.5;
-                    if (inHero) { hide(); } else { show(); }
-                }, {
-                    threshold: [0, 0.25, 0.5, 0.75, 1],
-                    rootMargin: (-offset) + 'px 0px 0px 0px'
-                });
-                io.observe(hero);
-            } else {
-                var onScrollHide = function () {
-                    var past = window.scrollY > (hero.offsetHeight * 0.6 - offset);
-                    if (past) { show(); } else { hide(); }
-                };
-                onScrollHide();
-                window.addEventListener('scroll', onScrollHide, { passive: true });
-            }
+            // Umbral por PROGRESO de scroll (no solo IO): con la superposición del
+            // Bloque 2, el Hero puede seguir intersectando aunque ya esté siendo
+            // reemplazado. Aparece cuando la transición hacia el Bloque 2 supera
+            // ~0.15 (es decir, pasado el 85% del Hero). Se oculta al volver bajo él.
+            var pm = document.querySelector('[data-okip-pm]');
+            var startProg = pm ? parseFloat(pm.getAttribute('data-overlap-start')) : 0.85;
+            if (isNaN(startProg)) { startProg = 0.85; }
+            var REVEAL_AT = 0.15; // progreso de transición para mostrar el navbar
+
+            var navTicking = false;
+            var evalNav = function () {
+                navTicking = false;
+                var rect = hero.getBoundingClientRect();
+                var topDoc = rect.top + window.scrollY;
+                var h = hero.offsetHeight || rect.height || window.innerHeight;
+                var start = topDoc + h * startProg - offset;
+                var end = topDoc + h;
+                var p = (end <= start) ? (window.scrollY >= start ? 1 : 0)
+                    : Math.max(0, Math.min(1, (window.scrollY - start) / (end - start)));
+                if (p >= REVEAL_AT) { show(); } else { hide(); }
+            };
+            var onNavScroll = function () {
+                if (!navTicking) { navTicking = true; window.requestAnimationFrame(evalNav); }
+            };
+            evalNav();
+            window.addEventListener('scroll', onNavScroll, { passive: true });
+            window.addEventListener('resize', onNavScroll, { passive: true });
         } else {
             show();
         }

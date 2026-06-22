@@ -142,6 +142,9 @@ $overlay_style = sprintf(
                 $c_hover = ! empty($card['autoplay_on_hover']);
                 $c_tap   = ! empty($card['play_on_tap']);
                 $c_label = isset($card['placeholder_label']) ? $card['placeholder_label'] : '';
+                $c_play  = isset($card['play_mode']) ? $card['play_mode'] : 'hover';
+                $c_reset = ! empty($card['reset_on_leave']);
+                $c_cont  = ! empty($card['continue_after_interaction']);
 
                 $card_classes = 'okip-hero__card';
                 $card_classes .= $c_glow ? ' okip-hero__card--glow' : '';
@@ -154,6 +157,9 @@ $overlay_style = sprintf(
                     data-has-media="<?php echo $c_has ? '1' : '0'; ?>"
                     data-hover="<?php echo $c_hover ? '1' : '0'; ?>"
                     data-tap="<?php echo $c_tap ? '1' : '0'; ?>"
+                    data-play-mode="<?php echo esc_attr($c_play); ?>"
+                    data-reset-on-leave="<?php echo $c_reset ? '1' : '0'; ?>"
+                    data-continue="<?php echo $c_cont ? '1' : '0'; ?>"
                     style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;">
                     <div class="okip-hero__card-media">
                         <?php if ($c_has && $c_type === 'video') : ?>

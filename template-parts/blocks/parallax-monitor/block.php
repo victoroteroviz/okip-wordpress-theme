@@ -3,17 +3,15 @@
 /**
  * Bloque Parallax Monitor (Bloque 2).
  *
- * Escena oscura full-screen que se SUPERPONE al bloque anterior (Hero) durante el
- * scroll. Capas con parallax real a velocidades distintas:
- *   1) fondo (media-driven, fallback neutro)  — lento
- *   2) overlay opcional
- *   3) glow azul detrás del monitor (iluminación, no fondo)
- *   4) monitor/pantalla (media real o marco/placeholder geométrico) — rápido
- *   5) texto (izquierda) — muy ligero
+ * Escena oscura full-screen que ENTRA SOBRE el Hero por PROGRESO de scroll (no
+ * desde el primer pintado). Tres capas reales con z-index y ritmos distintos:
+ *   1) background (z1, data-okip-pm-layer="background") — entra primero/rápido
+ *   2) computer   (z2, data-okip-pm-layer="computer")   — entra con retardo
+ *   3) text       (z3, data-okip-pm-layer="text")        — entra al final, arriba
  *
- * Toda la lógica de scroll/parallax/overlap vive en script.js. Cada capa expone
- * data-speed; la sección expone la config como data-* y variables CSS de layout.
- * Scope por instancia con id + data-block-instance.
+ * Toda la lógica de transición/parallax vive en script.js (vanilla, sin GSAP por
+ * ahora; soporta GSAP futuro). El template solo expone config como data-* y vars
+ * CSS. Scope por instancia con id + data-block-instance.
  *
  * @package OKIP
  */
@@ -28,7 +26,7 @@ $okip_data     = isset($args['data']) && is_array($args['data']) ? $args['data']
 $content    = isset($okip_data['content']) ? $okip_data['content'] : array();
 $layout     = isset($okip_data['layout']) ? $okip_data['layout'] : array();
 $background  = isset($okip_data['background']) ? $okip_data['background'] : array();
-$monitor    = isset($okip_data['monitor']) ? $okip_data['monitor'] : array();
+$computer   = isset($okip_data['computer']) ? $okip_data['computer'] : array();
 $cta        = isset($okip_data['cta']) ? $okip_data['cta'] : array();
 $overlay    = isset($okip_data['overlay']) ? $okip_data['overlay'] : array();
 $glow       = isset($okip_data['glow']) ? $okip_data['glow'] : array();
@@ -38,7 +36,9 @@ $animation  = isset($okip_data['animation']) ? $okip_data['animation'] : array()
 $min_height    = isset($layout['min_height']) ? $layout['min_height'] : '100svh';
 $content_width = isset($layout['content_width']) ? $layout['content_width'] : '1200px';
 $overlap_on    = ! empty($layout['overlap_previous']);
+$overlap_start = isset($layout['overlap_start']) ? (float) $layout['overlap_start'] : 0.85;
 $overlap_amt   = isset($layout['overlap_amount']) ? $layout['overlap_amount'] : '18vh';
+$overlap_vh    = (float) preg_replace('/[^0-9.\-]/', '', (string) $overlap_amt); // valor numérico en vh para el JS
 $z_index       = isset($layout['z_index']) ? (int) $layout['z_index'] : 2;
 
 // --- Fondo (media-driven) ---
@@ -49,17 +49,16 @@ $bg_url    = $bg_has ? okip_media_url($background['media']) : '';
 $bg_poster = isset($background['poster']) && okip_media_exists($background['poster']) ? okip_media_url($background['poster']) : '';
 $bg_render = $bg_has ? $bg_type : 'missing';
 
-// --- Monitor ---
-$mon_frame     = okip_media_exists(isset($monitor['image']) ? $monitor['image'] : '');
-$mon_frame_url = $mon_frame ? okip_media_url($monitor['image']) : '';
-$scr_video     = okip_media_exists(isset($monitor['screen_video']) ? $monitor['screen_video'] : '');
-$scr_image     = okip_media_exists(isset($monitor['screen_image']) ? $monitor['screen_image'] : '');
-$scr_video_url = $scr_video ? okip_media_url($monitor['screen_video']) : '';
-$scr_image_url = $scr_image ? okip_media_url($monitor['screen_image']) : '';
-$scr_has       = ($scr_video_url || $scr_image_url);
-$mon_alt       = isset($monitor['alt']) ? $monitor['alt'] : '';
-$frame_on      = ! empty($monitor['frame_enabled']);
-$ph_on         = ! empty($monitor['placeholder_enabled']);
+// --- Computadora (capa media del monitor) ---
+$cmp_type   = isset($computer['type']) ? $computer['type'] : 'placeholder';
+$cmp_has    = in_array($cmp_type, array('video', 'image', 'svg'), true)
+    && okip_media_exists(isset($computer['media']) ? $computer['media'] : '');
+$cmp_url    = $cmp_has ? okip_media_url($computer['media']) : '';
+$cmp_poster = isset($computer['poster']) && okip_media_exists($computer['poster']) ? okip_media_url($computer['poster']) : '';
+$cmp_alt    = isset($computer['alt']) ? $computer['alt'] : '';
+$cmp_auto   = ! empty($computer['autoplay_on_enter']);
+$frame_on   = ! empty($computer['frame_enabled']);
+$ph_on      = ! empty($computer['placeholder_enabled']);
 
 // --- Overlay ---
 $overlay_on      = ! empty($overlay['enabled']);
@@ -69,18 +68,30 @@ $overlay_opacity = isset($overlay['opacity']) ? (float) $overlay['opacity'] : 0.
 $glow_on        = ! empty($glow['enabled']);
 $glow_intensity = isset($glow['intensity']) ? (float) $glow['intensity'] : 0.6;
 
-// --- Animación / parallax ---
-$anim_on    = ! empty($animation['enabled']);
-$use_gsap   = ! empty($animation['use_gsap']);
-$use_vanilla = ! empty($animation['use_vanilla_fallback']);
-$parallax_on = ! empty($animation['parallax_enabled']);
+// --- Animación / transición / parallax ---
+$anim_on      = ! empty($animation['enabled']);
+$use_gsap     = ! empty($animation['use_gsap']);
+$use_vanilla  = ! empty($animation['use_vanilla_fallback']);
+$parallax_on  = ! empty($animation['parallax_enabled']);
 $overlap_anim = ! empty($animation['overlap_transition_enabled']);
-$bg_speed   = isset($animation['background_speed']) ? (float) $animation['background_speed'] : 0.18;
-$mon_speed  = isset($animation['monitor_speed']) ? (float) $animation['monitor_speed'] : 0.45;
-$txt_speed  = isset($animation['text_speed']) ? (float) $animation['text_speed'] : 0.12;
-$scroll_dur = isset($animation['scroll_duration']) ? (float) $animation['scroll_duration'] : 1.0;
-$pin_on     = ! empty($animation['pin_enabled']);
-$text_reveal = ! empty($animation['text_reveal']);
+$pin_on       = ! empty($animation['pin_enabled']);
+$text_reveal  = ! empty($animation['text_reveal']);
+$start_prog   = isset($animation['start_progress']) ? (float) $animation['start_progress'] : $overlap_start;
+$bg_speed     = isset($animation['background_speed']) ? (float) $animation['background_speed'] : 0.22;
+$cmp_speed    = isset($animation['computer_speed']) ? (float) $animation['computer_speed'] : 0.40;
+$txt_speed    = isset($animation['text_speed']) ? (float) $animation['text_speed'] : 0.12;
+
+$bg_range  = isset($animation['background_enter_range']) ? $animation['background_enter_range'] : array(0.00, 0.35);
+$cmp_range = isset($animation['computer_enter_range']) ? $animation['computer_enter_range'] : array(0.25, 0.70);
+$txt_range = isset($animation['text_enter_range']) ? $animation['text_enter_range'] : array(0.55, 1.00);
+$range_str = function ($r) {
+    $a = isset($r[0]) ? (float) $r[0] : 0;
+    $b = isset($r[1]) ? (float) $r[1] : 1;
+    return $a . ',' . $b;
+};
+
+// La transición de overlap está activa solo si: overlap_previous + su flag + animación.
+$transition_on = ($overlap_on && $overlap_anim && $anim_on);
 
 // --- CTA ---
 $cta_on = ! empty($cta['enabled']) && ! empty($cta['label']) && ! empty($cta['url']);
@@ -95,13 +106,13 @@ $section_style = sprintf(
     esc_attr($min_height),
     esc_attr($content_width),
     (int) $z_index,
-    esc_attr(($overlap_on && $overlap_anim) ? $overlap_amt : '0px'),
+    esc_attr($overlap_amt),
     esc_attr((string) max(0, min(1, $glow_intensity)))
 );
 
 $section_classes = 'okip-pm';
 $section_classes .= $anim_on ? ' okip-pm--animated' : '';
-$section_classes .= ($overlap_on && $overlap_anim) ? ' okip-pm--overlap' : '';
+$section_classes .= $transition_on ? ' okip-pm--transition' : '';
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
@@ -109,17 +120,21 @@ $section_classes .= ($overlap_on && $overlap_anim) ? ' okip-pm--overlap' : '';
     data-block-instance="<?php echo esc_attr($okip_instance); ?>"
     data-okip-pm
     data-anim="<?php echo $anim_on ? '1' : '0'; ?>"
+    data-transition="<?php echo $transition_on ? '1' : '0'; ?>"
     data-parallax="<?php echo $parallax_on ? '1' : '0'; ?>"
     data-use-gsap="<?php echo $use_gsap ? '1' : '0'; ?>"
     data-use-vanilla="<?php echo $use_vanilla ? '1' : '0'; ?>"
     data-text-reveal="<?php echo $text_reveal ? '1' : '0'; ?>"
     data-pin="<?php echo $pin_on ? '1' : '0'; ?>"
-    data-scroll-duration="<?php echo esc_attr((string) $scroll_dur); ?>"
+    data-overlap-start="<?php echo esc_attr((string) $start_prog); ?>"
+    data-overlap-vh="<?php echo esc_attr((string) $overlap_vh); ?>"
     style="<?php echo $section_style; ?>">
 
-    <!-- Capa 1: fondo (parallax lento) -->
+    <!-- Capa 1: fondo (z1, entra primero y rápido) -->
     <div class="okip-pm__bg okip-pm__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>"
-        data-okip-pm-bg data-okip-pm-layer data-speed="<?php echo esc_attr((string) $bg_speed); ?>">
+        data-okip-pm-layer="background"
+        data-speed="<?php echo esc_attr((string) $bg_speed); ?>"
+        data-enter="<?php echo esc_attr($range_str($bg_range)); ?>">
         <?php if ($bg_render === 'video') : ?>
             <video class="okip-pm__bg-media" muted autoplay loop playsinline preload="auto"
                 <?php echo $bg_poster ? 'poster="' . esc_url($bg_poster) . '"' : ''; ?>>
@@ -132,7 +147,7 @@ $section_classes .= ($overlap_on && $overlap_anim) ? ' okip-pm--overlap' : '';
         <?php endif; ?>
     </div>
 
-    <!-- Capa 2: overlay opcional -->
+    <!-- Capa 2 (overlay opcional, sobre el fondo) -->
     <?php if ($overlay_on) : ?>
         <div class="okip-pm__overlay" aria-hidden="true"
             style="opacity:<?php echo esc_attr((string) max(0, min(1, $overlay_opacity))); ?>;"></div>
@@ -140,8 +155,11 @@ $section_classes .= ($overlap_on && $overlap_anim) ? ' okip-pm--overlap' : '';
 
     <div class="okip-pm__inner">
 
-        <!-- Capa 5: texto (izquierda, parallax muy ligero) -->
-        <div class="okip-pm__text" data-okip-pm-text data-okip-pm-layer data-speed="<?php echo esc_attr((string) $txt_speed); ?>">
+        <!-- Capa 3: texto (z3, entra al final, queda arriba) -->
+        <div class="okip-pm__text"
+            data-okip-pm-layer="text"
+            data-speed="<?php echo esc_attr((string) $txt_speed); ?>"
+            data-enter="<?php echo esc_attr($range_str($txt_range)); ?>">
             <?php if (! empty($content['eyebrow'])) : ?>
                 <p class="okip-pm__eyebrow"><?php echo esc_html($content['eyebrow']); ?></p>
             <?php endif; ?>
@@ -173,19 +191,20 @@ $section_classes .= ($overlap_on && $overlap_anim) ? ' okip-pm--overlap' : '';
             <?php endif; ?>
         </div>
 
-        <!-- Capa 4: monitor/pantalla (derecha, parallax rápido). Glow detrás (capa 3). -->
+        <!-- Capa 2: computadora/monitor (z2, entra tras el fondo). Glow detrás. -->
         <div class="okip-pm__monitor<?php echo $frame_on ? ' okip-pm__monitor--frame' : ''; ?><?php echo $glow_on ? ' okip-pm__monitor--glow' : ''; ?>"
-            data-okip-pm-monitor data-okip-pm-layer data-speed="<?php echo esc_attr((string) $mon_speed); ?>">
-            <?php if ($mon_frame_url) : ?>
-                <img class="okip-pm__device" src="<?php echo esc_url($mon_frame_url); ?>" alt="<?php echo esc_attr($mon_alt); ?>">
-            <?php endif; ?>
+            data-okip-pm-layer="computer"
+            data-speed="<?php echo esc_attr((string) $cmp_speed); ?>"
+            data-enter="<?php echo esc_attr($range_str($cmp_range)); ?>"
+            data-autoplay-on-enter="<?php echo $cmp_auto ? '1' : '0'; ?>">
             <div class="okip-pm__screen">
-                <?php if ($scr_video_url) : ?>
-                    <video class="okip-pm__screen-media" muted autoplay loop playsinline preload="auto">
-                        <source src="<?php echo esc_url($scr_video_url); ?>" type="video/mp4">
+                <?php if ($cmp_has && $cmp_type === 'video') : ?>
+                    <video class="okip-pm__screen-media" muted loop playsinline preload="metadata" data-okip-pm-screen-video
+                        <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
+                        <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
                     </video>
-                <?php elseif ($scr_image_url) : ?>
-                    <img class="okip-pm__screen-media" src="<?php echo esc_url($scr_image_url); ?>" alt="<?php echo esc_attr($mon_alt); ?>">
+                <?php elseif ($cmp_has) : ?>
+                    <img class="okip-pm__screen-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
                 <?php elseif ($ph_on) : ?>
                     <!-- Placeholder geométrico de pantalla (sin media real). -->
                     <span class="okip-pm__screen-ph" aria-hidden="true">

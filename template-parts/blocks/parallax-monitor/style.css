@@ -2,12 +2,14 @@
  * Bloque Parallax Monitor (Bloque 2) — estilos.
  * Carga condicional: solo si la página usa el bloque `parallax-monitor`.
  *
- * Escena oscura full-screen (>=100svh) que se SUPERPONE al bloque anterior
- * durante el scroll. Texto grande a la izquierda, monitor grande a la derecha,
- * glow azul sutil detrás del monitor (iluminación de la escena).
+ * Escena oscura full-screen (>=100svh). NO se superpone al Hero desde el primer
+ * pintado: la superposición la dirige el JS por PROGRESO de scroll (translateY +
+ * opacity + z-index). El overlap de LAYOUT (margin negativo) solo se aplica en
+ * desktop sin reduce-motion, y en el estado inicial el bloque está
+ * counter-transformado + invisible, así que no tapa al Hero al cargar.
  *
- * Fondo media-driven: sin media real, fallback NEUTRO (color sólido), nunca un
- * diseño decorativo encima del media.
+ * Tres capas reales con z-index: fondo (z1) < computadora (z2) < texto (z3).
+ * Fondo media-driven: sin media, fallback NEUTRO (color sólido).
  */
 
 .okip-pm {
@@ -23,25 +25,14 @@
     padding-block: clamp(5rem, 12vh, 9rem);
 }
 
-/* ---- Superposición sobre el bloque anterior (transición por capas) ----
-   Sube sobre el final del Hero y queda por encima (z-index). Borde superior
-   redondeado + sombra hacia arriba para sensación de panel que "entra". */
-.okip-pm--overlap {
-    margin-top: calc(-1 * var(--okip-pm-overlap, 0px));
-    padding-top: calc(clamp(5rem, 12vh, 9rem) + var(--okip-pm-overlap, 0px));
-    border-top-left-radius: clamp(18px, 3vw, 40px);
-    border-top-right-radius: clamp(18px, 3vw, 40px);
-    box-shadow: 0 -40px 80px rgba(0, 0, 0, .55);
-}
-
-/* ---- Capa 1: fondo (con headroom para el parallax) ---- */
+/* ---- Capa 1: fondo (z1, con headroom para el parallax) ---- */
 .okip-pm__bg {
     position: absolute;
     inset: 0;
     z-index: 1;
     overflow: hidden;
     background: transparent; /* sin decoración encima del media */
-    will-change: transform;
+    will-change: transform, opacity;
 }
 .okip-pm__bg-media {
     position: absolute;
@@ -56,7 +47,7 @@
     background: #05080f;
 }
 
-/* ---- Capa 2: overlay ---- */
+/* ---- Overlay opcional (sobre el fondo) ---- */
 .okip-pm__overlay {
     position: absolute;
     inset: 0;
@@ -79,10 +70,12 @@
     gap: clamp(2rem, 6vw, 5rem);
 }
 
-/* ---- Capa 5: texto (izquierda) ---- */
+/* ---- Capa 3: texto (z3, queda por encima) ---- */
 .okip-pm__text {
+    position: relative;
+    z-index: 3;
     max-width: 40rem;
-    will-change: transform;
+    will-change: transform, opacity;
 }
 .okip-pm__eyebrow {
     margin: 0 0 1.25rem;
@@ -111,19 +104,14 @@
     margin-top: 2rem;
 }
 
-/* ---- Capa 4: monitor (derecha, grande) ---- */
+/* ---- Capa 2: computadora/monitor (z2) ---- */
 .okip-pm__monitor {
     position: relative;
+    z-index: 2;
     justify-self: end;
     width: 100%;
     max-width: 680px;
-    will-change: transform;
-}
-.okip-pm__device {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    display: block;
+    will-change: transform, opacity;
 }
 .okip-pm__screen {
     position: relative;
@@ -200,9 +188,8 @@
     border-radius: 6px;
 }
 
-/* ---- Capa 3: glow azul sutil tras el monitor (iluminación de escena) ----
-   Decorativo; vive DETRÁS del monitor, no encima del media de fondo. Intensidad
-   configurable vía --okip-pm-glow. */
+/* Glow azul sutil tras el monitor (iluminación de escena, no fondo).
+   Vive DETRÁS del monitor; intensidad configurable vía --okip-pm-glow. */
 .okip-pm__monitor--glow::before {
     content: "";
     position: absolute;
@@ -214,35 +201,74 @@
     pointer-events: none;
 }
 
-/* ---- Animación: estado inicial (solo con JS) ---- */
-.okip-js .okip-pm--animated .okip-pm__text > *,
-.okip-js .okip-pm--animated .okip-pm__monitor {
+/* ============================================================
+   TRANSICIÓN dirigida por JS (progreso de scroll).
+   Estado inicial (con JS): capas invisibles y bloque counter-transformado
+   hacia abajo para NO tapar el Hero al cargar. El JS aplica transform/opacity.
+   ============================================================ */
+.okip-js .okip-pm--transition .okip-pm__bg,
+.okip-js .okip-pm--transition .okip-pm__monitor,
+.okip-js .okip-pm--transition .okip-pm__text {
     opacity: 0;
 }
-.okip-js .okip-pm--animated .okip-pm__text > * {
+/* Mientras el JS controla (transición/parallax) anulamos transiciones CSS. */
+.okip-pm.is-transitioning .okip-pm__bg,
+.okip-pm.is-transitioning .okip-pm__monitor,
+.okip-pm.is-transitioning .okip-pm__text,
+.okip-pm.is-transitioning {
+    transition: none;
+}
+
+/* Modo estático (móvil / reduce-motion / sin transición): el JS marca is-static.
+   Las capas se revelan con un fade simple al entrar (is-revealed); sin parallax. */
+.okip-pm.is-static .okip-pm__bg,
+.okip-pm.is-static .okip-pm__monitor,
+.okip-pm.is-static .okip-pm__text {
+    transform: none !important;
+}
+.okip-pm.is-static.is-revealed .okip-pm__bg,
+.okip-pm.is-static.is-revealed .okip-pm__monitor,
+.okip-pm.is-static.is-revealed .okip-pm__text {
+    opacity: 1;
+    transition: opacity .7s ease;
+}
+.okip-pm.is-static.is-revealed .okip-pm__monitor { transition-delay: .1s; }
+.okip-pm.is-static.is-revealed .okip-pm__text { transition-delay: .2s; }
+
+/* ---- Revelado simple (cuando el bloque NO usa la transición de overlap) ---- */
+.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__text > *,
+.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__monitor {
+    opacity: 0;
+}
+.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__text > * {
     transform: translateY(24px);
 }
-.okip-js .okip-pm--animated .okip-pm__monitor {
+.okip-js .okip-pm--animated:not(.okip-pm--transition) .okip-pm__monitor {
     transform: translateY(40px);
 }
-/* Revelado por CSS (fallback de revelado; el parallax lo gestiona el JS) */
-.okip-pm.is-revealed .okip-pm__text > *,
-.okip-pm.is-revealed .okip-pm__monitor {
+.okip-pm:not(.okip-pm--transition).is-revealed .okip-pm__text > *,
+.okip-pm:not(.okip-pm--transition).is-revealed .okip-pm__monitor {
     opacity: 1;
     transform: none;
     transition: opacity .7s ease, transform .7s cubic-bezier(.22, 1, .36, 1);
 }
-.okip-pm.is-revealed .okip-pm__text > *:nth-child(2) { transition-delay: .08s; }
-.okip-pm.is-revealed .okip-pm__text > *:nth-child(3) { transition-delay: .16s; }
-.okip-pm.is-revealed .okip-pm__text > *:nth-child(4) { transition-delay: .24s; }
-.okip-pm.is-revealed .okip-pm__monitor { transition-delay: .12s; }
 
-/* Mientras el parallax (vanilla/GSAP) está activo, el JS controla el transform:
-   anulamos la transición de revelado para no pelear con el rAF. */
-.okip-pm.is-parallax .okip-pm__text,
-.okip-pm.is-parallax .okip-pm__monitor,
-.okip-pm.is-parallax .okip-pm__bg {
-    transition: none;
+/* ============================================================
+   Overlap de LAYOUT: solo en desktop y sin reduce-motion.
+   Margin negativo (constante, sin layout jump) + estado inicial
+   counter-transformado hacia abajo (invisible) para no tapar el Hero.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) and (min-width: 881px) {
+    .okip-pm--transition {
+        margin-top: calc(-1 * var(--okip-pm-overlap, 0px));
+        border-top-left-radius: clamp(18px, 3vw, 40px);
+        border-top-right-radius: clamp(18px, 3vw, 40px);
+        box-shadow: 0 -40px 80px rgba(0, 0, 0, .55);
+    }
+    /* Antes de que el JS escriba el primer frame: counter-transform + invisible. */
+    .okip-js .okip-pm--transition {
+        transform: translate3d(0, var(--okip-pm-overlap, 0px), 0);
+    }
 }
 
 /* ---- Responsive: tablet/móvil → vertical (texto y luego monitor) ---- */
@@ -250,9 +276,6 @@
     .okip-pm {
         min-height: auto;
         padding-block: clamp(3.5rem, 10vh, 6rem);
-    }
-    .okip-pm--overlap {
-        padding-top: calc(clamp(3.5rem, 10vh, 6rem) + var(--okip-pm-overlap, 0px));
     }
     .okip-pm__inner {
         grid-template-columns: 1fr;
@@ -262,7 +285,6 @@
         justify-self: stretch;
         max-width: 100%;
     }
-    /* En móvil el parallax fuerte se desactiva (lo hace el JS); sin headroom raro. */
     .okip-pm__bg-media {
         top: 0;
         height: 100%;
@@ -271,6 +293,9 @@
 
 /* ---- Accesibilidad: reduce motion ---- */
 @media (prefers-reduced-motion: reduce) {
+    .okip-js .okip-pm--transition .okip-pm__bg,
+    .okip-js .okip-pm--transition .okip-pm__monitor,
+    .okip-js .okip-pm--transition .okip-pm__text,
     .okip-js .okip-pm--animated .okip-pm__text > *,
     .okip-js .okip-pm--animated .okip-pm__monitor {
         opacity: 1;

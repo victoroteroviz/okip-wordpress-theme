@@ -208,31 +208,44 @@
         setupCards(hero);
     }
 
-    /* ---------- Tarjetas: play en hover (puntero fino) o tap (táctil) ---------- */
+    /* ---------- Tarjetas: SOLO se activan por interacción (nunca autoplay) ----------
+     * play_mode: hover (puntero fino) | tap (táctil) | manual (click siempre).
+     * Por defecto NO se reinicia/pausa al salir del hover (reset_on_leave=0):
+     * una vez activada, la tarjeta puede seguir reproduciéndose.
+     * Los placeholders (sin <video>) se ignoran sin lanzar errores. */
     function setupCards(hero) {
         var cards = hero.querySelectorAll('[data-okip-hero-card]');
         var finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
         cards.forEach(function (card) {
             var video = card.querySelector('video');
-            if (!video) { return; }
+            if (!video) { return; } // placeholder u otro tipo: nada que reproducir
 
-            var playOnHover = card.getAttribute('data-hover') === '1';
-            var playOnTap = card.getAttribute('data-tap') === '1';
+            var playMode = card.getAttribute('data-play-mode') || 'hover';
+            var resetOnLeave = card.getAttribute('data-reset-on-leave') === '1';
+            // Compat con flags previos:
+            var allowHover = playMode === 'hover' && card.getAttribute('data-hover') !== '0';
+            var allowTap = (playMode === 'tap' || playMode === 'manual') ? true
+                : card.getAttribute('data-tap') !== '0';
 
             var play = function () {
                 var p = video.play();
                 if (p && typeof p.catch === 'function') { p.catch(function () {}); }
             };
-            var pause = function () { video.pause(); };
+            var leave = function () {
+                if (!resetOnLeave) { return; } // continuar reproduciéndose
+                try { video.pause(); video.currentTime = 0; } catch (e) {}
+            };
 
-            if (finePointer && playOnHover) {
+            if (finePointer && allowHover) {
                 card.addEventListener('mouseenter', play);
-                card.addEventListener('mouseleave', pause);
+                card.addEventListener('mouseleave', leave);
             }
-            if (!finePointer && playOnTap) {
+            // Tap/click: en táctil siempre; en desktop solo si play_mode = tap|manual.
+            if ((!finePointer && allowTap) || (finePointer && (playMode === 'tap' || playMode === 'manual'))) {
                 card.addEventListener('click', function () {
-                    if (video.paused) { play(); } else { pause(); }
+                    if (video.paused) { play(); }
+                    else if (resetOnLeave || playMode === 'manual') { video.pause(); }
                 });
             }
         });

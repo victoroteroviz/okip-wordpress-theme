@@ -48,6 +48,10 @@ if (! function_exists('okip_hero_card_defaults')) {
             'scanline'            => false,
             'placeholder_label'   => '',      // texto del placeholder temporal
             'placeholder_enabled' => true,    // mostrar placeholder si no hay media real
+            // Reproducción: NUNCA autoplay al cargar/entrar. Solo por interacción.
+            'play_mode'                => 'hover', // hover | tap | manual
+            'continue_after_interaction' => true,  // sigue reproduciendo tras activarse
+            'reset_on_leave'           => false,   // al salir del hover NO reinicia/pausa
         );
     }
 }
@@ -65,6 +69,7 @@ if (! function_exists('okip_normalize_hero_data')) {
         $bg_allowed       = array('video', 'image', 'svg', 'gradient');
         $card_allowed     = array('video', 'image', 'svg');
         $strategy_allowed = array('video_end', 'delay', 'canplay');
+        $play_allowed     = array('hover', 'tap', 'manual');
 
         // Contenido.
         $data['content']['alignment'] = okip_one_of($data['content']['alignment'], $align_allowed, 'center');
@@ -109,6 +114,9 @@ if (! function_exists('okip_normalize_hero_data')) {
             $card['scanline']            = okip_bool($card['scanline']);
             $card['placeholder_enabled'] = okip_bool($card['placeholder_enabled']);
             $card['placeholder_label']   = is_string($card['placeholder_label']) ? $card['placeholder_label'] : '';
+            $card['play_mode']                 = okip_one_of($card['play_mode'], $play_allowed, 'hover');
+            $card['continue_after_interaction'] = okip_bool($card['continue_after_interaction']);
+            $card['reset_on_leave']            = okip_bool($card['reset_on_leave']);
 
             $result[] = $card;
         }
