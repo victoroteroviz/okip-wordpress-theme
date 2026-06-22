@@ -35,9 +35,11 @@ $bg_url    = isset($background['media']) ? okip_media_url($background['media']) 
 $poster    = isset($background['poster']) ? okip_media_url($background['poster']) : '';
 $obj_pos   = isset($background['object_position']) ? $background['object_position'] : 'center center';
 
-// Si el tipo declara media pero no hay URL resuelta, caemos a gradiente limpio.
-$has_media = in_array($bg_type, array('video', 'image', 'svg'), true) && $bg_url !== '';
-$bg_render = $has_media ? $bg_type : 'gradient';
+// Media-driven: solo es fondo real si el tipo es media Y el archivo existe.
+// Si no, fallback neutro ('missing'): color sólido oscuro, sin diseño falso.
+$has_media = in_array($bg_type, array('video', 'image', 'svg'), true)
+    && okip_media_exists(isset($background['media']) ? $background['media'] : '');
+$bg_render = $has_media ? $bg_type : 'missing';
 
 $align     = isset($content['alignment']) ? $content['alignment'] : 'center';
 $max_width = isset($content['max_width']) ? $content['max_width'] : '1000px';
@@ -79,7 +81,7 @@ $overlay_style = sprintf(
     data-replay="<?php echo $replay ? '1' : '0'; ?>"
     data-pause-blur="<?php echo $pause_blur ? '1' : '0'; ?>">
 
-    <!-- Capa 1: fondo (media limpio; gradiente solo si no hay media o si falla) -->
+    <!-- Capa 1: fondo media-driven. Sin media real → fallback neutro (solo color). -->
     <div class="okip-hero__bg okip-hero__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>" data-okip-hero-bg>
         <?php if ($bg_render === 'video') : ?>
             <video class="okip-hero__media" muted autoplay playsinline preload="auto"
@@ -92,8 +94,9 @@ $overlay_style = sprintf(
                 style="object-position:<?php echo esc_attr($obj_pos); ?>;">
         <?php elseif ($bg_render === 'svg') : ?>
             <img class="okip-hero__media okip-hero__media--svg" src="<?php echo esc_url($bg_url); ?>" alt="" aria-hidden="true">
+        <?php else : ?>
+            <!-- bg-missing: sin media real configurado/encontrado. Fallback neutro por CSS. -->
         <?php endif; ?>
-        <!-- bg--gradient: el fallback de gradiente lo aporta el CSS. -->
     </div>
 
     <!-- Capa 2: overlay (separado y opcional) -->
@@ -101,15 +104,30 @@ $overlay_style = sprintf(
         <div class="okip-hero__overlay" style="<?php echo $overlay_style; ?>" aria-hidden="true"></div>
     <?php endif; ?>
 
-    <!-- Capa 3: tarjetas multimedia flotantes -->
-    <?php if (! empty($cards)) : ?>
+    <!-- Capa 3: tarjetas multimedia. Solo se renderizan tarjetas con media REAL.
+         El contenedor puede quedar vacío, pero nunca se pintan tarjetas fake. -->
+    <?php
+    // Pre-filtrado: active + tipo válido + media existente.
+    $okip_valid_cards = array();
+    foreach ($cards as $card) {
+        if (empty($card['active'])) {
+            continue;
+        }
+        $c_type = isset($card['type']) ? $card['type'] : '';
+        if (! in_array($c_type, array('video', 'image', 'svg'), true)) {
+            continue;
+        }
+        if (! okip_media_exists(isset($card['media']) ? $card['media'] : '')) {
+            continue;
+        }
+        $okip_valid_cards[] = $card;
+    }
+    ?>
+    <?php if (! empty($okip_valid_cards)) : ?>
         <div class="okip-hero__cards" data-okip-hero-cards aria-hidden="true">
-            <?php foreach ($cards as $card) :
-                if (empty($card['active'])) {
-                    continue;
-                }
-                $c_type  = isset($card['type']) ? $card['type'] : 'image';
-                $c_url   = isset($card['media']) ? okip_media_url($card['media']) : '';
+            <?php foreach ($okip_valid_cards as $card) :
+                $c_type  = $card['type'];
+                $c_url   = okip_media_url($card['media']);
                 $c_post  = isset($card['poster']) ? okip_media_url($card['poster']) : '';
                 $c_alt   = isset($card['alt']) ? $card['alt'] : '';
                 $c_x     = isset($card['x']) ? (float) $card['x'] : 50;
@@ -130,15 +148,13 @@ $overlay_style = sprintf(
                     data-tap="<?php echo $c_tap ? '1' : '0'; ?>"
                     style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;">
                     <div class="okip-hero__card-media">
-                        <?php if ($c_type === 'video' && $c_url) : ?>
+                        <?php if ($c_type === 'video') : ?>
                             <video class="okip-hero__card-video" muted loop playsinline preload="none"
                                 <?php echo $c_post ? 'poster="' . esc_url($c_post) . '"' : ''; ?>>
                                 <source src="<?php echo esc_url($c_url); ?>" type="video/mp4">
                             </video>
-                        <?php elseif ($c_url) : ?>
-                            <img src="<?php echo esc_url($c_url); ?>" alt="<?php echo esc_attr($c_alt); ?>">
                         <?php else : ?>
-                            <span class="okip-hero__card-placeholder" aria-hidden="true"></span>
+                            <img src="<?php echo esc_url($c_url); ?>" alt="<?php echo esc_attr($c_alt); ?>">
                         <?php endif; ?>
                         <?php if ($c_scan) : ?><span class="okip-hero__card-scan" aria-hidden="true"></span><?php endif; ?>
                     </div>

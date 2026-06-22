@@ -1,0 +1,186 @@
+/*
+ * Bloque Parallax Monitor (Bloque 2) — estilos.
+ * Carga condicional: solo si la página usa el bloque `parallax-monitor`.
+ *
+ * Fondo media-driven: sin media real, fallback NEUTRO (color sólido), nunca un
+ * diseño decorativo encima del media. Texto izquierda, monitor derecha.
+ */
+
+.okip-pm {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--okip-color-text, #f4f7fb);
+    background: var(--okip-color-bg, #020711);
+    padding-block: clamp(4rem, 10vw, 8rem);
+}
+
+/* ---- Capa 1: fondo ---- */
+.okip-pm__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: transparent; /* sin decoración encima del media */
+}
+.okip-pm__bg-media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+/* Fallback neutro: solo color sólido (sin gradiente/patrón/glow falso) */
+.okip-pm__bg--missing {
+    background: #05080f;
+}
+
+/* ---- Capa 2: overlay ---- */
+.okip-pm__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: #020711;
+    pointer-events: none;
+}
+
+/* ---- Estructura ---- */
+.okip-pm__inner {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: clamp(1.5rem, 5vw, 4rem);
+}
+
+/* ---- Capa 4: texto (izquierda) ---- */
+.okip-pm__text {
+    max-width: 36rem;
+}
+.okip-pm__eyebrow {
+    margin: 0 0 1rem;
+    font-size: .8rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--okip-color-text-muted, #b9c4d4);
+}
+.okip-pm__title {
+    margin: 0;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.okip-pm__highlight {
+    color: var(--okip-color-accent, #ff5a14);
+}
+.okip-pm__desc {
+    margin-top: 1.25rem;
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    color: var(--okip-color-text-muted, #b9c4d4);
+}
+.okip-pm__cta {
+    margin-top: 1.75rem;
+}
+
+/* ---- Capa 3: monitor (derecha) ---- */
+.okip-pm__monitor {
+    position: relative;
+    justify-self: end;
+    width: 100%;
+    max-width: 560px;
+}
+.okip-pm__device {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    display: block;
+}
+.okip-pm__screen {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0a1422; /* pantalla neutra cuando no hay media real */
+}
+.okip-pm__screen-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Marco geométrico mínimo (no mockup falso): bisel + base del monitor */
+.okip-pm__monitor--frame .okip-pm__screen {
+    border: 10px solid #0c1626;
+    border-radius: 14px;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, .06),
+        0 30px 70px rgba(0, 0, 0, .5);
+}
+.okip-pm__monitor--frame::after {
+    content: "";
+    display: block;
+    width: 22%;
+    height: 14px;
+    margin: 8px auto 0;
+    border-radius: 0 0 8px 8px;
+    background: #0c1626;
+}
+
+/* Glow azul sutil tras el monitor (referencia bloque 2.png) — decorativo, no es
+   el fondo principal; vive detrás del monitor, no encima del media de fondo. */
+.okip-pm__monitor::before {
+    content: "";
+    position: absolute;
+    inset: -12% -8% -8% -8%;
+    z-index: 0;
+    background: radial-gradient(60% 60% at 50% 45%, rgba(60, 140, 255, .22), transparent 70%);
+    filter: blur(20px);
+    pointer-events: none;
+}
+
+/* ---- Animación: estado inicial (solo con JS) ---- */
+.okip-js .okip-pm--animated .okip-pm__text > *,
+.okip-js .okip-pm--animated .okip-pm__monitor {
+    opacity: 0;
+    will-change: transform, opacity;
+}
+.okip-js .okip-pm--animated .okip-pm__text > * {
+    transform: translateY(24px);
+}
+.okip-js .okip-pm--animated .okip-pm__monitor {
+    transform: translateY(40px);
+}
+/* Revelado por CSS (fallback sin GSAP) */
+.okip-pm.is-revealed .okip-pm__text > *,
+.okip-pm.is-revealed .okip-pm__monitor {
+    opacity: 1;
+    transform: none;
+    transition: opacity .7s ease, transform .7s cubic-bezier(.22, 1, .36, 1);
+}
+.okip-pm.is-revealed .okip-pm__text > *:nth-child(2) { transition-delay: .08s; }
+.okip-pm.is-revealed .okip-pm__text > *:nth-child(3) { transition-delay: .16s; }
+.okip-pm.is-revealed .okip-pm__text > *:nth-child(4) { transition-delay: .24s; }
+.okip-pm.is-revealed .okip-pm__monitor { transition-delay: .12s; }
+
+/* ---- Responsive: tablet/móvil → vertical (texto y luego monitor) ---- */
+@media (max-width: 880px) {
+    .okip-pm__inner {
+        grid-template-columns: 1fr;
+        gap: clamp(2rem, 8vw, 3rem);
+    }
+    .okip-pm__monitor {
+        justify-self: stretch;
+        max-width: 100%;
+    }
+}
+
+/* ---- Accesibilidad: reduce motion ---- */
+@media (prefers-reduced-motion: reduce) {
+    .okip-js .okip-pm--animated .okip-pm__text > *,
+    .okip-js .okip-pm--animated .okip-pm__monitor {
+        opacity: 1;
+        transform: none;
+    }
+}

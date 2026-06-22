@@ -55,6 +55,40 @@ function okip_media_url($value)
 }
 
 /**
+ * ¿La referencia de medio resuelve a algo que realmente existe?
+ *
+ * - ID de attachment → debe tener URL.
+ * - URL externa (http/protocol-relative) → se asume válida (no se comprueba red).
+ * - Ruta relativa a assets/ → el archivo debe existir en disco.
+ *
+ * Permite que el front sea media-driven: si no existe, el bloque usa su
+ * fallback neutro en vez de pintar un media roto.
+ *
+ * @param mixed $value
+ * @return bool
+ */
+function okip_media_exists($value)
+{
+    if (empty($value)) {
+        return false;
+    }
+    if (is_int($value) || (is_string($value) && ctype_digit($value))) {
+        return (bool) wp_get_attachment_url((int) $value);
+    }
+    if (! is_string($value)) {
+        return false;
+    }
+    if (preg_match('#^(https?:)?//#', $value)) {
+        return true; // externo: se asume disponible.
+    }
+    $relative = ltrim($value, '/');
+    if (strpos($relative, 'assets/') !== 0) {
+        $relative = 'assets/' . $relative;
+    }
+    return file_exists(OKIP_DIR . '/' . $relative);
+}
+
+/**
  * Texto alternativo de un attachment (si el medio es un ID), o cadena vacía.
  *
  * @param mixed $value

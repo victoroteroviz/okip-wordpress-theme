@@ -43,27 +43,30 @@ return array(
                 'strategy'        => 'video_end',
                 'replay_on_enter' => true,
             ),
-            'cards' => array(
-                array(
-                    'id'       => 'card-1',
-                    'type'     => 'image',
-                    'media'    => '', // sin medio → placeholder visual
-                    'alt'      => 'Tarjeta de ejemplo 1',
-                    'x'        => 80,
-                    'y'        => 24,
-                    'glow'     => true,
-                    'scanline' => true,
-                ),
-                array(
-                    'id'    => 'card-2',
-                    'type'  => 'image',
-                    'media' => '',
-                    'alt'   => 'Tarjeta de ejemplo 2',
-                    'x'     => 18,
-                    'y'     => 70,
-                    'glow'  => true,
-                ),
+            // Las tarjetas solo se renderizan con media REAL (ruta/URL/ID válido).
+            // Ejemplo para cuando exista el asset:
+            //   array('id'=>'card-1','type'=>'image','media'=>'img/card-1.jpg',
+            //         'alt'=>'…','x'=>80,'y'=>24,'glow'=>true,'scanline'=>true),
+            'cards' => array(),
+        ),
+    ),
+
+    array(
+        'type'        => 'parallax-monitor',
+        'instance_id' => 'home-parallax-monitor',
+        'data'        => array(
+            'content' => array(
+                'eyebrow'          => 'Tecnología OKIP',
+                'title'            => 'Inteligencia visual para proteger lo que importa',
+                'highlighted_text' => 'proteger',
+                'description'      => 'Integramos monitoreo, análisis y visualización para convertir señales complejas en decisiones claras.',
             ),
+            'cta' => array(
+                'enabled' => true,
+                'label'   => 'Conocer tecnología',
+                'url'     => '/fabrica-de-tecnologias',
+            ),
+            // background/monitor sin media real → fallback neutro/geométrico mínimo.
         ),
     ),
 );

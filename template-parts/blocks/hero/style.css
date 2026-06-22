@@ -35,18 +35,16 @@
     object-fit: cover;
 }
 
-/* Fallback de gradiente: solo sin media o si el video falla */
-.okip-hero__bg--gradient,
+/* Fallback NEUTRO: sin media real o si el video falla.
+   Solo un color sólido oscuro, sin gradiente decorativo, patrón ni glow falso. */
+.okip-hero__bg--missing,
 .okip-hero.is-bg-failed .okip-hero__bg {
-    background:
-        radial-gradient(120% 120% at 70% 10%, rgba(20, 60, 120, .35), transparent 60%),
-        radial-gradient(100% 100% at 20% 90%, rgba(255, 90, 20, .15), transparent 55%),
-        linear-gradient(160deg, #03060f 0%, #05101f 55%, #020711 100%);
+    background: #05080f;
 }
 
-/* Degradado/desenfoque suave del fondo fallido (pause_or_blur_on_fail) */
+/* Si un video llegó a renderizar pero falla, lo atenuamos suavemente. */
 .okip-hero.is-bg-failed .okip-hero__media {
-    filter: blur(8px) brightness(.7);
+    filter: brightness(.6);
     transition: filter .6s ease;
 }
 
@@ -91,14 +89,6 @@
     height: 100%;
     object-fit: cover;
     display: block;
-}
-
-.okip-hero__card-placeholder {
-    position: absolute;
-    inset: 0;
-    background:
-        repeating-linear-gradient(45deg, rgba(255, 255, 255, .04) 0 8px, rgba(255, 255, 255, .02) 8px 16px),
-        linear-gradient(160deg, #0a1830, #0a2038);
 }
 
 .okip-hero__card--glow .okip-hero__card-media {
