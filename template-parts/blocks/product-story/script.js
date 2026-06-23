@@ -149,7 +149,9 @@
                     id:                  tlId,
                     trigger:             row,
                     start:               'top 82%',
-                    end:                 'top 32%',
+                    // Clamp evita que la última fila quede a medias cuando no hay
+                    // suficiente contenido debajo para alcanzar el end geométrico.
+                    end:                 'clamp(top 32%)',
                     scrub:               scrub,
                     invalidateOnRefresh: true
                 }

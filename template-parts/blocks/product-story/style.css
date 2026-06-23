@@ -27,10 +27,24 @@
     min-height: var(--okip-ps-minh, auto);
     background: #f7f8fa;   /* mismo tono que el Bloque 3 → continuidad sin costura */
     color: #0d1520;
+    isolation: isolate;
     /* El root NUNCA recibe transform (regla del proyecto): se animan nodos internos. */
 }
 
+.okip-ps::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: -3px;
+    height: 6px;
+    z-index: 0;
+    background: #f7f8fa;
+    pointer-events: none;
+}
+
 .okip-ps__inner {
+    position: relative;
+    z-index: 1;
     width: 100%;
     max-width: var(--okip-ps-cw, 1100px);
     margin-inline: auto;

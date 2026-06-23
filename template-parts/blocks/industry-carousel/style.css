@@ -32,6 +32,13 @@
     isolation: isolate;
 }
 
+/* ScrollTrigger envuelve el bloque pineado en un .pin-spacer transparente.
+   Si el siguiente bloque asoma durante el handoff, esa transparencia puede
+   dejar una línea de composición. El spacer del carrusel debe compartir fondo. */
+.pin-spacer:has(> .okip-ic) {
+    background: #f7f8fa;
+}
+
 /* El retardo de cobertura B2→B3 (esperar a que el depth-entry de B2 termine + el hold
    estático) lo aplica el JS de B2 como `margin-top` INLINE sobre este bloque. NO se usa
    un selector adyacente (`.okip-pm + .okip-ic`) porque ScrollTrigger envuelve B2 en un
