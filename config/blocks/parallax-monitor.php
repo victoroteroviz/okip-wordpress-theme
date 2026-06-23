@@ -105,7 +105,7 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
         $a['text_reveal']                = okip_bool($a['text_reveal']);
         $a['pin_enabled']                = okip_bool($a['pin_enabled']);
         $a['background_pin']             = okip_bool(isset($a['background_pin']) ? $a['background_pin'] : true);
-        $a['background_pin_vh']          = okip_clamp_int(isset($a['background_pin_vh']) ? $a['background_pin_vh'] : 90, 0, 300);
+        $a['background_pin_vh']          = okip_clamp_int(isset($a['background_pin_vh']) ? $a['background_pin_vh'] : 100, 0, 300);
         $a['start_progress']             = okip_clamp_float($a['start_progress'], 0, 1);
         $a['background_speed']           = okip_clamp_float($a['background_speed'], 0, 2);
         $a['computer_speed']             = okip_clamp_float($a['computer_speed'], 0, 2);
@@ -113,8 +113,8 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
         $a['background_enter_range']     = okip_pm_normalize_range($a['background_enter_range'], 0.00, 0.35);
         $a['computer_enter_range']       = okip_pm_normalize_range($a['computer_enter_range'], 0.25, 0.70);
         $a['text_enter_range']           = okip_pm_normalize_range($a['text_enter_range'], 0.55, 1.00);
-        $a['parallax_drift_px']          = okip_clamp_int(isset($a['parallax_drift_px']) ? $a['parallax_drift_px'] : 100, 0, 500);
-        $a['disable_parallax_below']     = okip_clamp_int(isset($a['disable_parallax_below']) ? $a['disable_parallax_below'] : 1024, 0, 9999);
+        $a['parallax_drift_px']          = okip_clamp_int(isset($a['parallax_drift_px']) ? $a['parallax_drift_px'] : 140, 0, 500);
+        $a['disable_parallax_below']     = okip_clamp_int(isset($a['disable_parallax_below']) ? $a['disable_parallax_below'] : 0, 0, 9999);
         $data['animation'] = $a;
 
         return $data;
@@ -176,16 +176,16 @@ return array(
         'text_reveal'                => true,
         'pin_enabled'                => false, // sin pin por ahora (solo con GSAP futuro)
         'start_progress'             => 0.85,  // alias de layout.overlap_start (transición)
-        'disable_parallax_below'     => 1024,  // ancho en px: por debajo usa modo is-static
-        // Hold pin: en desktop+GSAP el Bloque 2 reserva un tramo de scroll propio
-        // antes de permitir la entrada del Bloque 3.
+        'disable_parallax_below'     => 0,     // 0 = no desactivar por ancho
+        // Hold pin: con GSAP el Bloque 2 queda fijo mientras B3 lo cubre.
         'background_pin'             => true,
         'background_pin_vh'          => 100,   // fallback del hold pin; JS prefiere altura real del bloque
-        // Magnitud base y velocidades de drift por capa (drift_px = speed × parallax_drift_px).
-        'parallax_drift_px'          => 140,   // px base; controla la escala de todo el parallax
-        'background_speed'           => 0.45,  // fondo: lento pero PERCEPTIBLE → ±63 px
-        'computer_speed'             => 0.95,  // monitor: protagonista        → ±133 px (el mayor recorrido)
-        'text_speed'                 => 0.07,  // texto: micro-parallax        → ±9.8 px (estable/legible)
+        // Magnitud base y velocidades de entrada por capa (px = speed × parallax_drift_px).
+        // Las capas empiezan desplazadas y terminan en y:0 cuando B2 queda completo.
+        'parallax_drift_px'          => 140,   // px base; escala clara para la profundidad
+        'background_speed'           => 0.28,  // fondo: movimiento leve
+        'computer_speed'             => 0.62,  // monitor: profundidad media
+        'text_speed'                 => 0.95,  // texto: capa frontal, movimiento mayor
         // Rangos de entrada coreografiada (en progreso 0..1 de la transición).
         'background_enter_range'     => array(0.00, 0.35),
         'computer_enter_range'       => array(0.25, 0.70),

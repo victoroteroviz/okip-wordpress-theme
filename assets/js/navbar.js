@@ -2,9 +2,9 @@
  * OKIP — navbar.
  *
  * Visibilidad:
- *   - reveal_mode = after_hero (Home con Hero): nace oculto; aparece cuando el
- *     usuario sale del Hero / llega al segundo bloque, y se oculta al volver.
- *     Detección por scrollY contra una posición documental estable del Hero.
+ *   - reveal_mode = after_hero (Home con Hero + Bloque 2): nace oculto; aparece
+ *     cuando el Bloque 2 queda completamente expuesto, y se oculta al volver.
+ *     Fallback por Hero solo si no existe Bloque 2.
  *   - reveal_mode = always | manual, o páginas sin Hero: visible desde el inicio.
  *   - Al ocultarse con el menú móvil abierto, el menú se cierra (aria-expanded).
  *
@@ -26,7 +26,8 @@
         var hideOnHero = navbar.getAttribute('data-hide-on-hero') === '1';
 
         var hero = document.querySelector('[data-okip-hero]');
-        var autoHide = (revealMode === 'after_hero') && hideOnHero && !!hero;
+        var pm = document.querySelector('[data-okip-pm]');
+        var autoHide = (revealMode === 'after_hero') && hideOnHero && (!!pm || !!hero);
 
         /* ---------- Mostrar / ocultar ---------- */
         function show() {
@@ -43,10 +44,9 @@
             navbar.classList.add('is-hidden');
             navbar.classList.remove('okip-navbar--start-hidden');
 
-            // Umbral por scroll: con sticky/pin, la intersección visual del Hero no
-            // es estable. El navbar solo permanece oculto en el primer estado del
-            // Hero; al bajar, cualquier scroll real lo revela como respaldo duro.
-            var pm = document.querySelector('[data-okip-pm]');
+            // Umbral principal: el Bloque 2 debe llegar al top del viewport.
+            // Esto evita que el navbar aparezca mientras B2 solo cubre parcialmente
+            // al Hero. Si no hay Bloque 2, se usa el cálculo estable por Hero.
             var startProg = pm ? parseFloat(pm.getAttribute('data-overlap-start')) : 0.85;
             if (isNaN(startProg)) { startProg = 0.85; }
             var REVEAL_AT = 0.15; // progreso de transición para mostrar el navbar
@@ -66,8 +66,13 @@
             var navTicking = false;
             var evalNav = function () {
                 navTicking = false;
+
+                if (pm) {
+                    if (pm.getBoundingClientRect().top <= 1) { show(); } else { hide(); }
+                    return;
+                }
+
                 var y = scrollY();
-                if (y > 8) { show(); return; }
 
                 var h = hero.offsetHeight;
                 // Guard: si el Hero aún no tiene altura (layout no listo), mantener

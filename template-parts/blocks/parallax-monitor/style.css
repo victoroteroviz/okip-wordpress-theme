@@ -29,12 +29,12 @@
 }
 
 /* ---- Capa 1: fondo ----
-   EXTERIOR (.okip-pm__bg) = PARALLAX (transform). Sobredimensionado (headroom) para que
-   el drift no descubra los bordes; recortado por el overflow:hidden de .okip-pm.
+   EXTERIOR (.okip-pm__bg) = DEPTH ENTRY (transform). Sobredimensionado (headroom)
+   para que la entrada no descubra bordes; recortado por el overflow:hidden de .okip-pm.
    NO lleva opacidad de reveal ni fondo propio. */
 .okip-pm__bg {
     position: absolute;
-    inset: -10% 0; /* headroom vertical (~±10% > drift máximo ±63 px) */
+    inset: -10% 0; /* headroom vertical para el desplazamiento inicial de entrada */
     z-index: 1;
     will-change: transform;
 }
@@ -53,7 +53,7 @@
     height: 130%; /* margen extra adicional para el media */
     object-fit: cover;
 }
-/* Fondo sin media: atmósfera suave (sin grid). El drift se percibe por el
+/* Fondo sin media: atmósfera suave (sin grid). La profundidad se percibe por el
    degradado y la luz, no por un patrón decorativo. */
 .okip-pm__bg-inner--missing,
 .okip-pm__bg-inner--gradient {
@@ -272,8 +272,8 @@
 
 /* ============================================================
    ANIMACIÓN: separación de responsabilidades (evita "letras atascadas").
-     - PARALLAX → transform INLINE (rAF) en el nodo EXTERIOR (.okip-pm__bg,
-       .okip-pm__monitor, .okip-pm__text). Drift continuo y pequeño.
+     - DEPTH ENTRY → transform INLINE (GSAP/rAF) en el nodo EXTERIOR (.okip-pm__bg,
+       .okip-pm__monitor, .okip-pm__text). Termina en y:0 con B2 completo.
      - REVEAL  → opacidad/translate por CLASE latcheada (CSS transition) en el
        nodo INTERIOR (.okip-pm__computer-reveal, .okip-pm__text-reveal) y la
        opacidad del fondo. Nunca se mezclan en el mismo nodo, así el contenido
@@ -326,12 +326,13 @@
     transition: opacity 1s ease .42s;
 }
 
-/* El parallax (GSAP/rAF) escribe `transform` inline en los nodos EXTERIORES, que
-   NO tienen transición CSS de transform → no hay conflicto. El reveal (opacidad/
-   translate) vive en nodos INTERIORES con su propia transición CSS, intacta. */
+/* La profundidad de entrada (GSAP/rAF) escribe `transform` inline en los nodos
+   EXTERIORES, que NO tienen transición CSS de transform → no hay conflicto. El
+   reveal (opacidad/translate) vive en nodos INTERIORES con su propia transición
+   CSS, intacta. */
 
-/* Modo estático (móvil/tablet ≤1024px / reduce-motion / sin overlap): sin parallax.
-   El JS marca is-static y latchea todos los reveals de inmediato (revealAll). */
+/* Modo estático: reduce-motion, sin driver o sin capas. El JS marca is-static y
+   latchea todos los reveals de inmediato (revealAll). */
 .okip-pm.is-static {
     transform: none !important; /* seguridad si el JS escribe algo antes de reinicializar */
     margin-top: 0 !important;
@@ -350,25 +351,41 @@
    El root nunca recibe transform de masa.
    ============================================================ */
 
-/* ---- Responsive: móvil/tablet (≤1024px) → vertical (texto y luego monitor) ---- */
+/* ---- Responsive: móvil/tablet (≤1024px) → composición compacta animada ---- */
 @media (max-width: 1024px) {  /* --okip-bp-tablet */
     .okip-pm {
-        min-height: auto;
-        /* padding-top >= navbar (68px) + margen de respiro para que el título no quede cortado */
-        padding-block-start: calc(var(--okip-navbar-h, 68px) + clamp(2rem, 5vh, 3.5rem));
-        padding-block-end: clamp(3rem, 8vh, 5rem);
+        min-height: var(--okip-pm-minh, 100svh);
+        /* padding-top >= navbar (68px) + respiro sin romper el pin full-screen */
+        padding-block-start: calc(var(--okip-navbar-h, 68px) + clamp(1rem, 3vh, 2rem));
+        padding-block-end: clamp(1.5rem, 5vh, 2.5rem);
     }
     .okip-pm__inner {
         grid-template-columns: 1fr;
-        gap: clamp(2.5rem, 8vw, 3.5rem);
+        gap: clamp(1.25rem, 4vh, 2.25rem);
+    }
+    .okip-pm__text {
+        max-width: 40rem;
     }
     .okip-pm__monitor {
-        justify-self: stretch;
-        max-width: 100%;
+        justify-self: center;
+        max-width: min(100%, 560px);
     }
     .okip-pm__bg-media {
         top: 0;
         height: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .okip-pm__title {
+        font-size: clamp(1.75rem, 8vw, 2.35rem);
+    }
+    .okip-pm__subtitle {
+        margin-top: 1rem;
+        font-size: .68rem;
+    }
+    .okip-pm__monitor {
+        max-width: min(100%, 420px);
     }
 }
 

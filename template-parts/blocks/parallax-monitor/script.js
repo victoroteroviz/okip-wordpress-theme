@@ -10,17 +10,19 @@
  *      (.okip-pm__computer-reveal / .okip-pm__text-reveal) + opacidad del fondo.
  *      Nunca reveal y parallax en el mismo nodo.
  *
- * Con GSAP + ScrollTrigger (desktop > disable_below):
+ * Con GSAP + ScrollTrigger:
  *   1) HERO STICKY: el Hero queda fijo por CSS y B2 lo cubre por flujo/z-index.
  *   2) REVEAL: una sola vez al salir del Hero (~82%). Se añaden las 3 clases a la vez;
  *      el ESCALONADO (fondo → texto → monitor) lo da el CSS (transition-delay) → suave,
  *      nunca intermedio ni atascado.
- *   3) DRIFT (parallax): fondo lento, monitor visible, texto micro — en nodos exteriores.
- *   4) HOLD-PIN: el Bloque 2 se pinea con espacio reservado para que su escena
- *      termine antes de que el Bloque 3 entre. No escribe nada sobre B3.
+ *   3) DEPTH ENTRY (parallax): fondo, monitor y texto entran con velocidades
+ *      distintas y terminan en y:0 cuando B2 queda completo. El hold posterior
+ *      no vuelve a mover esas capas.
+ *   4) HOLD-PIN: el Bloque 2 se pinea sin espacio reservado; B3 sube encima
+ *      como panel claro mientras la escena de B2 queda fija.
  *
- * Sin GSAP: fallback vanilla rAF (drift) + IO one-shot (reveal). Sin pin.
- * Móvil/tablet (≤disable_below): is-static, reveal inmediato, sin parallax ni pin.
+ * Sin GSAP: fallback vanilla rAF (depth entry) + IO one-shot (reveal). Sin pin.
+ * Móvil/tablet también animan; solo reduce-motion / sin driver entra en is-static.
  * Respeta prefers-reduced-motion. No duplica listeners.
  */
 (function () {
@@ -54,17 +56,15 @@
         var useVanilla = d.useVanilla !== '0'; // true por defecto
         var bgPinOn    = d.bgPin      === '1';
 
-        var DRIFT        = parseFloat(d.driftMax)       || 100;
-        var disableBelow = parseInt(d.disableBelow, 10) || 1024;
-        var bgPinVh      = parseFloat(d.bgPinVh)        || 90;
-        var isSmall      = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
+        var DRIFT        = parseFloat(d.driftMax)       || 140;
+        var bgPinVh      = parseFloat(d.bgPinVh)        || 100;
 
         // ID de instancia para nombrar ScrollTriggers y evitar colisiones entre bloques.
         var pmId = section.id || section.dataset.blockInstance || 'pm';
 
         var hero = document.querySelector('[data-okip-hero]');
 
-        // Capas (nodos EXTERIORES): solo para el DRIFT (parallax).
+        // Capas (nodos EXTERIORES): solo para la profundidad de entrada.
         var layers = [];
         section.querySelectorAll('[data-okip-pm-layer]').forEach(function (el) {
             layers.push({
@@ -100,10 +100,10 @@
 
         // El Hero NO se anima: queda estático y el Bloque 2 lo cubre (apilado). Sin recede.
 
-        var canAnimate = animOn && !reduceMotion && !isSmall && layers.length > 0;
+        var canAnimate = animOn && !reduceMotion && layers.length > 0;
 
         /* ============================================================
-           MODO ESTÁTICO: móvil/tablet, reduce-motion, sin animación.
+           MODO ESTÁTICO: reduce-motion o sin capas/animación.
            Reveal inmediato, sin parallax ni pin. Flujo vertical limpio.
            ============================================================ */
         if (!canAnimate) {
@@ -119,6 +119,8 @@
         } else if (useVanilla) {
             initVanilla();
         } else {
+            section.classList.remove('is-transitioning');
+            section.classList.add('is-static');
             revealAll(); // sin driver: al menos mostrar contenido.
         }
 
@@ -133,13 +135,19 @@
             // Bloque 2 (z-index 2, opaco) sube por flujo natural y lo cubre (apilado).
             // Sin recede → contenido del Hero inmóvil y sin jank en el navbar.
 
+            function forceLayersRest() {
+                layers.forEach(function (L) {
+                    if (L.speed) { gsap.set(L.el, { y: 0 }); }
+                });
+            }
+
             function holdPinDistance() {
                 var fallback = bgPinVh / 100 * vh();
                 var next = section.nextElementSibling;
                 if (!next) { return fallback; }
 
-                // Mantener al menos la altura real del bloque como tramo de cierre.
-                // Esto da tiempo al reveal/escena de B2 antes de que B3 aparezca.
+                // Mantener B2 fijo hasta que el siguiente bloque llegue al top del viewport.
+                // Con pinSpacing:false, B3 cubre B2 en lugar de empujarlo.
                 var distance = next.offsetTop - section.offsetTop;
                 return distance > 0 ? distance : fallback;
             }
@@ -157,26 +165,29 @@
                 onEnter: revealAll
             });
 
-            // 3) DRIFT (parallax): SOLO en nodos exteriores con speed.
+            // 3) DEPTH ENTRY: SOLO en nodos exteriores con speed.
+            //    Termina en top top; desde B2 completo y durante el hold, las capas
+            //    quedan en su posición natural (y:0) y no suben con el scroll.
             if (parallaxOn) {
                 var driftTl = gsap.timeline({
                     scrollTrigger: {
                         id: pmId + '-drift',
                         trigger: section,
                         start: 'top bottom',
-                        end:   'bottom top',
-                        scrub: 0.6,
-                        invalidateOnRefresh: true
+                        end:   'top top',
+                        scrub: true,
+                        invalidateOnRefresh: true,
+                        onLeave: forceLayersRest
                     }
                 });
                 layers.forEach(function (L) {
                     if (!L.speed) { return; }
-                    driftTl.fromTo(L.el, { y: L.speed * DRIFT }, { y: -L.speed * DRIFT, ease: 'none' }, 0);
+                    driftTl.fromTo(L.el, { y: L.speed * DRIFT }, { y: 0, ease: 'none' }, 0);
                 });
             }
 
-            // 4) HOLD-PIN: B2 queda fijo y reserva espacio. Así B3 no asoma hasta
-            //    que B2 ya tuvo su tramo completo de escena/reveal.
+            // 4) HOLD-PIN: B2 queda fijo sin reservar espacio. B3 (z-index 3)
+            //    sube encima y cubre la escena estática de B2.
             if (bgPinOn) {
                 ST.create({
                     id:            pmId + '-bgpin',
@@ -184,54 +195,41 @@
                     start:         'top top',
                     end:           function () { return '+=' + holdPinDistance(); },
                     pin:           true,
-                    pinSpacing:    true,
+                    pinSpacing:    false,
                     anticipatePin: 1,
-                    invalidateOnRefresh: true
+                    invalidateOnRefresh: true,
+                    onEnter:       forceLayersRest,
+                    onUpdate:      forceLayersRest,
+                    onLeave:       forceLayersRest,
+                    onEnterBack:   forceLayersRest
                 });
             }
 
-            // Resize: refresh en desktop; si pasa a móvil, matar STs propios → estático.
+            // Resize: B2 anima en todos los tamaños; solo refrescamos medidas.
             var rt;
             window.addEventListener('resize', function () {
                 window.clearTimeout(rt);
                 rt = window.setTimeout(function () {
-                    var nowSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
-                    if (nowSmall) {
-                        ST.getAll().forEach(function (st) {
-                            if (st.vars && st.vars.id && String(st.vars.id).indexOf(pmId + '-') === 0) {
-                                st.kill(true);
-                            }
-                        });
-                        section.style.transform = '';
-                        layers.forEach(function (L) { L.el.style.transform = ''; });
-                        if (hero) { hero.style.transform = ''; hero.style.opacity = ''; }
-                        section.classList.remove('is-transitioning');
-                        section.classList.add('is-static');
-                        revealAll();
-                    } else {
-                        ST.refresh();
-                    }
+                    ST.refresh();
                 }, 200);
             }, { passive: true });
         }
 
         /* ============================================================
-           Fallback VANILLA: rAF (drift) + IO one-shot (reveal).
-           Sin pin: la superposición B2→B3 degrada a apilado normal.
+           Fallback VANILLA: rAF (depth entry) + IO one-shot (reveal).
+           Sin pin: la cobertura B2→B3 degrada a apilado normal.
            ============================================================ */
         function initVanilla() {
-            function driftProgress() {
+            function entryProgress() {
                 var rect  = section.getBoundingClientRect();
-                var denom = (vh() + rect.height) / 2;
-                if (denom <= 0) { return 0; }
-                return clamp(((vh() / 2) - (rect.top + rect.height / 2)) / denom, -1, 1);
+                return clamp((vh() - rect.top) / vh(), 0, 1);
             }
             function applyFrame() {
-                var dp = parallaxOn ? driftProgress() : 0;
+                var p = parallaxOn ? entryProgress() : 1;
                 for (var i = 0; i < layers.length; i++) {
                     var L = layers[i];
                     if (L.speed) {
-                        L.el.style.transform = 'translate3d(0,' + (dp * L.speed * DRIFT).toFixed(2) + 'px,0)';
+                        L.el.style.transform = 'translate3d(0,' + ((1 - p) * L.speed * DRIFT).toFixed(2) + 'px,0)';
                     }
                 }
                 // El Hero queda estático (sticky CSS); no se anima desde aquí.
@@ -254,7 +252,7 @@
             }
 
             if ('IntersectionObserver' in window) {
-                // IO principal: activa/desactiva el bucle rAF (drift).
+                // IO principal: activa/desactiva el bucle rAF (depth entry).
                 var vis = { hero: false, section: false };
                 var io  = new IntersectionObserver(function (entries) {
                     entries.forEach(function (e) {
