@@ -1,0 +1,316 @@
+/*
+ * Bloque Product Story (Bloque 4) — estilos.
+ * Ref visual: bloque 4.png.
+ *
+ * Fondo CLARO, conectado visualmente con el Bloque 3 (mismo tono, sin transición).
+ * Composición editorial: tres filas de producto, mucho aire.
+ *   - Izquierda: recuadro negro (logo + título) o media con caption inferior.
+ *   - Etiqueta gris (pill) debajo del recuadro.
+ *   - Derecha: tarjeta gris clara con heading + descripción monoespaciados.
+ *
+ * Animación (desktop, GSAP): por fila, sin pin, sin transform en el root.
+ * Estados iniciales ocultos SOLO bajo `.okip-js .okip-ps--animated:not(.is-static)`
+ * → sin JS, todo visible.
+ *
+ * Namespacing: .okip-ps__* — sin reglas globales que afecten otros bloques.
+ */
+
+/* Pila monoespaciada local (no hay token global de mono) */
+.okip-ps {
+    --okip-ps-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    --okip-ps-black: #0b0c0e;
+    --okip-ps-card: #e9eaec;
+    --okip-ps-pill: #c8ccd2;
+
+    position: relative;
+    z-index: var(--okip-ps-z, 4);
+    min-height: var(--okip-ps-minh, auto);
+    background: #f7f8fa;   /* mismo tono que el Bloque 3 → continuidad sin costura */
+    color: #0d1520;
+    /* El root NUNCA recibe transform (regla del proyecto): se animan nodos internos. */
+}
+
+.okip-ps__inner {
+    width: 100%;
+    max-width: var(--okip-ps-cw, 1100px);
+    margin-inline: auto;
+    padding-inline: var(--okip-container-pad, 1.5rem);
+    padding-block: clamp(3rem, 9vh, 6rem);
+}
+
+.okip-ps__section-label {
+    margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
+    font-size: .78rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: #7a8899;
+}
+
+/* ---- Fila ---- */
+.okip-ps__row {
+    display: grid;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: center;
+}
+.okip-ps__row + .okip-ps__row {
+    margin-top: clamp(2.5rem, 8vh, 5.5rem);
+}
+
+/* ---- Columna izquierda ---- */
+.okip-ps__left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Recuadro visual: negro, esquinas redondeadas tipo referencia (derecha muy curva) */
+.okip-ps__visual {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px 64px 64px 12px;
+    background: var(--okip-ps-black);
+    color: #f4f7fb;
+    will-change: transform, clip-path, opacity;
+}
+
+/* logo-title: caja casi cuadrada con logo arriba y título abajo a la izquierda */
+.okip-ps__visual--logo-title {
+    aspect-ratio: 5 / 4;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(1rem, 2.2vw, 1.6rem);
+}
+
+/* media-caption: el media llena la caja; el caption va en barra inferior */
+.okip-ps__visual--media-caption {
+    aspect-ratio: 16 / 10;
+}
+
+/* Logo / placeholder (parte superior del recuadro logo-title) */
+.okip-ps__logo {
+    display: block;
+    width: clamp(48px, 9vw, 88px);
+    color: #f4f7fb;
+}
+.okip-ps__logo-img,
+.okip-ps__logo-ph {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* Título dentro del recuadro negro (bottom-left) */
+.okip-ps__title {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+    line-height: 1.1;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: #f4f7fb;
+}
+
+/* Media dentro del recuadro media-caption */
+.okip-ps__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+/* Placeholder sobrio cuando no hay media real */
+.okip-ps__media-ph {
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 38px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 38px),
+        #15171b;
+}
+/* Barra de caption (media-caption) */
+.okip-ps__caption {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    max-width: 80%;
+    padding: .5rem 1.6rem .5rem 1rem;
+    background: var(--okip-ps-black);
+    color: #f4f7fb;
+    font-size: clamp(.82rem, 1.4vw, 1rem);
+    line-height: 1.2;
+    border-radius: 0 18px 0 0;
+}
+
+/* Etiqueta gris (pill) bajo el recuadro */
+.okip-ps__label {
+    display: inline-block;
+    margin-top: clamp(.7rem, 1.6vh, 1rem);
+    margin-left: clamp(.4rem, 1.2vw, 1rem);
+    padding: .35rem 1.5rem;
+    background: var(--okip-ps-pill);
+    color: #4a4f57;
+    font-family: var(--okip-ps-mono);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .14em;
+    border-radius: 3px;
+    will-change: opacity;
+}
+
+/* ---- Columna derecha: tarjeta gris ---- */
+.okip-ps__card {
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    padding: clamp(1.4rem, 3vw, 2.4rem) clamp(1.4rem, 3.2vw, 2.6rem);
+}
+/* Fondo de la tarjeta (capa separada para el wipe horizontal) */
+.okip-ps__card-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--okip-ps-card);
+    z-index: 0;
+    will-change: clip-path;
+}
+.okip-ps__card-inner {
+    position: relative;
+    z-index: 1;
+}
+
+/* Heading monoespaciado */
+.okip-ps__heading {
+    margin: 0;
+    font-family: var(--okip-ps-mono);
+    font-size: clamp(1.05rem, 2vw, 1.45rem);
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: #14181f;
+}
+
+/* Descripción monoespaciada, justificada como en la referencia */
+.okip-ps__desc {
+    margin: clamp(.7rem, 1.8vh, 1.1rem) 0 0;
+    font-family: var(--okip-ps-mono);
+    font-size: clamp(.82rem, 1.4vw, .95rem);
+    line-height: 1.75;
+    color: #4a525e;
+    text-align: justify;
+    text-wrap: pretty;
+}
+
+/* Texto que se anima (heading/desc). Por defecto totalmente visible. */
+.okip-ps__type {
+    display: inline;
+}
+/* Palabras: no se parten a mitad durante el typewriter */
+.okip-ps__word {
+    display: inline-block;
+    white-space: nowrap;
+}
+.okip-ps__char {
+    display: inline-block;
+    will-change: opacity;
+}
+.okip-ps__char--space {
+    display: inline;
+    white-space: pre;
+}
+
+/* Copia solo para lectores de pantalla (texto completo cuando se hace split) */
+.okip-ps__sr {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* ============================================================
+   ESTADOS INICIALES OCULTOS — solo con JS, animado y NO estático.
+   Sin JS / is-static → estas reglas no aplican → todo visible.
+   ============================================================ */
+.okip-js .okip-ps--animated:not(.is-static) .okip-ps__visual {
+    opacity: 0;
+    transform: translateY(18px);
+    clip-path: inset(0 100% 0 0);
+}
+.okip-js .okip-ps--animated:not(.is-static) .okip-ps__card-bg {
+    clip-path: inset(0 100% 0 0);
+}
+.okip-js .okip-ps--animated:not(.is-static) .okip-ps__type {
+    opacity: 0;
+}
+.okip-js .okip-ps--animated:not(.is-static) .okip-ps__label {
+    opacity: 0;
+}
+
+/* ---- Reveal del FALLBACK vanilla (sin GSAP): is-revealed por fila ---- */
+.okip-ps__row.is-revealed .okip-ps__visual {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
+    transition: opacity .7s ease, transform .8s var(--okip-ease, cubic-bezier(.22,1,.36,1)),
+                clip-path .85s var(--okip-ease, cubic-bezier(.22,1,.36,1));
+}
+.okip-ps__row.is-revealed .okip-ps__card-bg {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path .75s var(--okip-ease, cubic-bezier(.22,1,.36,1)) .18s;
+}
+.okip-ps__row.is-revealed .okip-ps__type {
+    opacity: 1;
+    transition: opacity .6s ease .42s;
+}
+.okip-ps__row.is-revealed .okip-ps__label {
+    opacity: 1;
+    transition: opacity .5s ease .3s;
+}
+
+/* ============================================================
+   MODO ESTÁTICO (móvil/tablet / sin GSAP+vanilla off / reduce-motion / anim off)
+   Todo visible y legible. Layout apilado en móvil.
+   ============================================================ */
+.okip-ps.is-static .okip-ps__visual,
+.okip-ps.is-static .okip-ps__card-bg,
+.okip-ps.is-static .okip-ps__type,
+.okip-ps.is-static .okip-ps__char,
+.okip-ps.is-static .okip-ps__label {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+}
+
+/* ---- Responsive: móvil/tablet (≤1024px) ---- */
+@media (max-width: 1024px) {
+    .okip-ps__row {
+        grid-template-columns: 1fr;
+        gap: clamp(1rem, 3vh, 1.6rem);
+        align-items: stretch;
+    }
+    .okip-ps__left {
+        align-items: stretch;
+    }
+    .okip-ps__visual {
+        border-radius: 12px 40px 40px 12px;
+        max-width: 420px;
+    }
+    .okip-ps__visual--logo-title {
+        aspect-ratio: 16 / 9;
+    }
+    .okip-ps__label {
+        margin-left: 0;
+    }
+}
+
+/* ---- Accesibilidad: reduce-motion ---- */
+@media (prefers-reduced-motion: reduce) {
+    .okip-ps__visual,
+    .okip-ps__card-bg,
+    .okip-ps__type,
+    .okip-ps__char,
+    .okip-ps__label {
+        transition: none !important;
+    }
+}

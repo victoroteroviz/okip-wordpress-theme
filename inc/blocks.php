@@ -30,7 +30,8 @@ function okip_allowed_blocks()
         'hero',
         'parallax-monitor',
         'industry-carousel',
-        // 'product-story', 'statement', 'news'  ← se habilitarán en fases posteriores.
+        'product-story',
+        // 'statement', 'news'  ← se habilitarán en fases posteriores.
     ));
 }
 

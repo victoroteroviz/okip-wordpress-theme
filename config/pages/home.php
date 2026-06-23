@@ -162,4 +162,14 @@ return array(
             ),
         ),
     ),
+
+    array(
+        'type'        => 'product-story',
+        'instance_id' => 'home-product-story',
+        'data'        => array(
+            // Continúa SIN transición tras el Bloque 3 (mismo fondo claro).
+            // Contenido de productos en los defaults del bloque
+            // (config/blocks/product-story.php): RIA, COVIA, GIA.
+        ),
+    ),
 );
