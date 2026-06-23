@@ -273,7 +273,7 @@
 /* ============================================================
    ANIMACIÓN: separación de responsabilidades (evita "letras atascadas").
      - DEPTH ENTRY → transform INLINE (GSAP/rAF) en el nodo EXTERIOR (.okip-pm__bg,
-       .okip-pm__monitor, .okip-pm__text). Termina en y:0 con B2 completo.
+       .okip-pm__monitor, .okip-pm__text). Termina en y:0 antes del handoff a B3.
      - REVEAL  → opacidad/translate por CLASE latcheada (CSS transition) en el
        nodo INTERIOR (.okip-pm__computer-reveal, .okip-pm__text-reveal) y la
        opacidad del fondo. Nunca se mezclan en el mismo nodo, así el contenido
@@ -300,9 +300,8 @@
     opacity: 0;
 }
 
-/* Reveal latcheado (CSS transition suave; el JS añade las 3 clases A LA VEZ,
-   el ESCALONADO lo dan los transition-delay → entrada coreografiada, nunca "de
-   golpe" y nunca atascada: fondo → texto → monitor (protagonista, aterriza al final). */
+/* Reveal latcheado para fallback: fondo → monitor → texto. En GSAP, el timeline
+   maestro escribe opacidad/transform inline y estas transiciones no gobiernan. */
 .okip-pm.is-bg-revealed .okip-pm__bg-inner {
     opacity: 1;
     transition: opacity 1s ease;
@@ -311,19 +310,20 @@
     opacity: 1;
     transform: none;
     transition: opacity .7s ease, transform .8s var(--okip-ease);
-    transition-delay: .14s;
+    transition-delay: .52s;
 }
-.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(2) { transition-delay: .22s; }
-.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(3) { transition-delay: .30s; }
-.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(4) { transition-delay: .38s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(2) { transition-delay: .60s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(3) { transition-delay: .68s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(4) { transition-delay: .76s; }
 .okip-pm.is-computer-revealed .okip-pm__computer-reveal {
     opacity: 1;
     transform: none;
-    transition: opacity .85s ease .32s, transform .95s var(--okip-ease) .32s;
+    transition: opacity .85s ease .18s, transform .95s var(--okip-ease) .18s;
 }
-.okip-pm.is-computer-revealed .okip-pm__monitor--glow::before {
+.okip-pm.is-computer-revealed .okip-pm__monitor--glow::before,
+.okip-pm.is-glow-revealed .okip-pm__monitor--glow::before {
     opacity: var(--okip-pm-glow, 0.6);
-    transition: opacity 1s ease .42s;
+    transition: opacity 1s ease .28s;
 }
 
 /* La profundidad de entrada (GSAP/rAF) escribe `transform` inline en los nodos

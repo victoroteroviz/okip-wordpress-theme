@@ -12,12 +12,8 @@
  *
  * Con GSAP + ScrollTrigger:
  *   1) HERO STICKY: el Hero queda fijo por CSS y B2 lo cubre por flujo/z-index.
- *   2) REVEAL: una sola vez al salir del Hero (~82%). Se añaden las 3 clases a la vez;
- *      el ESCALONADO (fondo → texto → monitor) lo da el CSS (transition-delay) → suave,
- *      nunca intermedio ni atascado.
- *   3) DEPTH ENTRY (parallax): fondo, monitor y texto entran con velocidades
- *      distintas y terminan en y:0 cuando B2 queda completo. El hold posterior
- *      no vuelve a mover esas capas.
+ *   2) DEPTH ENTRY: un timeline maestro usa data-enter para revelar por capas:
+ *      fondo → monitor → texto. Todas terminan en y:0 antes de que B3 cubra B2.
  *   4) HOLD-PIN: el Bloque 2 se pinea sin espacio reservado; B3 sube encima
  *      como panel claro mientras la escena de B2 queda fija.
  *
@@ -58,6 +54,8 @@
 
         var DRIFT        = parseFloat(d.driftMax)       || 140;
         var bgPinVh      = parseFloat(d.bgPinVh)        || 100;
+        var entryScrollVh = clamp(parseFloat(d.entryScrollVh) || 155, 100, 300);
+        var coverDelayVh  = clamp(parseFloat(d.coverDelayVh) || 35, 0, 200);
 
         // ID de instancia para nombrar ScrollTriggers y evitar colisiones entre bloques.
         var pmId = section.id || section.dataset.blockInstance || 'pm';
@@ -71,6 +69,7 @@
                 el:          el,
                 name:        el.getAttribute('data-okip-pm-layer'),
                 speed:       parseFloat(el.dataset.speed) || 0,
+                enter:       parseEnter(el.dataset.enter),
                 revealClass: REVEAL_CLASS[el.getAttribute('data-okip-pm-layer')] || ''
             });
         });
@@ -87,7 +86,8 @@
             if (pr && typeof pr.catch === 'function') { pr.catch(function () {}); }
         }
 
-        // REVEAL: añade las 3 clases A LA VEZ; el CSS las escalona (transition-delay).
+        // Fallback reveal: en GSAP la entrada la gobierna el timeline maestro;
+        // sin GSAP, estas clases permiten mostrar todo con delays CSS.
         var revealed = false;
         function revealAll() {
             if (revealed) { return; }
@@ -97,6 +97,31 @@
         }
 
         function vh() { return window.innerHeight || document.documentElement.clientHeight; }
+        function entryScrollDistance() {
+            return vh() * (entryScrollVh / 100);
+        }
+        function entryExtraDistance() {
+            return Math.max(0, entryScrollDistance() - vh());
+        }
+        function coverGuardDistance() {
+            return vh() * (coverDelayVh / 100);
+        }
+        function parseEnter(value) {
+            var parts = String(value || '').split(',');
+            var start = parseFloat(parts[0]);
+            var end = parseFloat(parts[1]);
+            if (isNaN(start)) { start = 0; }
+            if (isNaN(end)) { end = 1; }
+            start = clamp(start, 0, 1);
+            end = clamp(end, start, 1);
+            return { start: start, end: end, duration: Math.max(end - start, 0.001) };
+        }
+        function layer(name) {
+            for (var i = 0; i < layers.length; i++) {
+                if (layers[i].name === name) { return layers[i]; }
+            }
+            return null;
+        }
 
         // El Hero NO se anima: queda estático y el Bloque 2 lo cubre (apilado). Sin recede.
 
@@ -131,6 +156,8 @@
             var gsap = window.gsap;
             var ST   = window.ScrollTrigger;
 
+            section.classList.add('is-gsap');
+
             // El Hero NO se anima: queda ESTÁTICO (position:sticky en CSS, desktop) y el
             // Bloque 2 (z-index 2, opaco) sube por flujo natural y lo cubre (apilado).
             // Sin recede → contenido del Hero inmóvil y sin jank en el navbar.
@@ -152,38 +179,78 @@
                 return distance > 0 ? distance : fallback;
             }
 
-            // 2) REVEAL one-shot: SOLO al salir del Hero (~82% de su scroll), no al
-            //    asomar el bloque. Así B2 no se "siente presente" antes de tiempo.
-            //    El escalonado fondo→texto→monitor lo da el CSS (transition-delay).
-            ST.create({
-                id:      pmId + '-reveal',
-                trigger: hero || section,
-                start:   hero
-                    ? function () { return 'top+=' + (0.82 * hero.offsetHeight) + ' top'; }
-                    : 'top 55%',
-                once:    true,
-                onEnter: revealAll
-            });
+            function followingBlockMargin() {
+                var naturalDelay = Math.max(0, (section.offsetHeight || vh()) - vh());
+                return Math.max(0, entryExtraDistance() + coverGuardDistance() - naturalDelay);
+            }
 
-            // 3) DEPTH ENTRY: SOLO en nodos exteriores con speed.
-            //    Termina en top top; desde B2 completo y durante el hold, las capas
-            //    quedan en su posición natural (y:0) y no suben con el scroll.
+            function syncFollowingBlockDelay() {
+                var next = section.nextElementSibling;
+                if (!next || !next.hasAttribute('data-okip-ic')) { return; }
+                next.style.setProperty('--okip-pm-to-ic-delay', followingBlockMargin().toFixed(2) + 'px');
+            }
+
+            syncFollowingBlockDelay();
+
+            // 2) DEPTH ENTRY: un solo timeline gobierna fondo → monitor → texto.
+            //    Se extiende más allá del primer viewport; B3 espera esta distancia
+            //    mas un colchon antes de empezar a cubrir la escena.
             if (parallaxOn) {
-                var driftTl = gsap.timeline({
+                var bg = layer('background');
+                var cmp = layer('computer');
+                var txt = layer('text');
+                var bgInner = section.querySelector('.okip-pm__bg-inner');
+                var computerReveal = section.querySelector('.okip-pm__computer-reveal');
+                var textItems = Array.prototype.slice.call(section.querySelectorAll('.okip-pm__text-reveal > *'));
+
+                var entryTl = gsap.timeline({
                     scrollTrigger: {
-                        id: pmId + '-drift',
+                        id: pmId + '-depth-entry',
                         trigger: section,
                         start: 'top bottom',
-                        end:   'top top',
+                        end: function () { return '+=' + entryScrollDistance(); },
                         scrub: true,
                         invalidateOnRefresh: true,
                         onLeave: forceLayersRest
                     }
                 });
-                layers.forEach(function (L) {
-                    if (!L.speed) { return; }
-                    driftTl.fromTo(L.el, { y: L.speed * DRIFT }, { y: 0, ease: 'none' }, 0);
-                });
+
+                if (bg) {
+                    entryTl.fromTo(bg.el, { y: bg.speed * DRIFT }, { y: 0, ease: 'none', duration: bg.enter.duration }, bg.enter.start);
+                    if (bgInner) {
+                        entryTl.fromTo(bgInner, { opacity: 0 }, { opacity: 1, ease: 'none', duration: bg.enter.duration }, bg.enter.start);
+                    }
+                }
+
+                if (cmp) {
+                    entryTl.fromTo(cmp.el, { y: cmp.speed * DRIFT }, { y: 0, ease: 'none', duration: cmp.enter.duration }, cmp.enter.start);
+                    if (computerReveal) {
+                        entryTl.fromTo(
+                            computerReveal,
+                            { opacity: 0, y: 46, scale: 0.955 },
+                            { opacity: 1, y: 0, scale: 1, ease: 'none', duration: cmp.enter.duration },
+                            cmp.enter.start
+                        );
+                    }
+                    entryTl.call(function () {
+                        section.classList.add('is-glow-revealed');
+                        if (cmpAutoplay) { playComputer(); }
+                    }, null, cmp.enter.start);
+                }
+
+                if (txt) {
+                    entryTl.fromTo(txt.el, { y: txt.speed * DRIFT }, { y: 0, ease: 'none', duration: txt.enter.duration }, txt.enter.start);
+                    if (textItems.length) {
+                        entryTl.fromTo(
+                            textItems,
+                            { opacity: 0, y: 34 },
+                            { opacity: 1, y: 0, ease: 'none', duration: txt.enter.duration },
+                            txt.enter.start
+                        );
+                    }
+                }
+            } else {
+                revealAll();
             }
 
             // 4) HOLD-PIN: B2 queda fijo sin reservar espacio. B3 (z-index 3)
@@ -198,10 +265,7 @@
                     pinSpacing:    false,
                     anticipatePin: 1,
                     invalidateOnRefresh: true,
-                    onEnter:       forceLayersRest,
-                    onUpdate:      forceLayersRest,
-                    onLeave:       forceLayersRest,
-                    onEnterBack:   forceLayersRest
+                    onLeave:       forceLayersRest
                 });
             }
 
@@ -210,6 +274,7 @@
             window.addEventListener('resize', function () {
                 window.clearTimeout(rt);
                 rt = window.setTimeout(function () {
+                    syncFollowingBlockDelay();
                     ST.refresh();
                 }, 200);
             }, { passive: true });
@@ -222,7 +287,7 @@
         function initVanilla() {
             function entryProgress() {
                 var rect  = section.getBoundingClientRect();
-                return clamp((vh() - rect.top) / vh(), 0, 1);
+                return clamp((vh() - rect.top) / entryScrollDistance(), 0, 1);
             }
             function applyFrame() {
                 var p = parallaxOn ? entryProgress() : 1;
