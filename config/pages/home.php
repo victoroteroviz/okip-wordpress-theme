@@ -106,4 +106,59 @@ return array(
             // background/monitor sin media real → fallback neutro/geométrico mínimo.
         ),
     ),
+
+    array(
+        'type'        => 'industry-carousel',
+        'instance_id' => 'home-industry-carousel',
+        'data'        => array(
+            'content' => array(
+                'eyebrow'      => 'Industrias',
+                'heading_main' => 'Ecosistemas de seguridad',
+                'heading_sub'  => 'físicos y virtuales a la medida',
+            ),
+            'cta' => array(
+                'enabled' => true,
+                'label'   => 'Saber más',
+                'url'     => '/fabrica-de-tecnologias',
+            ),
+            'items' => array(
+                array(
+                    'title'       => 'Gasolineras',
+                    'orange_text' => 'Gasolineras',
+                    'image'       => '',
+                    'alt'         => 'Seguridad en gasolineras',
+                ),
+                array(
+                    'title'       => 'Seguridad pública',
+                    'orange_text' => 'Seguridad pública',
+                    'image'       => '',
+                    'alt'         => 'Monitoreo de seguridad pública',
+                ),
+                array(
+                    'title'       => 'Infraestructura',
+                    'orange_text' => 'Infraestructura',
+                    'image'       => '',
+                    'alt'         => 'Vigilancia de infraestructura',
+                ),
+                array(
+                    'title'       => 'Transporte',
+                    'orange_text' => 'Transporte',
+                    'image'       => '',
+                    'alt'         => 'Control de transporte',
+                ),
+                array(
+                    'title'       => 'Sector privado',
+                    'orange_text' => 'Sector privado',
+                    'image'       => '',
+                    'alt'         => 'Seguridad sector privado',
+                ),
+            ),
+            'animation' => array(
+                'enabled'       => true,
+                'pin_enabled'   => true,
+                'disable_below' => 1024,
+                'scrub'         => 1,
+            ),
+        ),
+    ),
 );

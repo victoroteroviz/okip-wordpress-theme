@@ -29,8 +29,8 @@ function okip_allowed_blocks()
     return apply_filters('okip_allowed_blocks', array(
         'hero',
         'parallax-monitor',
-        // 'industries-carousel', 'product-story',
-        // 'statement', 'news'  ← se habilitarán en fases posteriores.
+        'industry-carousel',
+        // 'product-story', 'statement', 'news'  ← se habilitarán en fases posteriores.
     ));
 }
 

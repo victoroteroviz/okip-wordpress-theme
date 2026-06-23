@@ -1,0 +1,320 @@
+/*
+ * Bloque Industry Carousel (Bloque 3) — estilos.
+ * Ref visual: bloque 3.png.
+ *
+ * Fondo CLARO (blanco/gris suave) — contraste con el Bloque 2 oscuro.
+ * Layout: texto centrado arriba + cinta de imágenes full-width abajo.
+ *
+ * Activa: a color, scale mayor.
+ * Inactivas: grayscale, scale menor.
+ *
+ * En desktop con GSAP: el bloque se pina, la cinta se mueve con transform inline (JS).
+ * En móvil/tablet (≤1024px): is-static, scroll horizontal nativo.
+ *
+ * Namespacing: .okip-ic__* — sin reglas globales que afecten Bloque 2 (.okip-pm__*).
+ */
+
+/* ---- Raíz del bloque ---- */
+.okip-ic {
+    position: relative;
+    min-height: var(--okip-ic-minh, 100svh);
+    z-index: var(--okip-ic-z, 3);
+    background: #f7f8fa;   /* fondo claro, contraste con Bloque 2 */
+    color: #0d1520;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* overflow:clip permite que GSAP pin desborde sin layout jump;
+       no usar overflow:hidden (impediría que la cinta se mueva fuera del bloque en JS) */
+    overflow: clip;
+    isolation: isolate;
+}
+
+/* ---- Contenido de texto centrado ---- */
+.okip-ic__content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 900px;
+    margin-inline: auto;
+    padding-inline: var(--okip-container-pad, 1.5rem);
+    padding-block: clamp(3.5rem, 9vh, 6rem) 0;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.okip-ic__eyebrow {
+    margin: 0 0 .75rem;
+    font-size: .78rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: #7a8899;
+}
+
+/* Título principal uppercase bold (ref: "ECOSISTEMAS DE SEGURIDAD") */
+.okip-ic__heading-main {
+    margin: 0;
+    font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #0d1520;
+}
+
+/* Subtítulo en peso normal (ref: "físicos y virtuales a la medida") */
+.okip-ic__heading-sub {
+    margin: .4rem 0 0;
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    font-weight: 400;
+    color: #5a6475;
+    letter-spacing: 0;
+}
+
+/* ---- Texto naranja: línea propia centrada grande ---- */
+.okip-ic__orange-line {
+    position: relative;
+    margin: clamp(.8rem, 2vh, 1.25rem) 0 0;
+    /* el contenedor toma la altura del texto más largo para evitar layout shift */
+    display: block;
+    min-height: 1.15em;
+}
+
+/* Todos los textos naranjos apilados en la misma celda de grid */
+.okip-ic__orange-wrap {
+    display: inline-grid;
+    vertical-align: top;
+}
+.okip-ic__orange-wrap > * {
+    grid-area: 1 / 1;
+}
+
+/* Texto naranja individual */
+.okip-ic__orange-text {
+    display: block;
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--okip-color-accent, #ff5a14);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .3s ease, transform .35s var(--okip-ease, cubic-bezier(.4,0,.2,1));
+    will-change: opacity, transform;
+    pointer-events: none;
+    user-select: none;
+}
+.okip-ic__orange-text.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    user-select: auto;
+}
+
+/* Solo lectores de pantalla */
+.okip-ic__orange-sr {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* CTA */
+.okip-ic__cta {
+    display: inline-block;
+    margin-top: clamp(.9rem, 2.5vh, 1.5rem);
+    padding: .5rem 1.4rem;
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #0d1520;
+    border: 1.5px solid #0d1520;
+    border-radius: 2px;
+    transition: background .2s ease, color .2s ease;
+}
+.okip-ic__cta:hover,
+.okip-ic__cta:focus-visible {
+    background: #0d1520;
+    color: #fff;
+    outline: none;
+}
+
+/* ---- Cinta de imágenes ---- */
+.okip-ic__strip {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    margin-top: clamp(2rem, 5vh, 3.5rem);
+    /* en desktop el track se mueve con transform (JS); el overflow se recorta aquí */
+    overflow: clip;
+    flex-shrink: 0;
+}
+
+.okip-ic__track {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(.75rem, 1.5vw, 1.25rem);
+    list-style: none;
+    margin: 0;
+    padding: clamp(1rem, 3vh, 2rem) var(--okip-container-pad, 1.5rem);
+    width: max-content;
+    will-change: transform;
+}
+
+/* ---- Ítem individual (solo media, sin cuerpo de texto) ---- */
+.okip-ic__item {
+    flex: 0 0 auto;
+    width: clamp(220px, 28vw, 380px);
+    aspect-ratio: 4 / 3;
+    border-radius: 8px;
+    overflow: hidden;
+    /* Inactivo: escala de grises + pequeño */
+    filter: grayscale(0.85) brightness(0.92);
+    transform: scale(0.9);
+    transition: filter .4s ease, transform .4s var(--okip-ease, cubic-bezier(.4,0,.2,1)),
+                box-shadow .4s ease;
+    cursor: default;
+    background: #d0d5dd; /* placeholder color claro cuando no hay media */
+    will-change: transform, filter;
+}
+/* Activo: a color, escala mayor, sombra */
+.okip-ic__item.is-active {
+    filter: grayscale(0) brightness(1);
+    transform: scale(1.07);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, .22), 0 4px 16px rgba(0, 0, 0, .12);
+    z-index: 1;
+}
+
+/* Media dentro del ítem */
+.okip-ic__item-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Placeholder geométrico cuando no hay media real */
+.okip-ic__item-ph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        repeating-linear-gradient(0deg, rgba(0,0,0,.04) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,.04) 0 1px, transparent 1px 40px),
+        #e0e5ec;
+}
+.okip-ic__item-ph-label {
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #7a8899;
+    text-align: center;
+    padding: .5rem;
+}
+
+/* ---- Puntos indicadores ---- */
+.okip-ic__dots {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    gap: .45rem;
+    padding-block: clamp(.75rem, 2.5vh, 1.5rem);
+    flex-shrink: 0;
+}
+.okip-ic__dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: #c4cad4;
+    cursor: pointer;
+    transition: background .25s ease, transform .25s ease;
+}
+.okip-ic__dot.is-active {
+    background: var(--okip-color-accent, #ff5a14);
+    transform: scale(1.45);
+}
+
+/* ============================================================
+   MODO ESTÁTICO (móvil/tablet / sin GSAP / reduce-motion)
+   ============================================================ */
+.okip-ic.is-static {
+    transform: none !important;
+}
+/* Scroll horizontal nativo */
+.okip-ic.is-static .okip-ic__strip {
+    overflow-x: auto;
+    overflow-y: clip;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 90, 20, .4) transparent;
+}
+.okip-ic.is-static .okip-ic__strip::-webkit-scrollbar { height: 3px; }
+.okip-ic.is-static .okip-ic__strip::-webkit-scrollbar-thumb {
+    background: rgba(255, 90, 20, .4);
+    border-radius: 2px;
+}
+/* En is-static el track no se mueve con JS; los ítems no escalan tanto */
+.okip-ic.is-static .okip-ic__item {
+    filter: none;
+    transform: none;
+}
+.okip-ic.is-static .okip-ic__item.is-active {
+    box-shadow: 0 4px 20px rgba(0,0,0,.14);
+    outline: 2px solid var(--okip-color-accent, #ff5a14);
+    outline-offset: 2px;
+}
+/* En is-static mostrar solo el texto naranja activo */
+.okip-ic.is-static .okip-ic__orange-wrap {
+    display: inline;
+}
+.okip-ic.is-static .okip-ic__orange-text {
+    display: none;
+    opacity: 1;
+    transform: none;
+}
+.okip-ic.is-static .okip-ic__orange-text.is-active {
+    display: inline;
+}
+
+/* ---- Responsive: móvil/tablet (≤1024px) ---- */
+@media (max-width: 1024px) {
+    .okip-ic {
+        min-height: auto;
+        padding-block-start: calc(var(--okip-navbar-h, 68px) + clamp(1.5rem, 4vh, 2.5rem));
+        padding-block-end: clamp(2rem, 6vh, 3.5rem);
+        justify-content: flex-start;
+    }
+    .okip-ic__content {
+        padding-block: clamp(1.5rem, 4vh, 2.5rem) 0;
+    }
+    .okip-ic__item {
+        width: clamp(200px, 65vw, 300px);
+    }
+    .okip-ic__track {
+        padding-inline: var(--okip-container-pad, 1.5rem);
+    }
+}
+
+/* ---- Accesibilidad: reduce-motion ---- */
+@media (prefers-reduced-motion: reduce) {
+    .okip-ic__orange-text {
+        transition: opacity .15s ease;
+        transform: none !important;
+    }
+    .okip-ic__item {
+        transition: filter .15s ease, box-shadow .15s ease;
+        transform: none !important;
+    }
+    .okip-ic__item.is-active {
+        transform: none !important;
+    }
+}

@@ -17,7 +17,7 @@ solo una landing: la arquitectura soporta varias páginas (Contacto, Sala de pre
 Fábrica de tecnologías, etc.).
 
 - Ruta del tema: `www/wp-content/themes/okip-wordpress-theme`
-- Referencias visuales (PNG, NO código): `/home/littlekid/Documentos/Sistemas/okip_landing/referencias`
+- Referencias visuales (PNG, NO código): `www/wp-content/themes/okip-theme/referencias/`
   - `navbar.png`, `bloque 1.png` (Hero) … `bloque 6.png`, `idea panel 1/2.png` (panel admin futuro)
 - **Ignora** las carpetas hermanas `themes/okip` y `themes/okip-theme` (intentos previos;
   el tema activo es `okip-wordpress-theme`).
@@ -285,6 +285,37 @@ glow azul tras el monitor.
 - Contenido actual: eyebrow "Tecnología OKIP", title "Inteligencia visual para
   proteger lo que importa" (highlight "proteger"), CTA "Conocer tecnología" → `/fabrica-de-tecnologias`.
 
+### Industry Carousel (`industry-carousel`) — instancia `home-industry-carousel` · ref `bloque 3.png`
+Sección con **fondo claro** (blanco/gris muy claro) — opuesto al Bloque 2. Estructura visual:
+texto centrado arriba + cinta de imágenes a ancho completo abajo.
+
+**Layout (ref `bloque 3.png`):**
+- `heading_main` en uppercase bold centrado ("ECOSISTEMAS DE SEGURIDAD")
+- `heading_sub` debajo en peso normal ("físicos y virtuales a la medida")
+- Texto naranja en su **propia línea centrada grande** (NO inline en el heading); cambia con el ítem activo
+- Botón CTA pequeño bajo el naranja ("SABER MÁS")
+- Cinta de imágenes full-width al fondo; sin texto debajo de cada tarjeta
+
+**Tarjetas:**
+- Activa: a color, escala mayor (`scale(1.08)`), centrada en viewport
+- Inactivas: escala de grises (`filter: grayscale(0.85)`), escala menor (`scale(0.92)`)
+- Proporción landscape ancha (4/3 aprox.), sin borde card body
+
+**Scroll-driven (desktop, GSAP):**
+- **Un solo ScrollTrigger** (`icId-pin`): `pin:true`, `pinSpacing:true`, `scrub:1`
+- `start: 'top top'`, `end` calculado por la distancia real para centrar del primer al último ítem:
+  `end = Math.abs(firstItemCenterX - lastItemCenterX)` (via `invalidateOnRefresh`)
+- Índice activo: `Math.round(progress * (itemCount - 1))` (no `Math.floor`)
+- Track empieza con el primer ítem centrado; termina con el último ítem centrado
+- **SIN** ST separado de overlay (causaba conflicto con el pin)
+
+**Fallback / móvil ≤1024px:** modo `is-static`, scroll horizontal nativo, IO actualiza activo.
+
+**Config:** `config/blocks/industry-carousel.php`. Grupos: `content` (`heading_main`, `heading_sub`,
+`cta_label`, `cta_url`, `eyebrow`), `items` (lista; cada ítem: `title`, `orange_text`,
+`description`, `image`, `alt`, `video`), `animation` (`enabled`, `pin_enabled`,
+`scroll_distance_vh`, `disable_below`, `scrub`).
+
 ---
 
 ## 10. Estado y roadmap
@@ -307,9 +338,10 @@ glow azul tras el monitor.
 > de la transición con GSAP, navbar oculto en Hero / visible en Bloque 2, hamburguesa por
 > breakpoint, tarjetas sin autoplay. Recargar con Ctrl+Shift+R por caché de CSS/JS.
 
+**En progreso:**
+- Bloque 3 `industry-carousel` → `home-industry-carousel`: implementado, **pendiente verificación visual**.
+
 **Pendiente (NO implementado aún):**
-- Bloque 3 Carrusel de industrias (`bloque 3.png`): palabra naranja cambia con la imagen
-  activa; botones ahora, dejar `interaction_mode: buttons|scroll` para el futuro.
 - Bloque 4 Storytelling productos (`bloque 4.png` + video): scroll narrativo.
 - Bloque 5 Mensaje institucional (`bloque 5.png`): frase centrada, fondo oscuro.
 - Bloque 6 Noticias (`bloque 6.png`): WP_Query por categoría + fallback dummy; ruta a CPT.
@@ -320,6 +352,7 @@ glow azul tras el monitor.
 **`config/pages/home.php` actual (orden):**
 1. `hero` → `home-hero-main`
 2. `parallax-monitor` → `home-parallax-monitor`
+3. `industry-carousel` → `home-industry-carousel`
 
 ---
 
@@ -346,3 +379,20 @@ glow azul tras el monitor.
   para los límites del ScrollTrigger (el Hero se escala y daría feedback).
 - **Lint "short array syntax" (PHP7103):** es solo un *hint*; el tema usa `array()` por
   convención. No "corregir" a `[]`.
+- **Bloque 3 — no usar dos ScrollTriggers simultáneos sobre el mismo nodo:** el ST de
+  overlay (`y: 60vh → 0`) y el ST de pin (`pin:true`) sobre la misma sección se pelean.
+  Usar solo uno: el pin. La entrada visual se consigue con CSS initial state + la secuencia
+  natural del scroll.
+- **Bloque 3 — `end` del pin debe venir de medidas reales:** no usar `scrollDistVh * vh`.
+  Calcular `firstItemCenterX - lastItemCenterX` con `invalidateOnRefresh:true` para que
+  se recalcule en resize. Si se usa distancia arbitraria, el carrusel puede terminar antes
+  de mostrar todos los ítems o crear scroll extra.
+- **Bloque 3 — índice activo con `Math.round`, no `Math.floor`:** `Math.floor(p * N)`
+  llega al último ítem a p=0.75 con N=4, dejando el 25% final sin cambio visual.
+  `Math.round(p * (N-1))` distribuye uniformemente.
+- **Bloque 3 — `overflow:hidden` en el bloque raíz interfiere con pin:** GSAP pin necesita
+  que el bloque no corte su contenido. Usar `overflow:clip` solo en el track-outer o
+  quitar el overflow del raíz en desktop.
+- **Bloque 3 — fondo claro, no oscuro:** la referencia `bloque 3.png` usa fondo blanco/
+  claro. El texto naranja y el heading son oscuros. Es el bloque de mayor contraste con
+  el Bloque 2 (que es oscuro).
