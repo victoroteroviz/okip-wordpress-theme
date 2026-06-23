@@ -16,11 +16,11 @@ de bloques modulares**. La Home se arma como una lista ordenada de bloques. No e
 solo una landing: la arquitectura soporta varias páginas (Contacto, Sala de prensa,
 Fábrica de tecnologías, etc.).
 
-- Ruta del tema: `www/wp-content/themes/okip-wordpress-theme`
+- ⚠️ **Ruta real del tema en ESTE entorno de desarrollo: `www/wp-content/themes/okip-theme`.**
+  La ruta histórica `okip-wordpress-theme` que se citaba aquí **no existe en este entorno**;
+  el tema vivo y completo es `okip-theme`. Trabaja siempre dentro de `okip-theme`.
 - Referencias visuales (PNG, NO código): `www/wp-content/themes/okip-theme/referencias/`
   - `navbar.png`, `bloque 1.png` (Hero) … `bloque 6.png`, `idea panel 1/2.png` (panel admin futuro)
-- **Ignora** las carpetas hermanas `themes/okip` y `themes/okip-theme` (intentos previos;
-  el tema activo es `okip-wordpress-theme`).
 
 ---
 
@@ -32,13 +32,13 @@ WordPress corre en contenedor; el host **no** tiene PHP/WP-CLI.
 |---|---|
 | Contenedor WP | `okip_landing_wordpress` (PHP 8.x) |
 | Sitio | http://localhost:8080/ |
-| WP version | 7.0 · tema activo: `okip-wordpress-theme` |
+| WP version | 7.0 · tema activo: `okip-theme` (ruta real de este entorno) |
 | Host tools | `node`, `python3`, `jq`, `docker` |
 
 Comandos de verificación:
 ```bash
 # Lint PHP (en el contenedor)
-docker exec okip_landing_wordpress sh -c 'cd /var/www/html/wp-content/themes/okip-wordpress-theme && for f in $(find . -name "*.php" -not -path "./.git/*"); do php -l "$f"; done'
+docker exec okip_landing_wordpress sh -c 'cd /var/www/html/wp-content/themes/okip-theme && for f in $(find . -name "*.php" -not -path "./.git/*"); do php -l "$f"; done'
 
 # Sintaxis JS (en el host)
 node --check assets/js/navbar.js
@@ -74,7 +74,7 @@ docker exec okip_landing_wordpress php -r 'define("WP_USE_THEMES",false);require
 ## 4. Estructura
 
 ```
-okip-wordpress-theme/
+okip-theme/
 ├── style.css                 # cabecera del tema
 ├── functions.php             # bootstrap: define constantes, requiere inc/
 ├── front-page.php            # HOME → okip_render_page(okip_get_page_blocks('home'))
@@ -249,41 +249,54 @@ Capas: **1) background media limpio (video|image|svg)** → **2) overlay opciona
 - Texto actual: "Inteligencia mexicana" / "al servicio de la humanidad".
 
 ### Parallax Monitor (`parallax-monitor`) — instancia `home-parallax-monitor` · ref `bloque 2.png`
-Escena oscura **full-screen** (`min-height:100svh`) que ENTRA SOBRE el Hero por
-**progreso de scroll** (no desde el primer pintado). Texto izquierda, monitor derecha,
-glow azul tras el monitor.
+Escena oscura **cinematográfica full-screen** (`min-height:100svh`). Texto grande a la
+izquierda, **monitor protagonista** a la derecha, glow azul tras el monitor, **piso/reflejo
+azul** en la base, fondo negro→azul profundo (sin grid/patrón). **El Hero se mantiene limpio
+y protagonista**: la transición Hero→B2 NO empieza desde el primer pintado, solo al SALIR del
+Hero (≈80% de su scroll).
 
 - **3 capas reales** con z-index 1/2/3 y `data-okip-pm-layer="background|computer|text"`.
-  **Separación reveal/parallax (CLAVE — arregla "letras atascadas"):**
-  - PARALLAX = `transform` inline (GSAP o rAF) en el nodo **EXTERIOR**
+  **Separación estricta reveal/parallax (regla crítica — nunca el mismo nodo):**
+  - PARALLAX = `transform` inline (GSAP o rAF) SOLO en el nodo **EXTERIOR**
     (`.okip-pm__bg`, `.okip-pm__monitor`, `.okip-pm__text`) → solo drift.
-  - REVEAL = opacidad/translate por **CLASE latcheada** (`is-bg-revealed`,
-    `is-computer-revealed`, `is-text-revealed`) en el nodo **INTERIOR**
-    (`.okip-pm__computer-reveal`, `.okip-pm__text-reveal`, y opacidad del fondo),
-    con transición CSS. NUNCA el mismo nodo recibe ambos.
-- **Transición Hero→Bloque 2 (`template-parts/blocks/parallax-monitor/script.js`):**
-  - Con **GSAP+ScrollTrigger**: 2 timelines `scrub:0.6` (suave). (1) overlap del bloque
-    (`y: overlapPx→0`) + hundimiento del Hero (`y/scale/opacity`), `start ≈ top+85%·heroH`,
-    `end +15vh`. (2) parallax drift por capa. Reveal latcheado desde `onUpdate(progress)`
-    (+`onLeave`→final, `onLeaveBack`→inicial). `ScrollTrigger.refresh()` en resize.
-  - **Fallback vanilla** (sin GSAP): rAF + `lerp` (damping), mismo sistema de clases;
-    IO solo activa/desactiva el bucle; al pausar fija estado coherente (inicial/final).
-  - El bloque controla el hundimiento del Hero (por eso el `scroll_3d` del Hero está off).
-  - Desactivado (modo `is-static`, reveal simple por IO) en móvil (≤768px) y reduce-motion.
-- **Overlap sin layout jump:** margin negativo CONSTANTE (solo desktop/no-reduce) +
-  estado inicial counter-transformado hacia abajo + opacidad 0 → no tapa el Hero al cargar.
+  - REVEAL = opacidad/translate por **CLASE** (`is-bg-revealed`, `is-computer-revealed`,
+    `is-text-revealed`) en el nodo **INTERIOR** (`.okip-pm__bg-inner`,
+    `.okip-pm__computer-reveal`, `.okip-pm__text-reveal`), con transición CSS.
+  - **El fondo está dividido en exterior (`.okip-pm__bg`, parallax + headroom `inset:-8% 0`)
+    e interior (`.okip-pm__bg-inner`, reveal/opacidad/media/gradiente).** El gradiente del
+    estado sin media va en `.okip-pm__bg-inner--missing/--gradient`.
+  - **El ROOT `.okip-pm` NUNCA recibe transform de masa** (no se mueve "de golpe").
+- **Transición Hero→Bloque 2 (`script.js`) — 3 conceptos SEPARADOS:**
+  1. **Hero recede** (scrub, `trigger: hero`): el Hero se hunde (`y/scale/opacity`) SOLO en
+     su último ~20% (`start ≈ top+80%·heroH`, `end ≈ top+100%·heroH`). El bloque controla
+     el hundimiento del Hero (por eso el `scroll_3d` del Hero está off).
+  2. **Reveal one-shot** (`once`, `trigger: hero`, `start ≈ top+82%·heroH`): añade las 3
+     clases de reveal A LA VEZ; el **escalonado fondo→texto→monitor lo da el CSS**
+     (`transition-delay`) → suave, nunca "de golpe" ni atascado. (No usa `onUpdate`.)
+  3. **Parallax drift** (scrub, `trigger: section`): `fromTo(y)` por capa en los nodos
+     exteriores con `data-speed`.
+  - **Fallback vanilla** (sin GSAP): rAF para drift + recede; reveal por IO one-shot
+    (threshold 0.45). `heroProgress` arranca al 80%. Sin pin (B2→B3 degrada a apilado).
+  - Desactivado (modo `is-static`, reveal inmediato) en móvil/tablet (**≤1024px**) y reduce-motion.
+- **Transición Bloque 2 → Bloque 3 (overlap real):** B2 se **auto-pinea como fondo**
+  (`{id}-bgpin`: `pin:true, pinSpacing:false`, dura `background_pin_vh` vh ≈ 90) → queda
+  FIJO (position:fixed, **sin transform**) mientras el Bloque 3 (z-index mayor) **sube por
+  scroll ENCIMA**. B3 NUNCA escribe transforms sobre `.okip-pm` ni sus capas. Solo desktop+GSAP.
 - **Monitor media-driven:** `computer.type` (`video|image|svg|placeholder`) + `computer.media`;
-  sin media → **placeholder geométrico** + marco mínimo (no mockup). `autoplay_on_enter`:
-  el video de pantalla SÍ puede arrancar al entrar su capa (es parte de la escena).
-- **Título con resaltado:** `highlighted_text` envuelto en `.okip-pm__highlight` (naranja), escapado.
-- Config: `config/blocks/parallax-monitor.php`. Grupos: `content`, `layout`
-  (`min_height`, `overlap_previous`, `overlap_start≈0.85`, `overlap_amount`, `z_index`),
-  `background`, `computer`, `cta`, `overlay`, `glow` (`enabled`,`intensity`),
-  `animation` (`use_gsap`, `use_vanilla_fallback`, `parallax_enabled`,
-  `overlap_transition_enabled`, `start_progress`, `{background,computer,text}_speed`,
-  `{background,computer,text}_enter_range`, `pin_enabled=false`, `text_reveal`).
-- Contenido actual: eyebrow "Tecnología OKIP", title "Inteligencia visual para
-  proteger lo que importa" (highlight "proteger"), CTA "Conocer tecnología" → `/fabrica-de-tecnologias`.
+  sin media → **placeholder esquemático tipo dashboard** (barra+dots, panel "mapa", tarjetas
+  laterales) + marco mínimo. `autoplay_on_enter`: el video de pantalla puede arrancar al revelarse.
+- **Título con resaltado:** `highlighted_text` envuelto en `.okip-pm__highlight` = **negrita
+  blanca** (NO color naranja; ref `bloque 2.png`), escapado. `subtitle` = kicker uppercase
+  letterspaced bajo el título.
+- Config: `config/blocks/parallax-monitor.php`. Grupos: `content` (`eyebrow`, `title`,
+  `highlighted_text`, `subtitle`, `description`), `layout` (`overlap_amount≈8vh`…),
+  `background`, `computer`, `cta`, `overlay`, `glow`, `animation` (`use_gsap`,
+  `use_vanilla_fallback`, `parallax_enabled`, `background_pin`, `background_pin_vh=90`,
+  `parallax_drift_px=100`, `{background,computer,text}_speed` = **0.30 / 0.85 / 0.08**,
+  `disable_parallax_below=1024`, `text_reveal`).
+- Contenido actual: title "Facilitando la **toma de decisiones** en tiempo real" (highlight
+  "toma de decisiones"), subtitle "MONITOREO, GESTIÓN E INTELIGENCIA OPERATIVA", **sin CTA**
+  (la referencia no lo muestra), sin eyebrow ni descripción.
 
 ### Industry Carousel (`industry-carousel`) — instancia `home-industry-carousel` · ref `bloque 3.png`
 Sección con **fondo claro** (blanco/gris muy claro) — opuesto al Bloque 2. Estructura visual:
@@ -328,9 +341,12 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
   (funciona con `wp_nav_menu`), subrayado activo.
 - Hero media-driven con escena dual-video (intro→crossfade→loop); **tarjetas con placeholder**
   (sin media) y reproducción solo por hover/tap via `play_mode` (sin autoplay).
-- **Bloque 2:** escena full-screen, transición Hero→Bloque 2 con GSAP+ScrollTrigger
-  (scrub) + fallback vanilla; 3 capas con reveal latcheado SEPARADO del parallax
-  (sin "letras atascadas").
+- **Bloque 2 (Rev.2):** rediseño visual hacia `bloque 2.png` (fondo premium, monitor
+  protagonista con mockup dashboard, glow + piso/reflejo, título con highlight negrita +
+  subtítulo). Hero protagonista: transición Hero→B2 solo al salir del Hero (recede 80% +
+  reveal one-shot 82%, root sin transform). Fondo dividido exterior(parallax)/interior(reveal);
+  drift visible en las 3 capas (0.30/0.85/0.08). **Transición B2→B3:** B2 auto-pin como fondo
+  (`pinSpacing:false`) y B3 sube encima por z-index, sin tocar `.okip-pm`.
 - Páginas placeholder: `config/pages/{contacto,sala-de-prensa,fabrica-de-tecnologias}.php`
   (devuelven `[]` → fallback `the_content()`).
 
@@ -369,8 +385,25 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
 - **Imágenes/video en `assets/`:** siguen vacías → fondos en fallback neutro y tarjetas/
   monitor en placeholder; es lo esperado, no un bug.
 - **Bloque 2 — no mezclar reveal y parallax en el mismo nodo:** parallax (transform inline)
-  va en el nodo EXTERIOR; reveal (clase latcheada) en el INTERIOR. Si los juntas, vuelve el
-  bug de "letras atascadas" al pausar el rAF/ScrollTrigger.
+  va en el nodo EXTERIOR; reveal (clase/opacidad) en el INTERIOR. Aplica también al FONDO:
+  `.okip-pm__bg` (exterior) solo transform; `.okip-pm__bg-inner` (interior) solo opacidad/
+  media/gradiente. Si los juntas, el contenido se congela en estado intermedio.
+- **Bloque 2 — el ROOT `.okip-pm` no debe recibir transform de masa:** mueve "todo de golpe"
+  y rompe la sensación de capas. El overlap Hero→B2 por margin negativo ("lip") fue ELIMINADO
+  porque hacía que B2 invadiera al Hero desde el load. El Hero queda limpio; B2 entra solo por
+  recede del Hero + reveal escalonado.
+- **Bloque 2 — disparar la transición tarde (al SALIR del Hero):** recede `start ≈ top+80%·heroH`,
+  reveal one-shot `start ≈ top+82%·heroH`, ambos `trigger: hero`. Disparar temprano (50% o
+  `section top 78%`) le quita protagonismo al Hero.
+- **Bloque 2 — reveal one-shot (no `onUpdate`):** se añaden las 3 clases a la vez y el CSS las
+  escalona con `transition-delay`. Latchear por `onUpdate(progress)` en un rango corto hace que
+  todo "suba de golpe".
+- **Bloque 2 — drift del fondo debe ser visible:** con `speed` muy bajo (≈0.16) parece que solo
+  se mueve el monitor. Valores actuales 0.30/0.85/0.08; el exterior del fondo necesita headroom
+  (`inset:-8% 0`) para que el drift no descubra bordes.
+- **Bloque 2 → Bloque 3 (overlap):** B2 se auto-pinea (`pin:true, pinSpacing:false`) como fondo
+  fijo (position:fixed, sin transform) y B3 sube encima por z-index. B3 **no** debe escribir
+  transforms sobre `.okip-pm` ni sus capas. El handoff con el pin del carrusel de B3 es secuencial.
 - **No animar el Hero desde dos sitios:** su `scroll_3d` está OFF en Home porque el Bloque 2
   ya transforma el Hero (`hero.style.transform/opacity`). Si reactivas `scroll_3d` en Home,
   habrá doble transform.
