@@ -182,40 +182,44 @@
     }
 
     /* ---------- Tarjetas: SOLO se activan por interacción (nunca autoplay) ----------
-     * play_mode: hover (puntero fino) | tap (táctil) | manual (click siempre).
-     * Por defecto NO se reinicia/pausa al salir del hover (reset_on_leave=0).
+     * play_mode: hover | tap | manual.
+     *   hover  → mouseenter/mouseleave en punteros finos; click (toggle) en táctil.
+     *   tap    → click (reproducir) siempre, independientemente del dispositivo.
+     *   manual → click alterna play/pause siempre.
+     * reset_on_leave=false (default): al salir del hover el video CONTINÚA (no pausa).
      * Los placeholders (sin <video>) se ignoran sin lanzar errores. */
     function setupCards(hero) {
         var cards = hero.querySelectorAll('[data-okip-hero-card]');
-        var finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        var finePointer = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
 
         cards.forEach(function (card) {
             var video = card.querySelector('video');
             if (!video) { return; } // placeholder u otro tipo: nada que reproducir
 
-            var playMode = card.getAttribute('data-play-mode') || 'hover';
+            var playMode     = card.getAttribute('data-play-mode') || 'hover';
             var resetOnLeave = card.getAttribute('data-reset-on-leave') === '1';
-            var allowHover = playMode === 'hover' && card.getAttribute('data-hover') !== '0';
-            var allowTap = (playMode === 'tap' || playMode === 'manual') ? true
-                : card.getAttribute('data-tap') !== '0';
 
             var play = function () {
                 var p = video.play();
                 if (p && typeof p.catch === 'function') { p.catch(function () {}); }
             };
-            var leave = function () {
-                if (!resetOnLeave) { return; } // continuar reproduciéndose
-                try { video.pause(); video.currentTime = 0; } catch (e) {}
+            var pause = function () {
+                try { video.pause(); if (resetOnLeave) { video.currentTime = 0; } } catch (e) {}
             };
 
-            if (finePointer && allowHover) {
-                card.addEventListener('mouseenter', play);
-                card.addEventListener('mouseleave', leave);
-            }
-            if ((!finePointer && allowTap) || (finePointer && (playMode === 'tap' || playMode === 'manual'))) {
+            if (playMode === 'hover') {
+                if (finePointer) {
+                    // Puntero fino: hover activa/desactiva.
+                    card.addEventListener('mouseenter', play);
+                    card.addEventListener('mouseleave', pause);
+                } else {
+                    // Táctil: click reproduce (sin toggle, sigue siempre).
+                    card.addEventListener('click', play);
+                }
+            } else {
+                // tap | manual: click siempre, alterna play/pause.
                 card.addEventListener('click', function () {
-                    if (video.paused) { play(); }
-                    else if (resetOnLeave || playMode === 'manual') { video.pause(); }
+                    if (video.paused) { play(); } else { pause(); }
                 });
             }
         });

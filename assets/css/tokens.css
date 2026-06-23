@@ -41,4 +41,11 @@
 
     /* Easing */
     --okip-ease: cubic-bezier(.22, 1, .36, 1);
+
+    /*
+     * Breakpoints (referencia — NO usables en @media queries directamente).
+     *   --okip-bp-mobile : 768px  → Hero layout móvil (grid single-col)
+     *   --okip-bp-tablet : 1024px → Navbar hamburguesa · PM is-static + single-col
+     * Todos los @media del tema deben usar ESTOS valores para consistencia.
+     */
 }

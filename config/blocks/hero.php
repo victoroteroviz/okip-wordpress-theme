@@ -49,16 +49,13 @@ if (! function_exists('okip_hero_card_defaults')) {
             'alt'                 => '',
             'x'                   => 50.0,     // % (0..100) — solo desktop
             'y'                   => 50.0,     // % (0..100) — solo desktop
-            'autoplay_on_hover'   => true,
-            'play_on_tap'         => true,
             'glow'                => true,
             'scanline'            => false,
             'placeholder_label'   => '',      // texto del placeholder temporal
             'placeholder_enabled' => true,    // mostrar placeholder si no hay media real
             // Reproducción: NUNCA autoplay al cargar/entrar. Solo por interacción.
-            'play_mode'                => 'hover', // hover | tap | manual
-            'continue_after_interaction' => true,  // sigue reproduciendo tras activarse
-            'reset_on_leave'           => false,   // al salir del hover NO reinicia/pausa
+            'play_mode'      => 'hover', // hover | tap | manual
+            'reset_on_leave' => false,   // al salir del hover NO reinicia/pausa (continúa)
         );
     }
 }
@@ -104,7 +101,6 @@ if (! function_exists('okip_normalize_hero_data')) {
         $data['reveal']['image_reveal_delay']      = okip_clamp_int($data['reveal']['image_reveal_delay'], 0, 20000);
         $data['reveal']['cards_delay_after_intro'] = okip_clamp_int($data['reveal']['cards_delay_after_intro'], 0, 10000);
         $data['reveal']['text_delay_after_intro']  = okip_clamp_int($data['reveal']['text_delay_after_intro'], 0, 10000);
-        $data['reveal']['replay_on_enter']         = okip_bool($data['reveal']['replay_on_enter']);
         $data['reveal']['pause_or_blur_on_fail']   = okip_bool($data['reveal']['pause_or_blur_on_fail']);
 
         // Transición intro → loop.
@@ -129,15 +125,12 @@ if (! function_exists('okip_normalize_hero_data')) {
             $card['type']   = okip_one_of($card['type'], $card_allowed, 'image');
             $card['x']      = okip_clamp_float($card['x'], 0, 100);
             $card['y']      = okip_clamp_float($card['y'], 0, 100);
-            $card['autoplay_on_hover']   = okip_bool($card['autoplay_on_hover']);
-            $card['play_on_tap']         = okip_bool($card['play_on_tap']);
             $card['glow']                = okip_bool($card['glow']);
             $card['scanline']            = okip_bool($card['scanline']);
             $card['placeholder_enabled'] = okip_bool($card['placeholder_enabled']);
             $card['placeholder_label']   = is_string($card['placeholder_label']) ? $card['placeholder_label'] : '';
-            $card['play_mode']                 = okip_one_of($card['play_mode'], $play_allowed, 'hover');
-            $card['continue_after_interaction'] = okip_bool($card['continue_after_interaction']);
-            $card['reset_on_leave']            = okip_bool($card['reset_on_leave']);
+            $card['play_mode']      = okip_one_of($card['play_mode'], $play_allowed, 'hover');
+            $card['reset_on_leave'] = okip_bool($card['reset_on_leave']);
 
             $result[] = $card;
         }
@@ -184,12 +177,11 @@ return array(
         'opacity' => 0.35,  // 0..1 — capa ligera, no reemplaza el fondo
     ),
     'reveal' => array(
-        'reveal_after_intro'      => true,  // revelar tarjetas/texto al terminar el intro
-        'image_reveal_delay'      => 1500,  // ms (image/svg/gradient o cuando no hay intro)
-        'cards_delay_after_intro' => 300,   // ms tras el fin del intro → tarjetas
-        'text_delay_after_intro'  => 600,   // ms tras el fin del intro → texto
-        'replay_on_enter'         => false, // NO reiniciar la escena al volver al Hero
-        'pause_or_blur_on_fail'   => true,  // al fallar sin loop/fallback: degradar el fondo
+        'reveal_after_intro'      => true, // revelar tarjetas/texto al terminar el intro
+        'image_reveal_delay'      => 1000, // ms (image/svg/gradient o sin intro/loop)
+        'cards_delay_after_intro' => 300,  // ms tras el fin del intro → tarjetas
+        'text_delay_after_intro'  => 600,  // ms tras el fin del intro → texto
+        'pause_or_blur_on_fail'   => true, // al fallar sin loop/fallback: degradar el fondo
     ),
     'transition' => array(
         'intro_to_loop_crossfade' => true, // crossfade suave intro → loop (sin parpadeo)

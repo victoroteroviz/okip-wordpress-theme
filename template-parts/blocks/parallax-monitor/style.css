@@ -255,8 +255,12 @@
    NO tienen transición CSS de transform → no hay conflicto. El reveal (opacidad/
    translate) vive en nodos INTERIORES con su propia transición CSS, intacta. */
 
-/* Modo estático (móvil / reduce-motion / sin overlap): sin parallax.
-   El JS marca is-static y latchea los reveals igual (vía IO). */
+/* Modo estático (móvil/tablet ≤1024px / reduce-motion / sin overlap): sin parallax.
+   El JS marca is-static y latchea todos los reveals de inmediato (revealAll). */
+.okip-pm.is-static {
+    transform: none !important; /* seguridad si el JS escribe algo antes de reinicializar */
+    margin-top: 0 !important;
+}
 .okip-pm.is-static .okip-pm__bg,
 .okip-pm.is-static .okip-pm__monitor,
 .okip-pm.is-static .okip-pm__text {
@@ -268,24 +272,26 @@
    Margin negativo (constante, sin layout jump) + estado inicial
    counter-transformado hacia abajo (invisible) para no tapar el Hero.
    ============================================================ */
-@media (prefers-reduced-motion: no-preference) and (min-width: 881px) {
+@media (prefers-reduced-motion: no-preference) and (min-width: 1025px) {  /* --okip-bp-tablet: 1024px */
     .okip-pm--transition {
         margin-top: calc(-1 * var(--okip-pm-overlap, 0px));
         border-top-left-radius: clamp(18px, 3vw, 40px);
         border-top-right-radius: clamp(18px, 3vw, 40px);
         box-shadow: 0 -40px 80px rgba(0, 0, 0, .55);
     }
-    /* Antes de que el JS escriba el primer frame: counter-transform + invisible. */
+    /* Antes de que el JS escriba el primer frame: counter-transform invisible. */
     .okip-js .okip-pm--transition {
         transform: translate3d(0, var(--okip-pm-overlap, 0px), 0);
     }
 }
 
-/* ---- Responsive: tablet/móvil → vertical (texto y luego monitor) ---- */
-@media (max-width: 880px) {
+/* ---- Responsive: móvil/tablet (≤1024px) → vertical (texto y luego monitor) ---- */
+@media (max-width: 1024px) {  /* --okip-bp-tablet */
     .okip-pm {
         min-height: auto;
-        padding-block: clamp(3.5rem, 10vh, 6rem);
+        /* padding-top >= navbar (68px) + margen de respiro para que el título no quede cortado */
+        padding-block-start: calc(var(--okip-navbar-h, 68px) + clamp(2rem, 5vh, 3.5rem));
+        padding-block-end: clamp(3rem, 8vh, 5rem);
     }
     .okip-pm__inner {
         grid-template-columns: 1fr;

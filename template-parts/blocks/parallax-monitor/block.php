@@ -9,8 +9,8 @@
  *   2) computer   (z2, data-okip-pm-layer="computer")   — entra con retardo
  *   3) text       (z3, data-okip-pm-layer="text")        — entra al final, arriba
  *
- * Toda la lógica de transición/parallax vive en script.js (vanilla, sin GSAP por
- * ahora; soporta GSAP futuro). El template solo expone config como data-* y vars
+ * Toda la lógica de transición/parallax vive en script.js (GSAP+ScrollTrigger si
+ * disponibles, con fallback vanilla rAF+lerp). El template solo expone config como data-* y vars
  * CSS. Scope por instancia con id + data-block-instance.
  *
  * @package OKIP

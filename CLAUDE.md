@@ -1,3 +1,4 @@
+
 # OKIP Theme — Contexto del proyecto
 
 Documento de transferencia para retomar el desarrollo en una sesión nueva.
@@ -15,10 +16,11 @@ de bloques modulares**. La Home se arma como una lista ordenada de bloques. No e
 solo una landing: la arquitectura soporta varias páginas (Contacto, Sala de prensa,
 Fábrica de tecnologías, etc.).
 
-- Ruta del tema: `www/wp-content/themes/okip-theme`
+- Ruta del tema: `www/wp-content/themes/okip-wordpress-theme`
 - Referencias visuales (PNG, NO código): `/home/littlekid/Documentos/Sistemas/okip_landing/referencias`
   - `navbar.png`, `bloque 1.png` (Hero) … `bloque 6.png`, `idea panel 1/2.png` (panel admin futuro)
-- **Ignora** la carpeta hermana `themes/okip` (intento previo; no se usa).
+- **Ignora** las carpetas hermanas `themes/okip` y `themes/okip-theme` (intentos previos;
+  el tema activo es `okip-wordpress-theme`).
 
 ---
 
@@ -30,13 +32,13 @@ WordPress corre en contenedor; el host **no** tiene PHP/WP-CLI.
 |---|---|
 | Contenedor WP | `okip_landing_wordpress` (PHP 8.x) |
 | Sitio | http://localhost:8080/ |
-| WP version | 7.0 · tema activo: `okip-theme` |
+| WP version | 7.0 · tema activo: `okip-wordpress-theme` |
 | Host tools | `node`, `python3`, `jq`, `docker` |
 
 Comandos de verificación:
 ```bash
 # Lint PHP (en el contenedor)
-docker exec okip_landing_wordpress sh -c 'cd /var/www/html/wp-content/themes/okip-theme && for f in $(find . -name "*.php" -not -path "./.git/*"); do php -l "$f"; done'
+docker exec okip_landing_wordpress sh -c 'cd /var/www/html/wp-content/themes/okip-wordpress-theme && for f in $(find . -name "*.php" -not -path "./.git/*"); do php -l "$f"; done'
 
 # Sintaxis JS (en el host)
 node --check assets/js/navbar.js
@@ -72,7 +74,7 @@ docker exec okip_landing_wordpress php -r 'define("WP_USE_THEMES",false);require
 ## 4. Estructura
 
 ```
-okip-theme/
+okip-wordpress-theme/
 ├── style.css                 # cabecera del tema
 ├── functions.php             # bootstrap: define constantes, requiere inc/
 ├── front-page.php            # HOME → okip_render_page(okip_get_page_blocks('home'))
@@ -105,7 +107,7 @@ okip-theme/
     ├── css/                  # tokens, base, layout, components (globales)
     ├── js/                   # app.js, gsap-init.js, navbar.js (globales)
     ├── img/ video/ svg/      # media real (HOY VACÍO → todo cae a fallback)
-    └── vendor/gsap/          # gsap.min.js + ScrollTrigger.min.js (HOY ausentes; ver README)
+    └── vendor/gsap/          # gsap.min.js + ScrollTrigger.min.js (GSAP 3.15.0 instalado)
 ```
 
 **Regla:** `inc/` = lógica · `config/` = datos+esquema · `template-parts/blocks/<type>/` =
@@ -227,23 +229,23 @@ Capas: **1) background media limpio (video|image|svg)** → **2) overlay opciona
   NO llama `play()`. Solo se activa por interacción: `play_mode` = `hover|tap|manual`
   (`setupCards()`). `reset_on_leave=false` (default) → al salir del hover NO reinicia
   (continúa). Placeholder (sin `<video>`) se ignora sin error.
-- **Secuencia de entrada (JS):** fondo → tarjetas → texto, según `reveal.strategy`:
-  - `video_end` (default): revela al terminar el video.
-  - `canplay`: revela cuando el video puede reproducirse (loop).
-  - `delay`: revela tras `image_reveal_delay`.
-  - image/svg/missing → revela tras `image_reveal_delay` (default 1500 ms).
-  - Si el video falla o no arranca antes de `video_fail_timeout` (2000 ms) →
-    fallback: `is-bg-failed` (neutro + atenuado), pausa video, revela contenido.
-- **Reentrada:** `replay_on_enter` → al volver al Hero (IntersectionObserver, fallback
-  scrollY) se reinicia: video a `currentTime=0`, tarjetas/texto se ocultan y re-animan.
+- **Secuencia de entrada (JS) — escena dual-video:**
+  1. **Intro** (`background.intro_media`): se reproduce UNA vez; tarjetas y texto permanecen ocultos.
+  2. Al terminar (o al fallar antes de `intro.fail_timeout`, 2500 ms): crossfade al **loop**
+     (`background.loop_media`) que queda en bucle continuo (clase `is-loop-visible`).
+  3. Tras el crossfade: revela tarjetas (`reveal.cards_delay_after_intro`, default 300 ms)
+     y después texto (`reveal.text_delay_after_intro`, default 600 ms).
+  - Sin intro + sin loop (image/svg/missing): revela tras `reveal.image_reveal_delay` (default 1000 ms).
+  - Si no hay loop/fallback: fondo neutro (`is-bg-failed`). Nunca rompe.
+  - La escena **no se reinicia** al volver al Hero: el loop sigue vivo y el contenido
+    permanece visible. (`replay_on_enter` fue eliminado en la simplificación del modelo.)
 - **Scroll 3D** (`animation.scroll_3d`): existe pero está **DESACTIVADO en Home**
   (`config/pages/home.php` → hero `animation.scroll_3d=false`) para que el hundimiento
   del Hero lo controle el Bloque 2 (evita doble transform con GSAP). En otras páginas
   sigue disponible.
-- Config: `config/blocks/hero.php`. Grupos: `content`, `background`, `overlay`,
-  `reveal`, `cards` (lista; defaults en `okip_hero_card_defaults()` — incluye
-  `placeholder_label/placeholder_enabled`, `play_mode/continue_after_interaction/reset_on_leave`),
-  `animation`.
+- Config: `config/blocks/hero.php`. Grupos: `content`, `background`, `intro`, `loop`,
+  `overlay`, `reveal`, `transition`, `cards` (lista; defaults en `okip_hero_card_defaults()` —
+  incluye `placeholder_label/placeholder_enabled`, `play_mode/reset_on_leave`), `animation`.
 - Texto actual: "Inteligencia mexicana" / "al servicio de la humanidad".
 
 ### Parallax Monitor (`parallax-monitor`) — instancia `home-parallax-monitor` · ref `bloque 2.png`
@@ -267,7 +269,7 @@ glow azul tras el monitor.
   - **Fallback vanilla** (sin GSAP): rAF + `lerp` (damping), mismo sistema de clases;
     IO solo activa/desactiva el bucle; al pausar fija estado coherente (inicial/final).
   - El bloque controla el hundimiento del Hero (por eso el `scroll_3d` del Hero está off).
-  - Desactivado (modo `is-static`, reveal simple por IO) en móvil (≤880px) y reduce-motion.
+  - Desactivado (modo `is-static`, reveal simple por IO) en móvil (≤768px) y reduce-motion.
 - **Overlap sin layout jump:** margin negativo CONSTANTE (solo desktop/no-reduce) +
   estado inicial counter-transformado hacia abajo + opacidad 0 → no tapa el Hero al cargar.
 - **Monitor media-driven:** `computer.type` (`video|image|svg|placeholder`) + `computer.media`;
@@ -293,8 +295,8 @@ glow azul tras el monitor.
 - Navbar: full-bleed estilo `navbar.png`, oculto-en-Hero por progreso de scroll (con guard
   `offsetHeight<=0`), hamburguesa solo ≤1024px, estilos por `.okip-navbar__menu a`
   (funciona con `wp_nav_menu`), subrayado activo.
-- Hero media-driven con secuencia/reentrada; **tarjetas con placeholder** (sin media) y
-  reproducción solo por hover/tap (sin autoplay).
+- Hero media-driven con escena dual-video (intro→crossfade→loop); **tarjetas con placeholder**
+  (sin media) y reproducción solo por hover/tap via `play_mode` (sin autoplay).
 - **Bloque 2:** escena full-screen, transición Hero→Bloque 2 con GSAP+ScrollTrigger
   (scrub) + fallback vanilla; 3 capas con reveal latcheado SEPARADO del parallax
   (sin "letras atascadas").

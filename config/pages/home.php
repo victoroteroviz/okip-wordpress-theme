@@ -43,8 +43,8 @@ return array(
                 'opacity' => 0.35,
             ),
             'reveal' => array(
-                // El intro se reproduce una sola vez; al volver al Hero NO se reinicia.
-                'replay_on_enter' => false,
+                // image_reveal_delay usa el default de 1000ms del esquema.
+                // Sin media real, ese es el tiempo de espera antes de revelar tarjetas y texto.
             ),
             'animation' => array(
                 // El hundimiento del Hero durante la transición lo controla el
