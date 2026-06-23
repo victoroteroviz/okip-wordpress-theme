@@ -11,22 +11,20 @@
  *      Nunca reveal y parallax en el mismo nodo.
  *
  * Con GSAP + ScrollTrigger (desktop > disable_below):
- *   1) HERO RECEDE: el Hero se hunde (y/scale/opacity) mientras sale (scrub, rango amplio).
- *   2) REVEAL: una sola vez al entrar el bloque (top 78%). Se añaden las 3 clases a la vez;
+ *   1) HERO STICKY: el Hero queda fijo por CSS y B2 lo cubre por flujo/z-index.
+ *   2) REVEAL: una sola vez al salir del Hero (~82%). Se añaden las 3 clases a la vez;
  *      el ESCALONADO (fondo → texto → monitor) lo da el CSS (transition-delay) → suave,
  *      nunca intermedio ni atascado.
  *   3) DRIFT (parallax): fondo lento, monitor visible, texto micro — en nodos exteriores.
- *   4) BG-PIN: el Bloque 2 se pinea (pinSpacing:false) como FONDO ESTÁTICO mientras el
- *      Bloque 3 (z-index mayor) sube por scroll ENCIMA de él. No escribe nada sobre B3.
+ *   4) HOLD-PIN: el Bloque 2 se pinea con espacio reservado para que su escena
+ *      termine antes de que el Bloque 3 entre. No escribe nada sobre B3.
  *
- * Sin GSAP: fallback vanilla rAF (drift) + IO one-shot (reveal). Sin pin (apilado normal).
+ * Sin GSAP: fallback vanilla rAF (drift) + IO one-shot (reveal). Sin pin.
  * Móvil/tablet (≤disable_below): is-static, reveal inmediato, sin parallax ni pin.
  * Respeta prefers-reduced-motion. No duplica listeners.
  */
 (function () {
     'use strict';
-
-    var LERP = 0.09; // suavizado del fallback vanilla
 
     var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
@@ -38,7 +36,6 @@
     }
 
     function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
-    function lerp(a, b, t)  { return a + (b - a) * t; }
 
     var REVEAL_CLASS = {
         background: 'is-bg-revealed',
@@ -52,7 +49,6 @@
 
         var d          = section.dataset;
         var animOn     = d.anim       === '1';
-        var transition = d.transition === '1';
         var parallaxOn = d.parallax   === '1';
         var useGsap    = d.useGsap    !== '0'; // true por defecto
         var useVanilla = d.useVanilla !== '0'; // true por defecto
@@ -102,17 +98,7 @@
 
         function vh() { return window.innerHeight || document.documentElement.clientHeight; }
 
-        function applyHeroRecede(p) {
-            if (!hero) { return; }
-            if (p <= 0.001) {
-                hero.style.transform = '';
-                hero.style.opacity   = '';
-                return;
-            }
-            hero.style.transformOrigin = 'center top';
-            hero.style.transform = 'translate3d(0,' + lerp(0, 24, p).toFixed(2) + 'px,0) scale(' + lerp(1, 0.94, p).toFixed(4) + ')';
-            hero.style.opacity   = lerp(1, 0.66, p).toFixed(3);
-        }
+        // El Hero NO se anima: queda estático y el Bloque 2 lo cubre (apilado). Sin recede.
 
         var canAnimate = animOn && !reduceMotion && !isSmall && layers.length > 0;
 
@@ -143,20 +129,19 @@
             var gsap = window.gsap;
             var ST   = window.ScrollTrigger;
 
-            // 1) HERO RECEDE: hundimiento del Hero SOLO al salir (último ~20% de su
-            //    scroll). Empieza al 80% → el Hero se mantiene limpio y protagonista
-            //    hasta que el usuario realmente lo abandona.
-            if (transition && hero) {
-                gsap.timeline({
-                    scrollTrigger: {
-                        id: pmId + '-hero',
-                        trigger: hero,
-                        start: function () { return 'top+=' + (0.80 * hero.offsetHeight) + ' top'; },
-                        end:   function () { return 'top+=' + hero.offsetHeight + ' top'; },
-                        scrub: 0.6,
-                        invalidateOnRefresh: true
-                    }
-                }).to(hero, { y: 24, scale: 0.94, opacity: 0.66, transformOrigin: 'center top', ease: 'none' }, 0);
+            // El Hero NO se anima: queda ESTÁTICO (position:sticky en CSS, desktop) y el
+            // Bloque 2 (z-index 2, opaco) sube por flujo natural y lo cubre (apilado).
+            // Sin recede → contenido del Hero inmóvil y sin jank en el navbar.
+
+            function holdPinDistance() {
+                var fallback = bgPinVh / 100 * vh();
+                var next = section.nextElementSibling;
+                if (!next) { return fallback; }
+
+                // Mantener al menos la altura real del bloque como tramo de cierre.
+                // Esto da tiempo al reveal/escena de B2 antes de que B3 aparezca.
+                var distance = next.offsetTop - section.offsetTop;
+                return distance > 0 ? distance : fallback;
             }
 
             // 2) REVEAL one-shot: SOLO al salir del Hero (~82% de su scroll), no al
@@ -190,17 +175,16 @@
                 });
             }
 
-            // 4) BG-PIN: el Bloque 2 queda FIJO como fondo mientras el Bloque 3 sube encima.
-            //    pinSpacing:false → no añade espacio; el siguiente bloque (z-index mayor)
-            //    se superpone por scroll. No toca el Bloque 3 en absoluto.
+            // 4) HOLD-PIN: B2 queda fijo y reserva espacio. Así B3 no asoma hasta
+            //    que B2 ya tuvo su tramo completo de escena/reveal.
             if (bgPinOn) {
                 ST.create({
                     id:            pmId + '-bgpin',
                     trigger:       section,
                     start:         'top top',
-                    end:           function () { return '+=' + (bgPinVh / 100 * vh()); },
+                    end:           function () { return '+=' + holdPinDistance(); },
                     pin:           true,
-                    pinSpacing:    false,
+                    pinSpacing:    true,
                     anticipatePin: 1,
                     invalidateOnRefresh: true
                 });
@@ -242,18 +226,6 @@
                 if (denom <= 0) { return 0; }
                 return clamp(((vh() / 2) - (rect.top + rect.height / 2)) / denom, -1, 1);
             }
-            function heroProgress() {
-                if (!hero) { return 0; }
-                var h = hero.offsetHeight;
-                if (!h || h <= 0) { return 0; }
-                var rect  = hero.getBoundingClientRect();
-                var start = rect.top + window.scrollY + h * 0.80; // recede solo en el último 20%
-                var end   = rect.top + window.scrollY + h;
-                if (end <= start) { return window.scrollY >= start ? 1 : 0; }
-                return clamp((window.scrollY - start) / (end - start), 0, 1);
-            }
-
-            var current = 0;
             function applyFrame() {
                 var dp = parallaxOn ? driftProgress() : 0;
                 for (var i = 0; i < layers.length; i++) {
@@ -262,10 +234,7 @@
                         L.el.style.transform = 'translate3d(0,' + (dp * L.speed * DRIFT).toFixed(2) + 'px,0)';
                     }
                 }
-                if (transition) {
-                    current = lerp(current, heroProgress(), LERP);
-                    applyHeroRecede(current);
-                }
+                // El Hero queda estático (sticky CSS); no se anima desde aquí.
             }
 
             var active = false, rafId = 0;
@@ -285,7 +254,7 @@
             }
 
             if ('IntersectionObserver' in window) {
-                // IO principal: activa/desactiva el bucle rAF (drift + hero recede).
+                // IO principal: activa/desactiva el bucle rAF (drift).
                 var vis = { hero: false, section: false };
                 var io  = new IntersectionObserver(function (entries) {
                     entries.forEach(function (e) {

@@ -3,11 +3,8 @@
 /**
  * Esquema / defaults del bloque Parallax Monitor (Bloque 2).
  *
- * Escena oscura full-screen (>=100svh) que ENTRA SOBRE el bloque anterior (Hero)
- * conforme el usuario hace scroll, no desde el primer pintado. La transición se
- * calcula por PROGRESO de scroll (0..1) en JS vanilla (sin GSAP, sin pin):
- *   start = heroTop + heroHeight * overlap_start   (≈85% del Hero)
- *   end   = heroTop + heroHeight
+ * Escena oscura full-screen (>=100svh). En desktop el Hero queda sticky por CSS
+ * y este bloque lo cubre por flujo/z-index al salir del primer viewport.
  *
  * Tres capas reales con z-index y ritmos de entrada distintos (coreografía):
  *   1) background (z1) — entra primero y rápido
@@ -180,16 +177,15 @@ return array(
         'pin_enabled'                => false, // sin pin por ahora (solo con GSAP futuro)
         'start_progress'             => 0.85,  // alias de layout.overlap_start (transición)
         'disable_parallax_below'     => 1024,  // ancho en px: por debajo usa modo is-static
-        // Fondo fijo (auto-pin) para que el Bloque 3 entre ENCIMA del Bloque 2.
-        // Solo desktop+GSAP: el Bloque 2 se pinea (pinSpacing:false) como fondo
-        // mientras el siguiente bloque sube por scroll sobre él.
+        // Hold pin: en desktop+GSAP el Bloque 2 reserva un tramo de scroll propio
+        // antes de permitir la entrada del Bloque 3.
         'background_pin'             => true,
-        'background_pin_vh'          => 90,    // duración del pin en vh (cuánto dura como fondo)
+        'background_pin_vh'          => 100,   // fallback del hold pin; JS prefiere altura real del bloque
         // Magnitud base y velocidades de drift por capa (drift_px = speed × parallax_drift_px).
-        'parallax_drift_px'          => 100,   // px base; controla la escala de todo el parallax
-        'background_speed'           => 0.30,  // fondo: lento pero VISIBLE → ±30 px
-        'computer_speed'             => 0.85,  // monitor: protagonista     → ±85 px (parallax visible)
-        'text_speed'                 => 0.08,  // texto: micro-parallax     → ±8 px (estable)
+        'parallax_drift_px'          => 140,   // px base; controla la escala de todo el parallax
+        'background_speed'           => 0.45,  // fondo: lento pero PERCEPTIBLE → ±63 px
+        'computer_speed'             => 0.95,  // monitor: protagonista        → ±133 px (el mayor recorrido)
+        'text_speed'                 => 0.07,  // texto: micro-parallax        → ±9.8 px (estable/legible)
         // Rangos de entrada coreografiada (en progreso 0..1 de la transición).
         'background_enter_range'     => array(0.00, 0.35),
         'computer_enter_range'       => array(0.25, 0.70),

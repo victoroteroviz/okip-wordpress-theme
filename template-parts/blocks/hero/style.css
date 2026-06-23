@@ -9,6 +9,7 @@
 
 .okip-hero {
     position: relative;
+    z-index: 1; /* orden de overlap explícito: hero(1) < pm(2) < ic(3) — Bloque 2 sube encima */
     min-height: 100svh;
     min-height: 100vh;
     display: grid;
@@ -17,6 +18,17 @@
     isolation: isolate;
     color: var(--okip-color-text, #f4f7fb);
     perspective: 1200px; /* para el efecto 3D al hacer scroll */
+}
+
+/* Overlap apilado B1→B2 (solo desktop): el Hero queda ESTÁTICO a pantalla completa
+   (contenido inmóvil) y el Bloque 2 (z-index 2, opaco) sube por flujo natural y lo
+   cubre. `sticky` no comprime el scroll ni envuelve el nodo → no toca la cadena de
+   pins B2→B3. En ≤1024px se mantiene el flujo normal (apilado simple). */
+@media (min-width: 1025px) {
+    .okip-hero {
+        position: sticky;
+        top: 0;
+    }
 }
 
 /* ---- Capa 1: fondo (limpio) ---- */

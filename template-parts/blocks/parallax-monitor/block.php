@@ -3,14 +3,14 @@
 /**
  * Bloque Parallax Monitor (Bloque 2).
  *
- * Escena oscura full-screen que ENTRA SOBRE el Hero por PROGRESO de scroll (no
- * desde el primer pintado). Tres capas reales con z-index y ritmos distintos:
+ * Escena oscura full-screen que cubre al Hero sticky por flujo/z-index al salir
+ * del primer viewport. Tres capas reales con z-index y ritmos distintos:
  *   1) background (z1, data-okip-pm-layer="background") — entra primero/rápido
  *   2) computer   (z2, data-okip-pm-layer="computer")   — entra con retardo
  *   3) text       (z3, data-okip-pm-layer="text")        — entra al final, arriba
  *
- * Toda la lógica de transición/parallax vive en script.js (GSAP+ScrollTrigger si
- * disponibles, con fallback vanilla rAF+lerp). El template solo expone config como data-* y vars
+ * Toda la lógica de reveal/parallax/pin vive en script.js (GSAP+ScrollTrigger si
+ * disponibles, con fallback vanilla rAF). El template solo expone config como data-* y vars
  * CSS. Scope por instancia con id + data-block-instance.
  *
  * @package OKIP

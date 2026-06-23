@@ -47,8 +47,8 @@ return array(
                 // Sin media real, ese es el tiempo de espera antes de revelar tarjetas y texto.
             ),
             'animation' => array(
-                // El hundimiento del Hero durante la transición lo controla el
-                // Bloque 2 (parallax-monitor) para evitar doble transform con GSAP.
+                // El Hero queda sticky en desktop; el Bloque 2 lo cubre por flujo/z-index.
+                // Mantener scroll_3d apagado evita doble transform con GSAP.
                 'enabled'   => true,
                 'scroll_3d' => false,
             ),

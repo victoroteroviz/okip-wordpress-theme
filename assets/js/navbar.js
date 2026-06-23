@@ -4,7 +4,7 @@
  * Visibilidad:
  *   - reveal_mode = after_hero (Home con Hero): nace oculto; aparece cuando el
  *     usuario sale del Hero / llega al segundo bloque, y se oculta al volver.
- *     Detección con IntersectionObserver sobre el Hero; fallback por scrollY.
+ *     Detección por scrollY contra una posición documental estable del Hero.
  *   - reveal_mode = always | manual, o páginas sin Hero: visible desde el inicio.
  *   - Al ocultarse con el menú móvil abierto, el menú se cierra (aria-expanded).
  *
@@ -43,29 +43,46 @@
             navbar.classList.add('is-hidden');
             navbar.classList.remove('okip-navbar--start-hidden');
 
-            // Umbral por PROGRESO de scroll (no solo IO): con la superposición del
-            // Bloque 2, el Hero puede seguir intersectando aunque ya esté siendo
-            // reemplazado. Aparece cuando la transición hacia el Bloque 2 supera
-            // ~0.15 (es decir, pasado el 85% del Hero). Se oculta al volver bajo él.
+            // Umbral por scroll: con sticky/pin, la intersección visual del Hero no
+            // es estable. El navbar solo permanece oculto en el primer estado del
+            // Hero; al bajar, cualquier scroll real lo revela como respaldo duro.
             var pm = document.querySelector('[data-okip-pm]');
             var startProg = pm ? parseFloat(pm.getAttribute('data-overlap-start')) : 0.85;
             if (isNaN(startProg)) { startProg = 0.85; }
             var REVEAL_AT = 0.15; // progreso de transición para mostrar el navbar
 
+            function docTop(el) {
+                var top = 0;
+                while (el) {
+                    top += el.offsetTop || 0;
+                    el = el.offsetParent;
+                }
+                return top;
+            }
+            function scrollY() {
+                return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+            }
+
             var navTicking = false;
             var evalNav = function () {
                 navTicking = false;
+                var y = scrollY();
+                if (y > 8) { show(); return; }
+
                 var h = hero.offsetHeight;
                 // Guard: si el Hero aún no tiene altura (layout no listo), mantener
                 // OCULTO. Nunca mostrar por una medida inválida.
                 if (!h || h <= 0) { hide(); return; }
-                var rect = hero.getBoundingClientRect();
-                var topDoc = rect.top + window.scrollY;
+                // Posición por layout, no por getBoundingClientRect(): sticky mantiene
+                // rect.top en 0 mientras el scroll real sigue avanzando.
+                var topDoc = docTop(hero);
                 var start = topDoc + h * startProg - offset;
                 var end = topDoc + h;
-                var p = (end <= start) ? (window.scrollY >= start ? 1 : 0)
-                    : Math.max(0, Math.min(1, (window.scrollY - start) / (end - start)));
-                if (p >= REVEAL_AT) { show(); } else { hide(); }
+                var p = (end <= start) ? (y >= start ? 1 : 0)
+                    : Math.max(0, Math.min(1, (y - start) / (end - start)));
+                var visibleByProgress = p >= REVEAL_AT;
+                var visibleByFallback = y >= (topDoc + h * 0.85 - offset);
+                if (visibleByProgress || visibleByFallback) { show(); } else { hide(); }
             };
             var onNavScroll = function () {
                 if (!navTicking) { navTicking = true; window.requestAnimationFrame(evalNav); }

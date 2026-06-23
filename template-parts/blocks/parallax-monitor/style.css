@@ -2,11 +2,9 @@
  * Bloque Parallax Monitor (Bloque 2) — estilos.
  * Carga condicional: solo si la página usa el bloque `parallax-monitor`.
  *
- * Escena oscura full-screen (>=100svh). NO se superpone al Hero desde el primer
- * pintado: la superposición la dirige el JS por PROGRESO de scroll (translateY +
- * opacity + z-index). El overlap de LAYOUT (margin negativo) solo se aplica en
- * desktop sin reduce-motion, y en el estado inicial el bloque está
- * counter-transformado + invisible, así que no tapa al Hero al cargar.
+ * Escena oscura full-screen (>=100svh). En desktop el Hero queda sticky por CSS
+ * y este bloque lo cubre por flujo natural/z-index cuando el usuario sale del
+ * primer viewport. El root no recibe transform de masa.
  *
  * Tres capas reales con z-index: fondo (z1) < computadora (z2) < texto (z3).
  * Fondo media-driven: sin media, fallback NEUTRO (color sólido).
@@ -36,7 +34,7 @@
    NO lleva opacidad de reveal ni fondo propio. */
 .okip-pm__bg {
     position: absolute;
-    inset: -8% 0; /* headroom vertical (~±8% > drift máximo) */
+    inset: -10% 0; /* headroom vertical (~±10% > drift máximo ±63 px) */
     z-index: 1;
     will-change: transform;
 }
@@ -347,8 +345,8 @@
 /* ============================================================
    SIN overlap de LAYOUT (Hero → Bloque 2).
    Se eliminó el "lip" (margin negativo + bordes/sombra de card): el Bloque 2 ya NO
-   invade al Hero. El Hero queda limpio y protagonista; la transición la dan SOLO el
-   recede del Hero (al ~80% de su scroll) y la entrada escalonada de las capas de B2.
+   invade al Hero. El Hero queda limpio y protagonista con sticky CSS; la entrada
+   visible la da el flujo natural + el reveal escalonado de las capas de B2.
    El root nunca recibe transform de masa.
    ============================================================ */
 

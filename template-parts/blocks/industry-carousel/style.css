@@ -25,9 +25,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* overflow:clip permite que GSAP pin desborde sin layout jump;
-       no usar overflow:hidden (impediría que la cinta se mueva fuera del bloque en JS) */
-    overflow: clip;
+    border-radius: clamp(2rem, 6vw, 5.5rem) clamp(2rem, 6vw, 5.5rem) 0 0;
+    /* El root pineado no recorta: el clipping vive en la cinta para no pelear
+       con ScrollTrigger pin. */
+    overflow: visible;
     isolation: isolate;
 }
 
