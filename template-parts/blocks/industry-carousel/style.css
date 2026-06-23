@@ -32,11 +32,10 @@
     isolation: isolate;
 }
 
-/* Cuando B2 está pineado con GSAP, el JS calcula este margen contra la duracion
-   real del depth-entry para que B3 no cubra texto/monitor antes de tiempo. */
-.okip-pm.is-gsap + .okip-ic {
-    margin-top: var(--okip-pm-to-ic-delay, 0px);
-}
+/* El retardo de cobertura B2→B3 (esperar a que el depth-entry de B2 termine + el hold
+   estático) lo aplica el JS de B2 como `margin-top` INLINE sobre este bloque. NO se usa
+   un selector adyacente (`.okip-pm + .okip-ic`) porque ScrollTrigger envuelve B2 en un
+   `.pin-spacer` al pinearlo y rompería la adyacencia. */
 
 /* ---- Contenido de texto centrado ---- */
 .okip-ic__content {

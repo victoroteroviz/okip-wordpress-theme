@@ -62,6 +62,20 @@
 
         var hero = document.querySelector('[data-okip-hero]');
 
+        // Breakpoint del overlap/pin complejo: en móvil/tablet (≤1024px) NO se usa pin
+        // ni se empuja al Bloque 3; flujo vertical normal y entrada estática.
+        var OVERLAP_BP = 1024;
+        function isSmallViewport() {
+            return !!(window.matchMedia && window.matchMedia('(max-width:' + OVERLAP_BP + 'px)').matches);
+        }
+        var isSmall = isSmallViewport();
+
+        // Bloque que sigue a B2 (capturado con el DOM limpio, ANTES de que ScrollTrigger
+        // envuelva B2 en un .pin-spacer). Se usa para empujar B3 con margin-top INLINE
+        // robusto, sin depender de `.okip-pm + .okip-ic` (que se rompe tras el pin-spacer).
+        var followingBlock = section.nextElementSibling;
+        var followingIsIc  = !!(followingBlock && followingBlock.hasAttribute('data-okip-ic'));
+
         // Capas (nodos EXTERIORES): solo para la profundidad de entrada.
         var layers = [];
         section.querySelectorAll('[data-okip-pm-layer]').forEach(function (el) {
@@ -125,10 +139,12 @@
 
         // El Hero NO se anima: queda estático y el Bloque 2 lo cubre (apilado). Sin recede.
 
-        var canAnimate = animOn && !reduceMotion && layers.length > 0;
+        // En móvil/tablet (≤1024px) NO usamos overlap/pin complejo: la escena entra
+        // estática (reveal inmediato) y el Bloque 3 fluye debajo con normalidad.
+        var canAnimate = animOn && !reduceMotion && layers.length > 0 && !isSmall;
 
         /* ============================================================
-           MODO ESTÁTICO: reduce-motion o sin capas/animación.
+           MODO ESTÁTICO: móvil/tablet, reduce-motion o sin capas/animación.
            Reveal inmediato, sin parallax ni pin. Flujo vertical limpio.
            ============================================================ */
         if (!canAnimate) {
@@ -168,26 +184,35 @@
                 });
             }
 
-            function holdPinDistance() {
-                var fallback = bgPinVh / 100 * vh();
-                var next = section.nextElementSibling;
-                if (!next) { return fallback; }
-
-                // Mantener B2 fijo hasta que el siguiente bloque llegue al top del viewport.
-                // Con pinSpacing:false, B3 cubre B2 en lugar de empujarlo.
-                var distance = next.offsetTop - section.offsetTop;
-                return distance > 0 ? distance : fallback;
-            }
-
+            // Distancia que B3 debe esperar antes de empezar a cubrir B2: el sobrante del
+            // depth-entry (más allá del primer viewport) + el hold estático (medio scroll),
+            // descontando lo que ya tarda la propia altura de B2. Se traduce en margin-top.
             function followingBlockMargin() {
                 var naturalDelay = Math.max(0, (section.offsetHeight || vh()) - vh());
                 return Math.max(0, entryExtraDistance() + coverGuardDistance() - naturalDelay);
             }
 
+            // Pin de B2: dura hasta que B3 llega al top del viewport (lo cubre por completo).
+            // Se calcula con la ALTURA propia de B2 + el margin de B3, NO con offsetTop
+            // (que deja de ser fiable cuando ScrollTrigger envuelve B2 en un .pin-spacer).
+            //   distancia (B3.offsetTop − B2.offsetTop) ≡ B2.offsetHeight + margin(B3)
+            function holdPinDistance() {
+                var fallback = bgPinVh / 100 * vh();
+                var base   = section.offsetHeight || vh();
+                var margin = (followingBlock && followingIsIc) ? followingBlockMargin() : 0;
+                var distance = base + margin;
+                return distance > 0 ? distance : fallback;
+            }
+
+            // Empuja B3 con margin-top INLINE (autoridad sobre cualquier regla CSS y robusto
+            // al .pin-spacer): mientras B2 está pineado y la escena revela + hace su hold,
+            // B3 permanece bajo el viewport; solo después sube y cubre.
             function syncFollowingBlockDelay() {
-                var next = section.nextElementSibling;
-                if (!next || !next.hasAttribute('data-okip-ic')) { return; }
-                next.style.setProperty('--okip-pm-to-ic-delay', followingBlockMargin().toFixed(2) + 'px');
+                if (!followingBlock || !followingIsIc) { return; }
+                followingBlock.style.marginTop = followingBlockMargin().toFixed(2) + 'px';
+            }
+            function clearFollowingBlockDelay() {
+                if (followingBlock && followingIsIc) { followingBlock.style.marginTop = ''; }
             }
 
             syncFollowingBlockDelay();
@@ -253,10 +278,13 @@
                 revealAll();
             }
 
-            // 4) HOLD-PIN: B2 queda fijo sin reservar espacio. B3 (z-index 3)
-            //    sube encima y cubre la escena estática de B2.
+            // 4) HOLD-PIN: B2 queda fijo sin reservar espacio (pinSpacing:false). B3
+            //    (z-index 3) sube encima y cubre la escena estática de B2. El pin dura
+            //    hasta que B3 cubre por completo el viewport; en ese punto B2 se libera
+            //    y el pin del carrusel de B3 arranca limpio (handoff secuencial).
+            var bgPinST = null;
             if (bgPinOn) {
-                ST.create({
+                bgPinST = ST.create({
                     id:            pmId + '-bgpin',
                     trigger:       section,
                     start:         'top top',
@@ -269,11 +297,20 @@
                 });
             }
 
-            // Resize: B2 anima en todos los tamaños; solo refrescamos medidas.
+            // Resize: en desktop solo refrescamos medidas; si se cruza a móvil/tablet
+            // (≤1024px) se desmonta el overlap (mata el pin y quita el empuje de B3)
+            // para caer a flujo vertical normal.
             var rt;
             window.addEventListener('resize', function () {
                 window.clearTimeout(rt);
                 rt = window.setTimeout(function () {
+                    if (isSmallViewport()) {
+                        if (bgPinST) { bgPinST.kill(); bgPinST = null; }
+                        clearFollowingBlockDelay();
+                        forceLayersRest();
+                        ST.refresh();
+                        return;
+                    }
                     syncFollowingBlockDelay();
                     ST.refresh();
                 }, 200);

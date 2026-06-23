@@ -183,7 +183,7 @@ return array(
         'background_pin'             => true,
         'background_pin_vh'          => 100,   // fallback del hold pin; JS prefiere altura real del bloque
         'entry_scroll_vh'            => 155,   // duracion total del depth-entry: 100vh + 55vh extra
-        'cover_delay_vh'             => 35,    // espera adicional antes de que B3 empiece a cubrir B2
+        'cover_delay_vh'             => 50,    // hold estático (≈medio viewport) tras terminar B2, antes de que B3 cubra
         // Magnitud base y velocidades de entrada por capa (px = speed × parallax_drift_px).
         // Las capas empiezan desplazadas y terminan en y:0 antes del handoff visual a B3.
         'parallax_drift_px'          => 180,   // px base; escala clara para la profundidad

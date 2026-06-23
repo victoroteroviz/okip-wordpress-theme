@@ -157,9 +157,10 @@
         var initC = calcCentering();
         gsap.set(track, { x: initC.startX });
 
-        // ENTRADA del Bloque 3 sobre el Bloque 2: reveal sutil del contenido y la cinta
-        // al asomar el bloque (no es un pin; no toca `.okip-pm`). Con `from`, si GSAP
-        // faltara no habría estado oculto → nunca queda invisible/atascado.
+        // ENTRADA del Bloque 3 sobre el Bloque 2: el contenido aparece TARDE, solo cuando
+        // el panel blanco ya cubre casi todo el viewport (≈85%), no al asomar. Por eso el
+        // start es `top 15%` y no `top 80%` (no es un pin; no toca `.okip-pm`). Con `from`,
+        // si GSAP faltara no habría estado oculto → nunca queda invisible/atascado.
         var enterTargets = [section.querySelector('.okip-ic__content'), section.querySelector('.okip-ic__strip')]
             .filter(Boolean);
         if (enterTargets.length) {
@@ -172,7 +173,7 @@
                 scrollTrigger: {
                     id:            icId + '-enter',
                     trigger:       section,
-                    start:         'top 80%',
+                    start:         'top 15%',
                     toggleActions: 'play none none none'
                 }
             });

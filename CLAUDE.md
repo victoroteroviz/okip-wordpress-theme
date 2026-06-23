@@ -404,6 +404,21 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
 - **Bloque 2 → Bloque 3 (overlap):** B2 se auto-pinea (`pin:true, pinSpacing:false`) como fondo
   fijo (position:fixed, sin transform) y B3 sube encima por z-index. B3 **no** debe escribir
   transforms sobre `.okip-pm` ni sus capas. El handoff con el pin del carrusel de B3 es secuencial.
+- **Bloque 2 → Bloque 3 — NO retrasar a B3 con un selector adyacente:** el empuje que evita que
+  B3 cubra a B2 antes de tiempo (sobrante del depth-entry + hold estático) debe aplicarse como
+  `margin-top` **inline** sobre B3 desde el JS de B2. Una regla `.okip-pm.is-gsap + .okip-ic`
+  se ROMPE porque ScrollTrigger envuelve a B2 en un `.pin-spacer` al pinearlo → la adyacencia
+  deja de cumplirse → `margin:0` → B3 cubre a B2 mientras el texto aún se revela. (Era el bug.)
+- **Bloque 2 → Bloque 3 — la duración del pin se calcula con `offsetHeight`, no `offsetTop`:**
+  `holdPinDistance = section.offsetHeight + margin(B3)` (≡ `B3.offsetTop − B2.offsetTop`). Tras el
+  `.pin-spacer`, los `offsetTop` cambian de offsetParent y son poco fiables; `offsetHeight` es estable.
+- **Bloque 2 → Bloque 3 — el hold estático es `cover_delay_vh` (≈50vh = medio viewport):** se suma
+  al sobrante del depth-entry para que B2 quede revelado y quieto un rato antes de que B3 cubra.
+- **Bloque 2 — móvil/tablet (≤1024px) sin pin/overlap:** el JS gatea por `isSmallViewport()`
+  (`canAnimate && !isSmall`) → entra en `is-static` (reveal inmediato) y NO empuja a B3; flujo
+  vertical normal. El resize a ≤1024px desmonta el pin (`bgPinST.kill()`) y limpia el `margin-top`.
+- **Bloque 3 — el contenido se revela TARDE (`start: 'top 15%'`, no `'top 80%'`):** debe aparecer
+  solo cuando el panel blanco ya cubre ≈85% del viewport, no al asomar el bloque.
 - **No animar el Hero desde dos sitios:** su `scroll_3d` está OFF en Home porque el Bloque 2
   ya transforma el Hero (`hero.style.transform/opacity`). Si reactivas `scroll_3d` en Home,
   habrá doble transform.
