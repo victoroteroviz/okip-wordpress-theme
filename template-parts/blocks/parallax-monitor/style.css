@@ -37,14 +37,21 @@
 .okip-pm__bg-media {
     position: absolute;
     left: 0;
-    top: -12%;
+    top: -15%;
     width: 100%;
-    height: 124%; /* margen extra para que el parallax no descubra los bordes */
+    height: 130%; /* margen extra para que el parallax no descubra los bordes (±75 px) */
     object-fit: cover;
 }
-/* Fallback neutro: solo color sólido (sin gradiente/patrón/glow falso) */
-.okip-pm__bg--missing {
-    background: #05080f;
+/* Fondo sin media: gradient atmosférico + textura de grid como referencia visual del movimiento.
+   La textura hace perceptible el drift aunque no haya imagen/video real. */
+.okip-pm__bg--missing,
+.okip-pm__bg--gradient {
+    background:
+        repeating-linear-gradient(rgba(255, 255, 255, .025) 0 1px, transparent 1px 56px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 56px),
+        radial-gradient(ellipse 65% 55% at 70% 48%, rgba(28, 75, 200, 0.18), transparent 65%),
+        radial-gradient(ellipse 40% 35% at 22% 65%, rgba(12, 45, 140, 0.10), transparent 60%),
+        var(--okip-pm-bg-color, #050a16);
 }
 
 /* ---- Overlay opcional (sobre el fondo) ---- */

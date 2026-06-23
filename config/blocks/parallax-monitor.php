@@ -78,7 +78,8 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
         $data['layout']['z_index']          = okip_clamp_int($data['layout']['z_index'], 0, 50);
 
         // Fondo.
-        $data['background']['type'] = okip_one_of($data['background']['type'], $bg_allowed, 'image');
+        $data['background']['type']     = okip_one_of($data['background']['type'], $bg_allowed, 'image');
+        $data['background']['gradient'] = okip_bool($data['background']['gradient']);
 
         // Computadora (capa media del monitor).
         $data['computer']['type']                = okip_one_of($data['computer']['type'], $cmp_allowed, 'placeholder');
@@ -113,6 +114,8 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
         $a['background_enter_range']     = okip_pm_normalize_range($a['background_enter_range'], 0.00, 0.35);
         $a['computer_enter_range']       = okip_pm_normalize_range($a['computer_enter_range'], 0.25, 0.70);
         $a['text_enter_range']           = okip_pm_normalize_range($a['text_enter_range'], 0.55, 1.00);
+        $a['parallax_drift_px']          = okip_clamp_int(isset($a['parallax_drift_px']) ? $a['parallax_drift_px'] : 100, 0, 500);
+        $a['disable_parallax_below']     = okip_clamp_int(isset($a['disable_parallax_below']) ? $a['disable_parallax_below'] : 1024, 0, 9999);
         $data['animation'] = $a;
 
         return $data;
@@ -135,10 +138,12 @@ return array(
         'z_index'          => 2,        // por encima del Hero durante la transición
     ),
     'background' => array(
-        'type'   => 'image', // image | video | svg
-        'media'  => '',
-        'poster' => '',
-        'alt'    => '',
+        'type'     => 'image', // image | video | svg
+        'media'    => '',
+        'poster'   => '',
+        'alt'      => '',
+        'color'    => '#050a16', // color base cuando no hay media
+        'gradient' => true,      // gradient atmosférico cuando no hay media
     ),
     'computer' => array(
         'type'                => 'placeholder', // video | image | svg | placeholder
@@ -171,10 +176,12 @@ return array(
         'text_reveal'                => true,
         'pin_enabled'                => false, // sin pin por ahora (solo con GSAP futuro)
         'start_progress'             => 0.85,  // alias de layout.overlap_start (transición)
-        // Velocidades de drift de parallax (distintas por capa).
-        'background_speed'           => 0.22,  // fondo: más rápido
-        'computer_speed'             => 0.40,  // computadora: intermedio
-        'text_speed'                 => 0.12,  // texto: más sutil
+        'disable_parallax_below'     => 1024,  // ancho en px: por debajo usa modo is-static
+        // Magnitud base y velocidades de drift por capa (drift_px = speed × parallax_drift_px).
+        'parallax_drift_px'          => 100,   // px base; controla la escala de todo el parallax
+        'background_speed'           => 0.18,  // fondo: lento y lejano   → ±18 px
+        'computer_speed'             => 0.75,  // monitor: protagonista   → ±75 px
+        'text_speed'                 => 0.08,  // texto: micro-parallax   → ±8 px
         // Rangos de entrada coreografiada (en progreso 0..1 de la transición).
         'background_enter_range'     => array(0.00, 0.35),
         'computer_enter_range'       => array(0.25, 0.70),

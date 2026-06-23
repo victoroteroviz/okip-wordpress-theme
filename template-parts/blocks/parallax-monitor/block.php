@@ -47,7 +47,9 @@ $bg_has    = in_array($bg_type, array('image', 'video', 'svg'), true)
     && okip_media_exists(isset($background['media']) ? $background['media'] : '');
 $bg_url    = $bg_has ? okip_media_url($background['media']) : '';
 $bg_poster = isset($background['poster']) && okip_media_exists($background['poster']) ? okip_media_url($background['poster']) : '';
-$bg_render = $bg_has ? $bg_type : 'missing';
+$bg_render   = $bg_has ? $bg_type : 'missing';
+$bg_gradient = ! empty($background['gradient']);
+$bg_color    = isset($background['color']) ? $background['color'] : '#050a16';
 
 // --- Computadora (capa media del monitor) ---
 $cmp_type   = isset($computer['type']) ? $computer['type'] : 'placeholder';
@@ -77,9 +79,11 @@ $overlap_anim = ! empty($animation['overlap_transition_enabled']);
 $pin_on       = ! empty($animation['pin_enabled']);
 $text_reveal  = ! empty($animation['text_reveal']);
 $start_prog   = isset($animation['start_progress']) ? (float) $animation['start_progress'] : $overlap_start;
-$bg_speed     = isset($animation['background_speed']) ? (float) $animation['background_speed'] : 0.22;
-$cmp_speed    = isset($animation['computer_speed']) ? (float) $animation['computer_speed'] : 0.40;
-$txt_speed    = isset($animation['text_speed']) ? (float) $animation['text_speed'] : 0.12;
+$bg_speed      = isset($animation['background_speed']) ? (float) $animation['background_speed'] : 0.18;
+$cmp_speed     = isset($animation['computer_speed']) ? (float) $animation['computer_speed'] : 0.75;
+$txt_speed     = isset($animation['text_speed']) ? (float) $animation['text_speed'] : 0.08;
+$anim_drift_px = isset($animation['parallax_drift_px']) ? (int) $animation['parallax_drift_px'] : 100;
+$disable_below = isset($animation['disable_parallax_below']) ? (int) $animation['disable_parallax_below'] : 1024;
 
 $bg_range  = isset($animation['background_enter_range']) ? $animation['background_enter_range'] : array(0.00, 0.35);
 $cmp_range = isset($animation['computer_enter_range']) ? $animation['computer_enter_range'] : array(0.25, 0.70);
@@ -102,12 +106,13 @@ $hl    = isset($content['highlighted_text']) ? $content['highlighted_text'] : ''
 
 // Variables CSS de layout/escena (seguras, solo de presentación).
 $section_style = sprintf(
-    '--okip-pm-minh:%s;--okip-pm-cw:%s;--okip-pm-z:%d;--okip-pm-overlap:%s;--okip-pm-glow:%s;',
+    '--okip-pm-minh:%s;--okip-pm-cw:%s;--okip-pm-z:%d;--okip-pm-overlap:%s;--okip-pm-glow:%s;--okip-pm-bg-color:%s;',
     esc_attr($min_height),
     esc_attr($content_width),
     (int) $z_index,
     esc_attr($overlap_amt),
-    esc_attr((string) max(0, min(1, $glow_intensity)))
+    esc_attr((string) max(0, min(1, $glow_intensity))),
+    esc_attr($bg_color)
 );
 
 $section_classes = 'okip-pm';
@@ -128,10 +133,12 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
     data-pin="<?php echo $pin_on ? '1' : '0'; ?>"
     data-overlap-start="<?php echo esc_attr((string) $start_prog); ?>"
     data-overlap-vh="<?php echo esc_attr((string) $overlap_vh); ?>"
+    data-drift-max="<?php echo esc_attr((string) $anim_drift_px); ?>"
+    data-disable-below="<?php echo esc_attr((string) $disable_below); ?>"
     style="<?php echo $section_style; ?>">
 
     <!-- Capa 1: fondo (z1, entra primero y rápido) -->
-    <div class="okip-pm__bg okip-pm__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>"
+    <div class="okip-pm__bg okip-pm__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?><?php echo ($bg_gradient && $bg_render === 'missing') ? ' okip-pm__bg--gradient' : ''; ?>"
         data-okip-pm-layer="background"
         data-speed="<?php echo esc_attr((string) $bg_speed); ?>"
         data-enter="<?php echo esc_attr($range_str($bg_range)); ?>">

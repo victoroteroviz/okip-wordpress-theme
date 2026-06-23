@@ -69,6 +69,11 @@
         var useGsap    = d.useGsap    !== '0'; // true por defecto
         var useVanilla = d.useVanilla !== '0'; // true por defecto
 
+        // Magnitud base de drift y breakpoint leídos desde config (vía data-*).
+        var DRIFT        = parseFloat(d.driftMax)       || 80;
+        var disableBelow = parseInt(d.disableBelow, 10) || 1024;
+        var isSmall      = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
+
         var startProg = parseFloat(d.overlapStart);
         if (isNaN(startProg)) { startProg = 0.85; }
         var overlapVh = parseFloat(d.overlapVh) || 0;
@@ -225,7 +230,7 @@
                     }
                 });
                 layers.forEach(function (L) {
-                    if (!L.speed || L.name === 'text') { return; }
+                    if (!L.speed) { return; }
                     driftTl.fromTo(L.el, { y: L.speed * DRIFT }, { y: -L.speed * DRIFT, ease: 'none' }, 0);
                 });
             }
@@ -238,7 +243,7 @@
             window.addEventListener('resize', function () {
                 window.clearTimeout(rt);
                 rt = window.setTimeout(function () {
-                    var nowSmall = !!(window.matchMedia && window.matchMedia('(max-width: 1024px)').matches);
+                    var nowSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
                     if (nowSmall) {
                         // Matar solo los STs de este bloque (prefijo id).
                         ST.getAll().forEach(function (st) {
@@ -291,7 +296,6 @@
                 var dp = parallaxOn ? driftProgress() : 0;
                 for (var i = 0; i < layers.length; i++) {
                     var L = layers[i];
-                    if (L.name === 'text') { continue; } // texto sin drift
                     L.el.style.transform = 'translate3d(0,' + (dp * L.speed * DRIFT).toFixed(2) + 'px,0)';
                 }
                 setReveal(p);
@@ -352,7 +356,7 @@
 
             applyFrame(0);
             window.addEventListener('resize', function () {
-                isSmall = !!(window.matchMedia && window.matchMedia('(max-width: 1024px)').matches);
+                isSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
                 render();
             }, { passive: true });
         }
