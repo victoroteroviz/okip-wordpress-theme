@@ -157,6 +157,27 @@
         var initC = calcCentering();
         gsap.set(track, { x: initC.startX });
 
+        // ENTRADA del Bloque 3 sobre el Bloque 2: reveal sutil del contenido y la cinta
+        // al asomar el bloque (no es un pin; no toca `.okip-pm`). Con `from`, si GSAP
+        // faltara no habría estado oculto → nunca queda invisible/atascado.
+        var enterTargets = [section.querySelector('.okip-ic__content'), section.querySelector('.okip-ic__strip')]
+            .filter(Boolean);
+        if (enterTargets.length) {
+            gsap.from(enterTargets, {
+                y: 40,
+                opacity: 0,
+                duration: 0.7,
+                ease: 'power2.out',
+                stagger: 0.12,
+                scrollTrigger: {
+                    id:            icId + '-enter',
+                    trigger:       section,
+                    start:         'top 80%',
+                    toggleActions: 'play none none none'
+                }
+            });
+        }
+
         // Índice activo por progreso.
         function progressToIdx(p) {
             return Math.round(p * (itemCount - 1));
@@ -213,6 +234,10 @@
                         }
                     });
                     gsap.set(track, { clearProps: 'x' });
+                    // Limpiar el estado de entrada para que el contenido no quede oculto en móvil.
+                    if (enterTargets.length) {
+                        gsap.set(enterTargets, { clearProps: 'opacity,transform' });
+                    }
                     section.classList.add('is-static');
                     setActive(0);
                 } else {

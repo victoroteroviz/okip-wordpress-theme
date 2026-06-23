@@ -93,15 +93,16 @@ return array(
         'instance_id' => 'home-parallax-monitor',
         'data'        => array(
             'content' => array(
-                'eyebrow'          => 'Tecnología OKIP',
-                'title'            => 'Inteligencia visual para proteger lo que importa',
-                'highlighted_text' => 'proteger',
-                'description'      => 'Integramos monitoreo, análisis y visualización para convertir señales complejas en decisiones claras.',
+                // Ref `referencias/bloque 2.png`: título con resaltado en negrita (no color)
+                // + subtítulo kicker debajo. Sin eyebrow ni descripción ni CTA.
+                'eyebrow'          => '',
+                'title'            => 'Facilitando la toma de decisiones en tiempo real',
+                'highlighted_text' => 'toma de decisiones',
+                'subtitle'         => 'Monitoreo, gestión e inteligencia operativa',
+                'description'      => '',
             ),
             'cta' => array(
-                'enabled' => true,
-                'label'   => 'Conocer tecnología',
-                'url'     => '/fabrica-de-tecnologias',
+                'enabled' => false,
             ),
             // background/monitor sin media real → fallback neutro/geométrico mínimo.
         ),

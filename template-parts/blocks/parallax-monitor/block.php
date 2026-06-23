@@ -77,6 +77,8 @@ $use_vanilla  = ! empty($animation['use_vanilla_fallback']);
 $parallax_on  = ! empty($animation['parallax_enabled']);
 $overlap_anim = ! empty($animation['overlap_transition_enabled']);
 $pin_on       = ! empty($animation['pin_enabled']);
+$bg_pin_on    = ! empty($animation['background_pin']);
+$bg_pin_vh    = isset($animation['background_pin_vh']) ? (int) $animation['background_pin_vh'] : 90;
 $text_reveal  = ! empty($animation['text_reveal']);
 $start_prog   = isset($animation['start_progress']) ? (float) $animation['start_progress'] : $overlap_start;
 $bg_speed      = isset($animation['background_speed']) ? (float) $animation['background_speed'] : 0.18;
@@ -101,8 +103,9 @@ $transition_on = ($overlap_on && $overlap_anim && $anim_on);
 $cta_on = ! empty($cta['enabled']) && ! empty($cta['label']) && ! empty($cta['url']);
 
 // --- Título con resaltado seguro ---
-$title = isset($content['title']) ? $content['title'] : '';
-$hl    = isset($content['highlighted_text']) ? $content['highlighted_text'] : '';
+$title    = isset($content['title']) ? $content['title'] : '';
+$hl       = isset($content['highlighted_text']) ? $content['highlighted_text'] : '';
+$subtitle = isset($content['subtitle']) ? $content['subtitle'] : '';
 
 // Variables CSS de layout/escena (seguras, solo de presentación).
 $section_style = sprintf(
@@ -134,24 +137,30 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
     data-overlap-start="<?php echo esc_attr((string) $start_prog); ?>"
     data-overlap-vh="<?php echo esc_attr((string) $overlap_vh); ?>"
     data-drift-max="<?php echo esc_attr((string) $anim_drift_px); ?>"
+    data-bg-pin="<?php echo $bg_pin_on ? '1' : '0'; ?>"
+    data-bg-pin-vh="<?php echo esc_attr((string) $bg_pin_vh); ?>"
     data-disable-below="<?php echo esc_attr((string) $disable_below); ?>"
     style="<?php echo $section_style; ?>">
 
-    <!-- Capa 1: fondo (z1, entra primero y rápido) -->
-    <div class="okip-pm__bg okip-pm__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?><?php echo ($bg_gradient && $bg_render === 'missing') ? ' okip-pm__bg--gradient' : ''; ?>"
+    <!-- Capa 1: fondo. EXTERIOR = parallax (transform + headroom).
+         INTERIOR (.okip-pm__bg-inner) = reveal (opacidad) y media/gradiente.
+         Nunca reveal y parallax en el mismo nodo. -->
+    <div class="okip-pm__bg"
         data-okip-pm-layer="background"
         data-speed="<?php echo esc_attr((string) $bg_speed); ?>"
         data-enter="<?php echo esc_attr($range_str($bg_range)); ?>">
-        <?php if ($bg_render === 'video') : ?>
-            <video class="okip-pm__bg-media" muted autoplay loop playsinline preload="auto"
-                <?php echo $bg_poster ? 'poster="' . esc_url($bg_poster) . '"' : ''; ?>>
-                <source src="<?php echo esc_url($bg_url); ?>" type="video/mp4">
-            </video>
-        <?php elseif ($bg_render === 'image' || $bg_render === 'svg') : ?>
-            <img class="okip-pm__bg-media" src="<?php echo esc_url($bg_url); ?>" alt="" aria-hidden="true">
-        <?php else : ?>
-            <!-- bg-missing: sin media real. Fallback neutro por CSS. -->
-        <?php endif; ?>
+        <div class="okip-pm__bg-inner okip-pm__bg-inner--<?php echo esc_attr(sanitize_html_class($bg_render)); ?><?php echo ($bg_gradient && $bg_render === 'missing') ? ' okip-pm__bg-inner--gradient' : ''; ?>">
+            <?php if ($bg_render === 'video') : ?>
+                <video class="okip-pm__bg-media" muted autoplay loop playsinline preload="auto"
+                    <?php echo $bg_poster ? 'poster="' . esc_url($bg_poster) . '"' : ''; ?>>
+                    <source src="<?php echo esc_url($bg_url); ?>" type="video/mp4">
+                </video>
+            <?php elseif ($bg_render === 'image' || $bg_render === 'svg') : ?>
+                <img class="okip-pm__bg-media" src="<?php echo esc_url($bg_url); ?>" alt="" aria-hidden="true">
+            <?php else : ?>
+                <!-- bg-missing: sin media real. Fallback neutro por CSS en el inner. -->
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Capa 2 (overlay opcional, sobre el fondo) -->
@@ -159,6 +168,10 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
         <div class="okip-pm__overlay" aria-hidden="true"
             style="opacity:<?php echo esc_attr((string) max(0, min(1, $overlay_opacity))); ?>;"></div>
     <?php endif; ?>
+
+    <!-- Piso / reflejo de escena: luz azul ambiental en la base, bajo el monitor.
+         Iluminación de escena (no fondo decorativo falso); estable, sin parallax. -->
+    <div class="okip-pm__floor" aria-hidden="true"></div>
 
     <div class="okip-pm__inner">
 
@@ -188,6 +201,10 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
                         }
                         ?>
                     </h2>
+                <?php endif; ?>
+
+                <?php if ($subtitle !== '') : ?>
+                    <p class="okip-pm__subtitle"><?php echo esc_html($subtitle); ?></p>
                 <?php endif; ?>
 
                 <?php if (! empty($content['description'])) : ?>
@@ -220,10 +237,23 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
                     <?php elseif ($cmp_has) : ?>
                         <img class="okip-pm__screen-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
                     <?php elseif ($ph_on) : ?>
-                        <!-- Placeholder geométrico de pantalla (sin media real). -->
+                        <!-- Placeholder esquemático tipo dashboard (sin media real):
+                             barra superior + panel principal ("mapa") + tarjetas laterales.
+                             Es claramente un wireframe, no un mockup fotográfico falso. -->
                         <span class="okip-pm__screen-ph" aria-hidden="true">
-                            <span class="okip-pm__screen-ph-bar"></span>
-                            <span class="okip-pm__screen-ph-grid"></span>
+                            <span class="okip-pm__screen-ph-bar">
+                                <span class="okip-pm__screen-ph-dot"></span>
+                                <span class="okip-pm__screen-ph-dot"></span>
+                                <span class="okip-pm__screen-ph-dot"></span>
+                            </span>
+                            <span class="okip-pm__screen-ph-body">
+                                <span class="okip-pm__screen-ph-map"></span>
+                                <span class="okip-pm__screen-ph-side">
+                                    <span class="okip-pm__screen-ph-card"></span>
+                                    <span class="okip-pm__screen-ph-card"></span>
+                                    <span class="okip-pm__screen-ph-card"></span>
+                                </span>
+                            </span>
                         </span>
                     <?php else : ?>
                         <!-- Sin media de pantalla: queda el marco/pantalla neutra (CSS). -->

@@ -21,37 +21,48 @@
     isolation: isolate;
     z-index: var(--okip-pm-z, 2);
     color: var(--okip-color-text, #f4f7fb);
-    background: var(--okip-color-bg, #020711);
+    /* Fondo oscuro premium: negro → azul profundo, con una leve luz fría
+       arriba a la derecha (tras el monitor). Sin patrón/grid. */
+    background:
+        radial-gradient(120% 95% at 74% 30%, rgba(38, 92, 205, .20), transparent 58%),
+        radial-gradient(90% 80% at 16% 82%, rgba(10, 32, 92, .16), transparent 64%),
+        linear-gradient(180deg, #02040b 0%, #04071a 55%, #020610 100%);
     padding-block: clamp(5rem, 12vh, 9rem);
 }
 
-/* ---- Capa 1: fondo (z1, con headroom para el parallax) ---- */
+/* ---- Capa 1: fondo ----
+   EXTERIOR (.okip-pm__bg) = PARALLAX (transform). Sobredimensionado (headroom) para que
+   el drift no descubra los bordes; recortado por el overflow:hidden de .okip-pm.
+   NO lleva opacidad de reveal ni fondo propio. */
 .okip-pm__bg {
     position: absolute;
-    inset: 0;
+    inset: -8% 0; /* headroom vertical (~±8% > drift máximo) */
     z-index: 1;
+    will-change: transform;
+}
+/* INTERIOR (.okip-pm__bg-inner) = REVEAL (opacidad) + media/gradiente. */
+.okip-pm__bg-inner {
+    position: absolute;
+    inset: 0;
     overflow: hidden;
-    background: transparent; /* sin decoración encima del media */
-    will-change: transform, opacity;
+    background: transparent;
 }
 .okip-pm__bg-media {
     position: absolute;
     left: 0;
     top: -15%;
     width: 100%;
-    height: 130%; /* margen extra para que el parallax no descubra los bordes (±75 px) */
+    height: 130%; /* margen extra adicional para el media */
     object-fit: cover;
 }
-/* Fondo sin media: gradient atmosférico + textura de grid como referencia visual del movimiento.
-   La textura hace perceptible el drift aunque no haya imagen/video real. */
-.okip-pm__bg--missing,
-.okip-pm__bg--gradient {
+/* Fondo sin media: atmósfera suave (sin grid). El drift se percibe por el
+   degradado y la luz, no por un patrón decorativo. */
+.okip-pm__bg-inner--missing,
+.okip-pm__bg-inner--gradient {
     background:
-        repeating-linear-gradient(rgba(255, 255, 255, .025) 0 1px, transparent 1px 56px),
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 56px),
-        radial-gradient(ellipse 65% 55% at 70% 48%, rgba(28, 75, 200, 0.18), transparent 65%),
-        radial-gradient(ellipse 40% 35% at 22% 65%, rgba(12, 45, 140, 0.10), transparent 60%),
-        var(--okip-pm-bg-color, #050a16);
+        radial-gradient(ellipse 70% 60% at 72% 40%, rgba(34, 84, 196, 0.16), transparent 66%),
+        radial-gradient(ellipse 45% 40% at 20% 72%, rgba(12, 40, 120, 0.10), transparent 62%),
+        var(--okip-pm-bg-color, #04071a);
 }
 
 /* ---- Overlay opcional (sobre el fondo) ---- */
@@ -63,6 +74,24 @@
     pointer-events: none;
 }
 
+/* ---- Piso / reflejo de escena (luz azul ambiental en la base) ----
+   Vive bajo el monitor (z2, sobre el fondo, bajo el contenido z3). Estable,
+   sin parallax: es el "suelo" de la escena. */
+.okip-pm__floor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 42%;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        radial-gradient(60% 100% at 68% 118%, rgba(60, 130, 255, .30), transparent 70%),
+        radial-gradient(120% 80% at 50% 130%, rgba(18, 46, 120, .22), transparent 72%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 55%);
+            mask-image: linear-gradient(180deg, transparent 0%, #000 55%);
+}
+
 /* ---- Estructura ---- */
 .okip-pm__inner {
     position: relative;
@@ -72,9 +101,9 @@
     margin-inline: auto;
     padding-inline: var(--okip-container-pad, 1.5rem);
     display: grid;
-    grid-template-columns: 1.05fr 1fr;
+    grid-template-columns: 1fr 1.15fr; /* texto izq · monitor (protagonista) der */
     align-items: center;
-    gap: clamp(2rem, 6vw, 5rem);
+    gap: clamp(2rem, 5vw, 4.5rem);
 }
 
 /* ---- Capa 3: texto (z3, queda por encima) ---- */
@@ -94,12 +123,23 @@
 .okip-pm__title {
     margin: 0;
     font-size: clamp(2.2rem, 5vw, 4rem);
-    line-height: 1.06;
-    font-weight: 700;
+    line-height: 1.08;
+    font-weight: 300; /* base ligero; el resaltado va en negrita (no color) */
     letter-spacing: -0.02em;
+    color: #fff;
 }
+/* Resaltado de la referencia: NEGRITA BLANCA (no naranja). */
 .okip-pm__highlight {
-    color: var(--okip-color-accent, #ff5a14);
+    color: inherit;
+    font-weight: 700;
+}
+.okip-pm__subtitle {
+    margin: 1.5rem 0 0;
+    font-size: clamp(.72rem, 1vw, .82rem);
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--okip-color-text-muted, #aeb9cb);
 }
 .okip-pm__desc {
     margin-top: 1.5rem;
@@ -117,7 +157,7 @@
     z-index: 2;
     justify-self: end;
     width: 100%;
-    max-width: 680px;
+    max-width: 760px; /* protagonista */
     will-change: transform, opacity;
 }
 .okip-pm__screen {
@@ -166,33 +206,57 @@
     background: #0c1626;
 }
 
-/* Placeholder geométrico de pantalla (sin media real): tablero esquemático */
+/* Placeholder esquemático tipo dashboard (sin media real): barra + mapa + tarjetas.
+   Wireframe sobrio (no mockup fotográfico falso). */
 .okip-pm__screen-ph {
     position: absolute;
     inset: 0;
-    display: block;
-    background:
-        repeating-linear-gradient(0deg, rgba(255, 255, 255, .04) 0 1px, transparent 1px 38px),
-        repeating-linear-gradient(90deg, rgba(255, 255, 255, .04) 0 1px, transparent 1px 38px),
-        #0a1422;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(160deg, #0c1626 0%, #0a1422 60%, #081020 100%);
 }
 .okip-pm__screen-ph-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 12%;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    height: 11%;
+    padding-inline: 4%;
     background: #0c1828;
     border-bottom: 1px solid rgba(255, 255, 255, .06);
 }
-.okip-pm__screen-ph-grid {
-    position: absolute;
-    left: 8%;
-    right: 8%;
-    top: 26%;
-    bottom: 14%;
-    border: 1px dashed rgba(120, 180, 255, .35);
+.okip-pm__screen-ph-dot {
+    width: .55em;
+    height: .55em;
+    border-radius: 50%;
+    background: rgba(120, 170, 255, .35);
+}
+.okip-pm__screen-ph-dot:first-child { background: rgba(255, 120, 90, .5); }
+.okip-pm__screen-ph-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 4%;
+    padding: 5% 4%;
+}
+/* Panel principal "mapa": superficie fría con líneas suaves (no fake map fotográfico) */
+.okip-pm__screen-ph-map {
+    border-radius: 8px;
+    background:
+        radial-gradient(40% 50% at 60% 45%, rgba(60, 140, 255, .18), transparent 70%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 22px),
+        #0b1a30;
+    border: 1px solid rgba(120, 180, 255, .14);
+}
+.okip-pm__screen-ph-side {
+    display: flex;
+    flex-direction: column;
+    gap: 8%;
+}
+.okip-pm__screen-ph-card {
+    flex: 1;
     border-radius: 6px;
+    background: linear-gradient(180deg, #102038, #0b1626);
+    border: 1px solid rgba(120, 180, 255, .12);
 }
 
 /* Glow azul sutil tras el monitor (iluminación de escena, no fondo).
@@ -200,11 +264,11 @@
 .okip-pm__monitor--glow::before {
     content: "";
     position: absolute;
-    inset: -18% -12% -6% -12%;
+    inset: -26% -18% -12% -18%;
     z-index: 0;
-    background: radial-gradient(58% 58% at 55% 42%, rgba(60, 140, 255, .55), transparent 70%);
+    background: radial-gradient(60% 62% at 55% 40%, rgba(70, 150, 255, .65), transparent 72%);
     opacity: var(--okip-pm-glow, 0.6);
-    filter: blur(26px);
+    filter: blur(34px);
     pointer-events: none;
 }
 
@@ -218,45 +282,51 @@
        no se congela en un estado intermedio si el rAF se pausa.
    ============================================================ */
 
-/* Estado inicial (con JS): contenido oculto hasta que el JS latchea el reveal. */
-.okip-js .okip-pm--animated .okip-pm__bg {
+/* Estado inicial (con JS): contenido oculto hasta que el JS latchea el reveal.
+   El reveal del fondo va en el INTERIOR (opacidad), no en el exterior (parallax). */
+.okip-js .okip-pm--animated .okip-pm__bg-inner {
     opacity: 0;
 }
 .okip-js .okip-pm--animated .okip-pm__computer-reveal {
     opacity: 0;
-    transform: translateY(34px) scale(.975);
+    transform: translateY(46px) scale(.955);
+    will-change: opacity, transform;
 }
 .okip-js .okip-pm--animated .okip-pm__text-reveal > * {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(24px);
+    will-change: opacity, transform;
 }
 /* El glow no debe verse antes de que entre la computadora. */
 .okip-js .okip-pm--animated .okip-pm__monitor--glow::before {
     opacity: 0;
 }
 
-/* Reveal latcheado (CSS transition suave; lo dispara el JS por progreso o IO). */
-.okip-pm.is-bg-revealed .okip-pm__bg {
+/* Reveal latcheado (CSS transition suave; el JS añade las 3 clases A LA VEZ,
+   el ESCALONADO lo dan los transition-delay → entrada coreografiada, nunca "de
+   golpe" y nunca atascada: fondo → texto → monitor (protagonista, aterriza al final). */
+.okip-pm.is-bg-revealed .okip-pm__bg-inner {
     opacity: 1;
-    transition: opacity .9s ease;
-}
-.okip-pm.is-computer-revealed .okip-pm__computer-reveal {
-    opacity: 1;
-    transform: none;
-    transition: opacity .8s ease, transform .9s var(--okip-ease);
-}
-.okip-pm.is-computer-revealed .okip-pm__monitor--glow::before {
-    opacity: var(--okip-pm-glow, 0.6);
-    transition: opacity .9s ease;
+    transition: opacity 1s ease;
 }
 .okip-pm.is-text-revealed .okip-pm__text-reveal > * {
     opacity: 1;
     transform: none;
-    transition: opacity .75s ease, transform .85s var(--okip-ease);
+    transition: opacity .7s ease, transform .8s var(--okip-ease);
+    transition-delay: .14s;
 }
-.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(2) { transition-delay: .08s; }
-.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(3) { transition-delay: .16s; }
-.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(4) { transition-delay: .24s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(2) { transition-delay: .22s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(3) { transition-delay: .30s; }
+.okip-pm.is-text-revealed .okip-pm__text-reveal > *:nth-child(4) { transition-delay: .38s; }
+.okip-pm.is-computer-revealed .okip-pm__computer-reveal {
+    opacity: 1;
+    transform: none;
+    transition: opacity .85s ease .32s, transform .95s var(--okip-ease) .32s;
+}
+.okip-pm.is-computer-revealed .okip-pm__monitor--glow::before {
+    opacity: var(--okip-pm-glow, 0.6);
+    transition: opacity 1s ease .42s;
+}
 
 /* El parallax (GSAP/rAF) escribe `transform` inline en los nodos EXTERIORES, que
    NO tienen transición CSS de transform → no hay conflicto. El reveal (opacidad/
@@ -275,22 +345,12 @@
 }
 
 /* ============================================================
-   Overlap de LAYOUT: solo en desktop y sin reduce-motion.
-   Margin negativo (constante, sin layout jump) + estado inicial
-   counter-transformado hacia abajo (invisible) para no tapar el Hero.
+   SIN overlap de LAYOUT (Hero → Bloque 2).
+   Se eliminó el "lip" (margin negativo + bordes/sombra de card): el Bloque 2 ya NO
+   invade al Hero. El Hero queda limpio y protagonista; la transición la dan SOLO el
+   recede del Hero (al ~80% de su scroll) y la entrada escalonada de las capas de B2.
+   El root nunca recibe transform de masa.
    ============================================================ */
-@media (prefers-reduced-motion: no-preference) and (min-width: 1025px) {  /* --okip-bp-tablet: 1024px */
-    .okip-pm--transition {
-        margin-top: calc(-1 * var(--okip-pm-overlap, 0px));
-        border-top-left-radius: clamp(18px, 3vw, 40px);
-        border-top-right-radius: clamp(18px, 3vw, 40px);
-        box-shadow: 0 -40px 80px rgba(0, 0, 0, .55);
-    }
-    /* Antes de que el JS escriba el primer frame: counter-transform invisible. */
-    .okip-js .okip-pm--transition {
-        transform: translate3d(0, var(--okip-pm-overlap, 0px), 0);
-    }
-}
 
 /* ---- Responsive: móvil/tablet (≤1024px) → vertical (texto y luego monitor) ---- */
 @media (max-width: 1024px) {  /* --okip-bp-tablet */
@@ -316,7 +376,7 @@
 
 /* ---- Accesibilidad: reduce motion ---- */
 @media (prefers-reduced-motion: reduce) {
-    .okip-js .okip-pm--animated .okip-pm__bg,
+    .okip-js .okip-pm--animated .okip-pm__bg-inner,
     .okip-js .okip-pm--animated .okip-pm__computer-reveal,
     .okip-js .okip-pm--animated .okip-pm__text-reveal > * {
         opacity: 1 !important;

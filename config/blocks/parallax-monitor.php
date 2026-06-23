@@ -107,6 +107,8 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
         $a['overlap_transition_enabled'] = okip_bool($a['overlap_transition_enabled']);
         $a['text_reveal']                = okip_bool($a['text_reveal']);
         $a['pin_enabled']                = okip_bool($a['pin_enabled']);
+        $a['background_pin']             = okip_bool(isset($a['background_pin']) ? $a['background_pin'] : true);
+        $a['background_pin_vh']          = okip_clamp_int(isset($a['background_pin_vh']) ? $a['background_pin_vh'] : 90, 0, 300);
         $a['start_progress']             = okip_clamp_float($a['start_progress'], 0, 1);
         $a['background_speed']           = okip_clamp_float($a['background_speed'], 0, 2);
         $a['computer_speed']             = okip_clamp_float($a['computer_speed'], 0, 2);
@@ -126,7 +128,8 @@ return array(
     'content' => array(
         'eyebrow'          => '',
         'title'            => '',
-        'highlighted_text' => '', // subcadena del title a resaltar
+        'highlighted_text' => '', // subcadena del title a resaltar (negrita, no color)
+        'subtitle'         => '', // línea inferior tipo kicker (uppercase, letterspaced)
         'description'      => '',
     ),
     'layout' => array(
@@ -134,7 +137,7 @@ return array(
         'content_width'    => '1200px',
         'overlap_previous' => true,     // entrar sobre el bloque anterior (Hero)
         'overlap_start'    => 0.85,     // % del Hero donde empieza la transición
-        'overlap_amount'   => '18vh',   // cuánto sube sobre el bloque anterior
+        'overlap_amount'   => '8vh',    // "lip" sutil del panel sobre el Hero (constante)
         'z_index'          => 2,        // por encima del Hero durante la transición
     ),
     'background' => array(
@@ -177,11 +180,16 @@ return array(
         'pin_enabled'                => false, // sin pin por ahora (solo con GSAP futuro)
         'start_progress'             => 0.85,  // alias de layout.overlap_start (transición)
         'disable_parallax_below'     => 1024,  // ancho en px: por debajo usa modo is-static
+        // Fondo fijo (auto-pin) para que el Bloque 3 entre ENCIMA del Bloque 2.
+        // Solo desktop+GSAP: el Bloque 2 se pinea (pinSpacing:false) como fondo
+        // mientras el siguiente bloque sube por scroll sobre él.
+        'background_pin'             => true,
+        'background_pin_vh'          => 90,    // duración del pin en vh (cuánto dura como fondo)
         // Magnitud base y velocidades de drift por capa (drift_px = speed × parallax_drift_px).
         'parallax_drift_px'          => 100,   // px base; controla la escala de todo el parallax
-        'background_speed'           => 0.18,  // fondo: lento y lejano   → ±18 px
-        'computer_speed'             => 0.75,  // monitor: protagonista   → ±75 px
-        'text_speed'                 => 0.08,  // texto: micro-parallax   → ±8 px
+        'background_speed'           => 0.30,  // fondo: lento pero VISIBLE → ±30 px
+        'computer_speed'             => 0.85,  // monitor: protagonista     → ±85 px (parallax visible)
+        'text_speed'                 => 0.08,  // texto: micro-parallax     → ±8 px (estable)
         // Rangos de entrada coreografiada (en progreso 0..1 de la transición).
         'background_enter_range'     => array(0.00, 0.35),
         'computer_enter_range'       => array(0.25, 0.70),
