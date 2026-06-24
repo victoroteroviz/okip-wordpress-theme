@@ -15,12 +15,12 @@
  * (replay_on_enter = false): el intro solo se repite recargando la página.
  *
  * Whitelists:
-     *   background.type  : video | image | svg | svg_inline | gradient
+ *   background.type  : css_glitch | video | image | svg | gradient
  *   card.type        : video | image | svg
  *
- * Regla del fondo: el fondo real es el MEDIA (video/image/svg) limpio. El
- * gradiente CSS solo actúa como fallback (sin media o si el video falla). El
- * overlay es una capa separada y opcional, no un reemplazo del fondo.
+ * Regla del fondo: `css_glitch` es el fondo editable por defecto. Media
+ * (video/image/svg) sigue disponible como alternativa limpia. El overlay es una
+ * capa separada y opcional, no un reemplazo del fondo.
  *
  * Las funciones se declaran ANTES del return (con function_exists) porque el
  * archivo se incluye para obtener su array de defaults.
@@ -70,23 +70,30 @@ if (! function_exists('okip_normalize_hero_data')) {
     function okip_normalize_hero_data($data)
     {
         $align_allowed = array('left', 'center', 'right');
-        $bg_allowed    = array('video', 'image', 'svg', 'svg_inline', 'gradient');
+        $bg_allowed    = array('css_glitch', 'video', 'image', 'svg', 'gradient');
         $card_allowed  = array('video', 'image', 'svg');
         $play_allowed  = array('hover', 'tap', 'manual');
 
         // Contenido.
         $data['content']['alignment'] = okip_one_of($data['content']['alignment'], $align_allowed, 'center');
 
-        // Fondo (media-driven: intro + loop + fallback).
-        $data['background']['type'] = okip_one_of($data['background']['type'], $bg_allowed, 'gradient');
-        $data['background']['svg_variant'] = okip_one_of($data['background']['svg_variant'], array('mexico_network'), 'mexico_network');
-        $data['background']['svg_bg'] = sanitize_hex_color((string) $data['background']['svg_bg']) ?: '#020711';
-        $data['background']['svg_accent'] = sanitize_hex_color((string) $data['background']['svg_accent']) ?: '#00a9ff';
-        $data['background']['svg_accent_2'] = sanitize_hex_color((string) $data['background']['svg_accent_2']) ?: '#6ee7ff';
-        $data['background']['svg_grid_opacity'] = okip_clamp_float($data['background']['svg_grid_opacity'], 0, 1);
-        $data['background']['svg_node_intensity'] = okip_clamp_float($data['background']['svg_node_intensity'], 0, 1);
-        $data['background']['svg_particle_opacity'] = okip_clamp_float($data['background']['svg_particle_opacity'], 0, 1);
-        $data['background']['svg_particle_speed'] = okip_clamp_float($data['background']['svg_particle_speed'], 0.25, 3);
+        // Fondo (CSS editable por default, media intro/loop como alternativa).
+        if (isset($data['background']['type']) && $data['background']['type'] === 'svg' && empty($data['background']['media'])) {
+            $data['background']['type'] = 'css_glitch';
+        }
+        $data['background']['type'] = okip_one_of($data['background']['type'], $bg_allowed, 'css_glitch');
+        $data['background']['css_variant'] = okip_one_of($data['background']['css_variant'], array('glitch_grid'), 'glitch_grid');
+        $data['background']['css_bg'] = sanitize_hex_color((string) $data['background']['css_bg']) ?: '#020711';
+        $data['background']['css_accent'] = sanitize_hex_color((string) $data['background']['css_accent']) ?: '#00a9ff';
+        $data['background']['css_accent_2'] = sanitize_hex_color((string) $data['background']['css_accent_2']) ?: '#6ee7ff';
+        $data['background']['css_grid_opacity'] = okip_clamp_float($data['background']['css_grid_opacity'], 0, 1);
+        $data['background']['css_scanline_opacity'] = okip_clamp_float($data['background']['css_scanline_opacity'], 0, 1);
+        $data['background']['css_noise_opacity'] = okip_clamp_float($data['background']['css_noise_opacity'], 0, 1);
+        $data['background']['css_glitch_enabled'] = okip_bool($data['background']['css_glitch_enabled']);
+        $data['background']['css_glitch_intensity'] = okip_clamp_float($data['background']['css_glitch_intensity'], 0, 1);
+        $data['background']['css_glitch_speed'] = okip_clamp_float($data['background']['css_glitch_speed'], 0.2, 3);
+        $data['background']['css_glitch_interval'] = okip_clamp_float($data['background']['css_glitch_interval'], 2, 20);
+        $data['background']['css_chroma_offset'] = okip_clamp_float($data['background']['css_chroma_offset'], 0, 32);
 
         // Intro (video introductorio, una sola vez).
         $data['intro']['enabled']      = okip_bool($data['intro']['enabled']);
@@ -167,21 +174,25 @@ return array(
         'max_width'    => '1000px',
     ),
     'background' => array(
-        'type'            => 'svg_inline', // video | image | svg | svg_inline | gradient
+        'type'            => 'css_glitch', // css_glitch | video | image | svg | gradient
         'media'           => '',      // compat: media único (si no hay intro/loop, se usa como loop)
         'intro_media'     => '',      // ruta/URL/ID del video introductorio
         'loop_media'      => '',      // ruta/URL/ID del video de bucle
         'poster'          => '',      // imagen de respaldo para los videos
         'fallback_image'  => '',      // imagen estática si los videos no cargan
         'object_position' => 'center center',
-        'svg_variant'          => 'mexico_network',
-        'svg_bg'               => '#020711',
-        'svg_accent'           => '#00a9ff',
-        'svg_accent_2'         => '#6ee7ff',
-        'svg_grid_opacity'     => 0.32,
-        'svg_node_intensity'   => 0.85,
-        'svg_particle_opacity' => 0.62,
-        'svg_particle_speed'   => 1.15,
+        'css_variant'          => 'glitch_grid',
+        'css_bg'               => '#020711',
+        'css_accent'           => '#00a9ff',
+        'css_accent_2'         => '#6ee7ff',
+        'css_grid_opacity'     => 0.24,
+        'css_scanline_opacity' => 0.16,
+        'css_noise_opacity'    => 0.10,
+        'css_glitch_enabled'   => true,
+        'css_glitch_intensity' => 0.42,
+        'css_glitch_speed'     => 1,
+        'css_glitch_interval'  => 7,
+        'css_chroma_offset'    => 8,
     ),
     'intro' => array(
         'enabled'      => true,

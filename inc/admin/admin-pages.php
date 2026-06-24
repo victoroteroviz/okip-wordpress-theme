@@ -211,26 +211,30 @@ function okip_render_admin_hero_editor($instance_id, array $data)
     </details>
 
     <details class="okip-admin-panel" open>
-        <summary><?php esc_html_e('Fondo SVG / media', 'okip'); ?></summary>
+        <summary><?php esc_html_e('Fondo CSS / media', 'okip'); ?></summary>
         <div class="okip-admin-grid okip-admin-grid--two">
             <?php
             okip_admin_select_field(__('Tipo de fondo', 'okip'), $base . '[background][type]', $background['type'], array(
-                'svg_inline' => __('SVG inline editable', 'okip'),
+                'css_glitch' => __('Fondo CSS glitch', 'okip'),
                 'video'      => __('Video intro/loop', 'okip'),
                 'image'      => __('Imagen', 'okip'),
                 'svg'        => __('SVG externo', 'okip'),
                 'gradient'   => __('Fallback neutro', 'okip'),
             ));
-            okip_admin_select_field(__('Variante SVG', 'okip'), $base . '[background][svg_variant]', $background['svg_variant'], array(
-                'mexico_network' => __('México red tecnológica', 'okip'),
+            okip_admin_select_field(__('Variante CSS', 'okip'), $base . '[background][css_variant]', $background['css_variant'], array(
+                'glitch_grid' => __('Glitch grid', 'okip'),
             ));
-            okip_admin_color_field(__('Fondo SVG', 'okip'), $base . '[background][svg_bg]', $background['svg_bg']);
-            okip_admin_color_field(__('Acento azul', 'okip'), $base . '[background][svg_accent]', $background['svg_accent']);
-            okip_admin_color_field(__('Acento claro', 'okip'), $base . '[background][svg_accent_2]', $background['svg_accent_2']);
-            okip_admin_number_field(__('Opacidad grid', 'okip'), $base . '[background][svg_grid_opacity]', $background['svg_grid_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_number_field(__('Intensidad nodos', 'okip'), $base . '[background][svg_node_intensity]', $background['svg_node_intensity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_number_field(__('Opacidad partículas', 'okip'), $base . '[background][svg_particle_opacity]', $background['svg_particle_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_number_field(__('Velocidad partículas', 'okip'), $base . '[background][svg_particle_speed]', $background['svg_particle_speed'], __('1 = normal, mayor = más rápido.', 'okip'), array('min' => .25, 'max' => 3, 'step' => '.05'));
+            okip_admin_color_field(__('Fondo CSS', 'okip'), $base . '[background][css_bg]', $background['css_bg']);
+            okip_admin_color_field(__('Acento azul', 'okip'), $base . '[background][css_accent]', $background['css_accent']);
+            okip_admin_color_field(__('Acento claro', 'okip'), $base . '[background][css_accent_2]', $background['css_accent_2']);
+            okip_admin_number_field(__('Opacidad grid', 'okip'), $base . '[background][css_grid_opacity]', $background['css_grid_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+            okip_admin_number_field(__('Opacidad scanlines', 'okip'), $base . '[background][css_scanline_opacity]', $background['css_scanline_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+            okip_admin_number_field(__('Opacidad noise', 'okip'), $base . '[background][css_noise_opacity]', $background['css_noise_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+            okip_admin_checkbox_field(__('Glitch activo', 'okip'), $base . '[background][css_glitch_enabled]', $background['css_glitch_enabled']);
+            okip_admin_number_field(__('Intensidad glitch', 'okip'), $base . '[background][css_glitch_intensity]', $background['css_glitch_intensity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+            okip_admin_number_field(__('Velocidad glitch', 'okip'), $base . '[background][css_glitch_speed]', $background['css_glitch_speed'], __('1 = normal, mayor = más rápido.', 'okip'), array('min' => .2, 'max' => 3, 'step' => '.05'));
+            okip_admin_number_field(__('Intervalo glitch', 'okip'), $base . '[background][css_glitch_interval]', $background['css_glitch_interval'], __('Segundos entre micro desplazamientos.', 'okip'), array('min' => 2, 'max' => 20, 'step' => '.25'));
+            okip_admin_number_field(__('Chroma offset px', 'okip'), $base . '[background][css_chroma_offset]', $background['css_chroma_offset'], '', array('min' => 0, 'max' => 32, 'step' => '.5'));
             okip_admin_text_field(__('Object position', 'okip'), $base . '[background][object_position]', $background['object_position']);
             okip_admin_media_field(__('Media único / imagen / SVG externo', 'okip'), $base . '[background][media]', $background['media']);
             okip_admin_media_field(__('Intro video', 'okip'), $base . '[background][intro_media]', $background['intro_media']);

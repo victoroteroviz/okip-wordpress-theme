@@ -4,8 +4,8 @@
  * Bloque Hero.
  *
  * Recibe en $args: ['type', 'instance_id', 'data'] (data ya normalizada).
- * Orden de capas (regla del fondo limpio):
- *   1. background media limpio (video | image | svg); gradiente solo de fallback
+ * Orden de capas:
+ *   1. background CSS editable o media limpio (video | image | svg)
  *   2. overlay configurable opcional (capa separada y ligera)
  *   3. tarjetas flotantes
  *   4. texto central
@@ -70,9 +70,9 @@ if ($img_on) {
     $single_img_url = $fallback_url; // sin videos pero con fallback → es el fondo
 }
 
-// Render del fondo: video | image | svg | svg-inline | missing (neutro).
-if ($bg_type === 'svg_inline') {
-    $bg_render = 'svg-inline';
+// Render del fondo: css-glitch | video | image | svg | missing (neutro).
+if ($bg_type === 'css_glitch') {
+    $bg_render = 'css-glitch';
 } elseif ($has_video_layer) {
     $bg_render = 'video';
 } elseif ($single_img_url !== '') {
@@ -114,36 +114,31 @@ $desc_typography = okip_normalize_typography(
     'hero_description'
 );
 
-$svg_particle_speed = isset($background['svg_particle_speed']) ? max(0.25, min(3, (float) $background['svg_particle_speed'])) : 1;
-$svg_duration = function ($seconds) use ($svg_particle_speed) {
-    return okip_css_number(((float) $seconds) / $svg_particle_speed) . 's';
+$css_glitch_speed = isset($background['css_glitch_speed']) ? max(0.2, min(3, (float) $background['css_glitch_speed'])) : 1;
+$css_duration = function ($seconds) use ($css_glitch_speed) {
+    return okip_css_number(((float) $seconds) / $css_glitch_speed) . 's';
 };
+$css_glitch_interval = isset($background['css_glitch_interval']) ? max(2, min(20, (float) $background['css_glitch_interval'])) : 7;
+$css_glitch_enabled = ! empty($background['css_glitch_enabled']);
+$css_glitch_class = $css_glitch_enabled ? ' is-glitch-enabled' : '';
+
 $hero_style = '--okip-hero-xfade:' . esc_attr((string) $effective_crossfade_ms) . 'ms;';
 $hero_style .= okip_typography_css_vars('okip-hero-title', $title_typography);
 $hero_style .= okip_typography_css_vars('okip-hero-desc', $desc_typography);
 $hero_style .= okip_css_vars(array(
-    'okip-hero-svg-bg'             => isset($background['svg_bg']) ? $background['svg_bg'] : '#020711',
-    'okip-hero-svg-accent'         => isset($background['svg_accent']) ? $background['svg_accent'] : '#00a9ff',
-    'okip-hero-svg-accent-2'       => isset($background['svg_accent_2']) ? $background['svg_accent_2'] : '#6ee7ff',
-    'okip-hero-svg-grid-opacity'   => isset($background['svg_grid_opacity']) ? okip_css_number($background['svg_grid_opacity']) : '0.32',
-    'okip-hero-svg-node-intensity' => isset($background['svg_node_intensity']) ? okip_css_number($background['svg_node_intensity']) : '0.85',
-    'okip-hero-svg-particle-alpha' => isset($background['svg_particle_opacity']) ? okip_css_number($background['svg_particle_opacity']) : '0.62',
-    'okip-hero-route-fast'         => $svg_duration(11),
-    'okip-hero-route-slow'         => $svg_duration(15),
-    'okip-hero-node-duration'      => $svg_duration(3.6),
-    'okip-hero-hud-duration'       => $svg_duration(7),
-    'okip-hero-p1-duration'        => $svg_duration(6.2),
-    'okip-hero-p2-duration'        => $svg_duration(8.4),
-    'okip-hero-p3-duration'        => $svg_duration(7.1),
-    'okip-hero-p4-duration'        => $svg_duration(9.2),
-    'okip-hero-p5-duration'        => $svg_duration(6.8),
-    'okip-hero-p6-duration'        => $svg_duration(8.8),
-    'okip-hero-p7-duration'        => $svg_duration(7.6),
-    'okip-hero-p8-duration'        => $svg_duration(6.4),
-    'okip-hero-p9-duration'        => $svg_duration(8.1),
-    'okip-hero-p10-duration'       => $svg_duration(9.6),
-    'okip-hero-p11-duration'       => $svg_duration(7.8),
-    'okip-hero-p12-duration'       => $svg_duration(6.9),
+    'okip-hero-css-bg'                 => isset($background['css_bg']) ? $background['css_bg'] : '#020711',
+    'okip-hero-css-accent'             => isset($background['css_accent']) ? $background['css_accent'] : '#00a9ff',
+    'okip-hero-css-accent-2'           => isset($background['css_accent_2']) ? $background['css_accent_2'] : '#6ee7ff',
+    'okip-hero-css-grid-opacity'       => isset($background['css_grid_opacity']) ? okip_css_number($background['css_grid_opacity']) : '0.24',
+    'okip-hero-css-scanline-opacity'   => isset($background['css_scanline_opacity']) ? okip_css_number($background['css_scanline_opacity']) : '0.16',
+    'okip-hero-css-noise-opacity'      => isset($background['css_noise_opacity']) ? okip_css_number($background['css_noise_opacity']) : '0.1',
+    'okip-hero-css-glitch-intensity'   => isset($background['css_glitch_intensity']) ? okip_css_number($background['css_glitch_intensity']) : '0.42',
+    'okip-hero-css-glitch-alpha'       => $css_glitch_enabled ? '1' : '0',
+    'okip-hero-css-glitch-in-duration' => $css_duration(.74),
+    'okip-hero-css-signal-duration'    => $css_duration(24),
+    'okip-hero-css-noise-duration'     => $css_duration(1.35),
+    'okip-hero-css-chroma-duration'    => okip_css_number($css_glitch_interval / $css_glitch_speed) . 's',
+    'okip-hero-css-chroma-offset'      => isset($background['css_chroma_offset']) ? okip_css_number($background['css_chroma_offset']) . 'px' : '8px',
 ));
 
 $overlay_style = sprintf(
@@ -178,8 +173,8 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     data-pause-blur="<?php echo $pause_blur ? '1' : '0'; ?>"
     style="<?php echo $hero_style; ?>">
 
-    <!-- Capa 1: fondo media-driven. Intro (una vez) → crossfade → loop (bucle).
-         Sin videos: imagen/svg o fallback neutro (solo color). -->
+    <!-- Capa 1: fondo CSS o media-driven. Intro (una vez) → crossfade → loop (bucle).
+         Sin CSS/media: fallback neutro (solo color). -->
     <div class="okip-hero__bg okip-hero__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>" data-okip-hero-bg>
         <?php if ($bg_render === 'video') : ?>
             <?php if ($intro_url !== '') : ?>
@@ -202,17 +197,12 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 <img class="okip-hero__media okip-hero__media--fallback" src="<?php echo esc_url($fallback_url); ?>"
                     alt="" aria-hidden="true" style="object-position:<?php echo esc_attr($obj_pos); ?>;">
             <?php endif; ?>
-        <?php elseif ($bg_render === 'svg-inline') : ?>
-            <?php
-            get_template_part(
-                'template-parts/blocks/hero/svg-mexico-network',
-                null,
-                array(
-                    'instance_id' => $okip_instance,
-                    'background'  => $background,
-                )
-            );
-            ?>
+        <?php elseif ($bg_render === 'css-glitch') : ?>
+            <div class="okip-hero__css-bg<?php echo esc_attr($css_glitch_class); ?>" aria-hidden="true">
+                <span class="okip-hero__css-grid"></span>
+                <span class="okip-hero__css-signal"></span>
+                <span class="okip-hero__css-noise"></span>
+            </div>
         <?php elseif ($bg_render === 'image') : ?>
             <img class="okip-hero__media" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true"
                 style="object-position:<?php echo esc_attr($obj_pos); ?>;">

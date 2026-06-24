@@ -29,17 +29,21 @@ return array(
                 'alignment'    => 'center',
             ),
             'background' => array(
-                // Fondo SVG inline editable: mapa tecnológico de México.
+                // Fondo CSS editable por default: glitch/grid tecnológico sutil.
                 // El flujo video intro/loop sigue soportado por el bloque si se cambia el type.
-                'type'                 => 'svg_inline',
-                'svg_variant'          => 'mexico_network',
-                'svg_bg'               => '#020711',
-                'svg_accent'           => '#00a9ff',
-                'svg_accent_2'         => '#6ee7ff',
-                'svg_grid_opacity'     => 0.32,
-                'svg_node_intensity'   => 0.9,
-                'svg_particle_opacity' => 0.62,
-                'svg_particle_speed'   => 1.2,
+                'type'                 => 'css_glitch',
+                'css_variant'          => 'glitch_grid',
+                'css_bg'               => '#020711',
+                'css_accent'           => '#00a9ff',
+                'css_accent_2'         => '#6ee7ff',
+                'css_grid_opacity'     => 0.24,
+                'css_scanline_opacity' => 0.16,
+                'css_noise_opacity'    => 0.10,
+                'css_glitch_enabled'   => true,
+                'css_glitch_intensity' => 0.42,
+                'css_glitch_speed'     => 1,
+                'css_glitch_interval'  => 7,
+                'css_chroma_offset'    => 8,
             ),
             'overlay' => array(
                 'enabled' => true,

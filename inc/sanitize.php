@@ -170,3 +170,52 @@ function okip_merge_defaults($data, $defaults)
     }
     return $out;
 }
+
+/**
+ * Diff recursivo de $new contra $base: devuelve SOLO las claves de $new cuyo valor
+ * difiere de $base. Es la operación inversa de okip_merge_defaults, así que el
+ * resultado puede volver a mezclarse sobre $base para reconstruir $new.
+ *
+ * Las listas (secuenciales) se tratan de forma ATÓMICA: si la lista cambió en algo,
+ * se devuelve entera (coherente con okip_merge_defaults, que reemplaza listas).
+ *
+ * @param mixed $new
+ * @param mixed $base
+ * @return array Diff mínimo (mapa asociativo).
+ */
+function okip_array_diff_recursive($new, $base)
+{
+    if (! is_array($new)) {
+        return $new;
+    }
+    // Listas: comparación atómica (igualdad estructural).
+    if (okip_is_list($new) || ! is_array($base)) {
+        return $new;
+    }
+
+    $diff = array();
+    foreach ($new as $key => $value) {
+        if (! array_key_exists($key, $base)) {
+            $diff[$key] = $value;
+            continue;
+        }
+        if (is_array($value) && ! okip_is_list($value)) {
+            $sub = okip_array_diff_recursive($value, $base[$key]);
+            if (! empty($sub)) {
+                $diff[$key] = $sub;
+            }
+            continue;
+        }
+        if (is_array($value)) {
+            // Lista: incluir entera solo si difiere.
+            if ($value !== $base[$key]) {
+                $diff[$key] = $value;
+            }
+            continue;
+        }
+        if ($value !== $base[$key]) {
+            $diff[$key] = $value;
+        }
+    }
+    return $diff;
+}

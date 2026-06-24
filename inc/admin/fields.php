@@ -107,6 +107,9 @@ function okip_admin_color_field($label, $name, $value, $description = '')
 function okip_admin_checkbox_field($label, $name, $checked, $description = '')
 {
     echo '<label class="okip-admin-check">';
+    // Hidden fallback: garantiza que la clave llegue en POST cuando el checkbox
+    // está desmarcado (si no, el saneador caería en su default y no se podría apagar).
+    echo '<input type="hidden" name="' . esc_attr($name) . '" value="0">';
     echo '<input type="checkbox" name="' . esc_attr($name) . '" value="1" ' . checked((bool) $checked, true, false) . '>';
     echo '<span>' . esc_html($label) . '</span>';
     if ($description !== '') {

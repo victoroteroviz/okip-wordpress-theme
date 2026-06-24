@@ -80,10 +80,17 @@ function okip_admin_sanitize_page_overrides($slug, $raw_blocks)
             : array();
 
         if ($block['type'] === 'hero') {
-            $overrides[$instance_id] = array(
-                'type' => 'hero',
-                'data' => okip_admin_sanitize_hero_data($raw_data, isset($block['data']) ? $block['data'] : array()),
-            );
+            $base_data = isset($block['data']) ? $block['data'] : array();
+            $full = okip_admin_sanitize_hero_data($raw_data, $base_data);
+            // Solo persistir el diff mínimo contra el config base normalizado: así un
+            // cambio futuro en config/ no queda enmascarado por un snapshot completo.
+            $base_norm = okip_normalize_block_data('hero', $base_data);
+            $diff = okip_array_diff_recursive($full, $base_norm);
+            if (! empty($diff)) {
+                $overrides[$instance_id] = array('type' => 'hero', 'data' => $diff);
+            } else {
+                unset($overrides[$instance_id]);
+            }
         }
     }
 
@@ -113,21 +120,25 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
 
     $background = isset($raw['background']) && is_array($raw['background']) ? $raw['background'] : array();
     $data['background'] = array(
-        'type'                 => okip_one_of(isset($background['type']) ? $background['type'] : 'svg_inline', array('video', 'image', 'svg', 'svg_inline', 'gradient'), 'svg_inline'),
+        'type'                 => okip_one_of(isset($background['type']) ? $background['type'] : 'css_glitch', array('css_glitch', 'video', 'image', 'svg', 'gradient'), 'css_glitch'),
         'media'                => okip_admin_sanitize_media_ref(isset($background['media']) ? $background['media'] : ''),
         'intro_media'          => okip_admin_sanitize_media_ref(isset($background['intro_media']) ? $background['intro_media'] : ''),
         'loop_media'           => okip_admin_sanitize_media_ref(isset($background['loop_media']) ? $background['loop_media'] : ''),
         'poster'               => okip_admin_sanitize_media_ref(isset($background['poster']) ? $background['poster'] : ''),
         'fallback_image'       => okip_admin_sanitize_media_ref(isset($background['fallback_image']) ? $background['fallback_image'] : ''),
         'object_position'      => isset($background['object_position']) ? sanitize_text_field((string) $background['object_position']) : 'center center',
-        'svg_variant'          => okip_one_of(isset($background['svg_variant']) ? $background['svg_variant'] : 'mexico_network', array('mexico_network'), 'mexico_network'),
-        'svg_bg'               => sanitize_hex_color(isset($background['svg_bg']) ? $background['svg_bg'] : '#020711') ?: '#020711',
-        'svg_accent'           => sanitize_hex_color(isset($background['svg_accent']) ? $background['svg_accent'] : '#00a9ff') ?: '#00a9ff',
-        'svg_accent_2'         => sanitize_hex_color(isset($background['svg_accent_2']) ? $background['svg_accent_2'] : '#6ee7ff') ?: '#6ee7ff',
-        'svg_grid_opacity'     => okip_clamp_float(isset($background['svg_grid_opacity']) ? $background['svg_grid_opacity'] : .32, 0, 1),
-        'svg_node_intensity'   => okip_clamp_float(isset($background['svg_node_intensity']) ? $background['svg_node_intensity'] : .85, 0, 1),
-        'svg_particle_opacity' => okip_clamp_float(isset($background['svg_particle_opacity']) ? $background['svg_particle_opacity'] : .62, 0, 1),
-        'svg_particle_speed'   => okip_clamp_float(isset($background['svg_particle_speed']) ? $background['svg_particle_speed'] : 1.15, .25, 3),
+        'css_variant'          => okip_one_of(isset($background['css_variant']) ? $background['css_variant'] : 'glitch_grid', array('glitch_grid'), 'glitch_grid'),
+        'css_bg'               => sanitize_hex_color(isset($background['css_bg']) ? $background['css_bg'] : '#020711') ?: '#020711',
+        'css_accent'           => sanitize_hex_color(isset($background['css_accent']) ? $background['css_accent'] : '#00a9ff') ?: '#00a9ff',
+        'css_accent_2'         => sanitize_hex_color(isset($background['css_accent_2']) ? $background['css_accent_2'] : '#6ee7ff') ?: '#6ee7ff',
+        'css_grid_opacity'     => okip_clamp_float(isset($background['css_grid_opacity']) ? $background['css_grid_opacity'] : .24, 0, 1),
+        'css_scanline_opacity' => okip_clamp_float(isset($background['css_scanline_opacity']) ? $background['css_scanline_opacity'] : .16, 0, 1),
+        'css_noise_opacity'    => okip_clamp_float(isset($background['css_noise_opacity']) ? $background['css_noise_opacity'] : .10, 0, 1),
+        'css_glitch_enabled'   => okip_bool(isset($background['css_glitch_enabled']) ? $background['css_glitch_enabled'] : true),
+        'css_glitch_intensity' => okip_clamp_float(isset($background['css_glitch_intensity']) ? $background['css_glitch_intensity'] : .42, 0, 1),
+        'css_glitch_speed'     => okip_clamp_float(isset($background['css_glitch_speed']) ? $background['css_glitch_speed'] : 1, .2, 3),
+        'css_glitch_interval'  => okip_clamp_float(isset($background['css_glitch_interval']) ? $background['css_glitch_interval'] : 7, 2, 20),
+        'css_chroma_offset'    => okip_clamp_float(isset($background['css_chroma_offset']) ? $background['css_chroma_offset'] : 8, 0, 32),
     );
 
     $overlay = isset($raw['overlay']) && is_array($raw['overlay']) ? $raw['overlay'] : array();

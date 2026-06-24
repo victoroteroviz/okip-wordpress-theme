@@ -67,11 +67,15 @@ function okip_google_fonts_seed_catalog()
  */
 function okip_google_fonts_catalog()
 {
-    $stored = get_option('okip_google_fonts_catalog');
-    if (is_array($stored) && ! empty($stored)) {
-        return $stored;
+    // Cache en proceso: evita repetir get_option (y deserializar el blob, que con
+    // el catálogo de API puede ser grande) en cada normalización tipográfica.
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
     }
-    return okip_google_fonts_seed_catalog();
+    $stored = get_option('okip_google_fonts_catalog');
+    $cache = (is_array($stored) && ! empty($stored)) ? $stored : okip_google_fonts_seed_catalog();
+    return $cache;
 }
 
 /**
@@ -161,10 +165,17 @@ function okip_google_font_meta($family)
         );
     }
 
-    foreach (okip_google_fonts_catalog() as $font) {
-        $known = isset($font['family']) ? okip_sanitize_google_font_family($font['family']) : '';
-        if (strtolower($known) === strtolower($family)) {
-            return array(
+    // Mapa indexado por familia en minúsculas: lookup O(1) en vez de recorrer el
+    // catálogo entero en cada normalización tipográfica.
+    static $index = null;
+    if ($index === null) {
+        $index = array();
+        foreach (okip_google_fonts_catalog() as $font) {
+            $known = isset($font['family']) ? okip_sanitize_google_font_family($font['family']) : '';
+            if ($known === '') {
+                continue;
+            }
+            $index[strtolower($known)] = array(
                 'family'  => $known,
                 'label'   => isset($font['label']) ? $font['label'] : $known,
                 'weights' => ! empty($font['weights']) && is_array($font['weights']) ? array_map('intval', $font['weights']) : array(400, 700),
@@ -172,11 +183,18 @@ function okip_google_font_meta($family)
             );
         }
     }
+    $key = strtolower($family);
+    if (isset($index[$key])) {
+        return $index[$key];
+    }
 
+    // Familia libre (no en catálogo): permitir el rango completo de pesos.
+    // Google Fonts CSS2 sirve el peso más cercano disponible, así que no se
+    // descarta la elección del usuario (100/200/900 incluidos).
     return array(
         'family'  => $family,
         'label'   => $family,
-        'weights' => array(300, 400, 500, 600, 700, 800),
+        'weights' => array(100, 200, 300, 400, 500, 600, 700, 800, 900),
         'google'  => true,
     );
 }

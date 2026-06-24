@@ -2,9 +2,9 @@
  * Bloque Hero — estilos.
  * Carga condicional: solo si la página usa el bloque `hero`.
  *
- * Regla del fondo: el media (video/image/svg) es el fondo limpio. El gradiente
- * CSS SOLO aparece como fallback: tipo `gradient` (sin media) o `.is-bg-failed`
- * (el video falló). El overlay es una capa separada y opcional.
+ * Regla del fondo: `css_glitch` es el fondo editable por defecto; media
+ * (video/image/svg) sigue disponible como alternativa limpia. El fallback neutro
+ * aparece con tipo `gradient` sin media o `.is-bg-failed`.
  */
 
 .okip-hero {
@@ -47,166 +47,161 @@
     object-fit: cover;
 }
 
-/* ---- Fondo SVG inline: mapa México + red de inteligencia ---- */
-.okip-hero__bg--svg-inline {
-    background: var(--okip-hero-svg-bg, #020711);
+/* ---- Fondo CSS editable: glitch/grid tecnológico ---- */
+.okip-hero__bg--css-glitch {
+    background: var(--okip-hero-css-bg, #020711);
+    overflow: hidden;
 }
 
-.okip-hero-map {
+.okip-hero__css-bg,
+.okip-hero__css-bg::before,
+.okip-hero__css-bg::after,
+.okip-hero__css-grid,
+.okip-hero__css-signal,
+.okip-hero__css-noise {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
+    pointer-events: none;
 }
 
-.okip-hero-map__grid {
-    opacity: var(--okip-hero-svg-grid-opacity, .32);
+.okip-hero__css-bg {
+    overflow: hidden;
+    background:
+        radial-gradient(78% 70% at 50% 46%, rgba(255, 255, 255, .045), transparent 64%),
+        linear-gradient(180deg, rgba(2, 7, 17, .08), rgba(2, 7, 17, .58));
+    transform: translateZ(0);
+}
+
+.okip-hero__css-bg.is-glitch-enabled {
+    animation: okip-hero-glitch-in var(--okip-hero-css-glitch-in-duration, .74s) steps(2, end) both;
+    will-change: filter, transform;
+}
+
+.okip-hero__css-bg::before {
+    content: "";
+    background:
+        radial-gradient(42% 34% at 28% 31%, var(--okip-hero-css-accent, #00a9ff), transparent 68%),
+        radial-gradient(36% 30% at 74% 63%, var(--okip-hero-css-accent-2, #6ee7ff), transparent 70%),
+        radial-gradient(54% 44% at 50% 92%, rgba(255, 255, 255, .12), transparent 72%);
+    filter: blur(14px) saturate(1.08);
     mix-blend-mode: screen;
+    opacity: calc(.08 + (var(--okip-hero-css-glitch-intensity, .42) * .16));
 }
 
-.okip-hero-map__ambient circle {
-    fill: var(--okip-hero-svg-accent, #00a9ff);
-    opacity: .09;
-    filter: blur(22px);
+.okip-hero__css-bg::after {
+    content: "";
+    background:
+        linear-gradient(90deg, transparent 0 13%, var(--okip-hero-css-accent, #00a9ff) 13.25% 13.42%, transparent 13.7% 46%, var(--okip-hero-css-accent-2, #6ee7ff) 46.15% 46.28%, transparent 46.6% 100%),
+        repeating-linear-gradient(180deg, transparent 0 24px, var(--okip-hero-css-accent-2, #6ee7ff) 25px 26px, transparent 27px 72px);
+    mix-blend-mode: screen;
+    opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .2);
+    transform: translate3d(0, 0, 0);
 }
 
-.okip-hero-map__land path {
-    fill: rgba(0, 18, 34, .54);
-    stroke: var(--okip-hero-svg-accent, #00a9ff);
-    stroke-width: 2.5;
-    vector-effect: non-scaling-stroke;
+.okip-hero__css-bg.is-glitch-enabled::after {
+    animation: okip-hero-chroma-jolt var(--okip-hero-css-chroma-duration, 7s) steps(1, end) infinite;
+    will-change: opacity, transform;
 }
 
-.okip-hero-map__baja,
-.okip-hero-map__main,
-.okip-hero-map__yucatan {
-    opacity: .92;
+.okip-hero__css-grid {
+    color: var(--okip-hero-css-accent, #00a9ff);
+    background-image:
+        linear-gradient(to right, currentColor 1px, transparent 1px),
+        linear-gradient(to bottom, currentColor 1px, transparent 1px),
+        linear-gradient(120deg, transparent 0 34%, currentColor 34.2% 34.35%, transparent 34.6% 100%);
+    background-size: 72px 72px, 72px 72px, 320px 320px;
+    background-position: center;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 48%, #000 0 54%, transparent 82%);
+    mask-image: radial-gradient(ellipse at 50% 48%, #000 0 54%, transparent 82%);
+    mix-blend-mode: screen;
+    opacity: var(--okip-hero-css-grid-opacity, .24);
 }
 
-.okip-hero-map__routes path {
-    fill: none;
-    stroke: var(--okip-hero-svg-accent-2, #6ee7ff);
-    stroke-width: 1.2;
-    stroke-linecap: round;
-    stroke-dasharray: 2 16;
-    opacity: calc(var(--okip-hero-svg-node-intensity, .85) * .48);
-    animation: okip-hero-route-flow var(--okip-hero-route-fast, 11s) linear infinite;
+.okip-hero__css-signal {
+    background:
+        repeating-linear-gradient(180deg, transparent 0 8px, var(--okip-hero-css-accent-2, #6ee7ff) 9px 10px, transparent 11px 20px),
+        linear-gradient(90deg, transparent 0 9%, var(--okip-hero-css-accent, #00a9ff) 11% 11.45%, transparent 13% 38%, var(--okip-hero-css-accent-2, #6ee7ff) 39% 39.28%, transparent 41% 100%),
+        linear-gradient(180deg, transparent 0 23%, var(--okip-hero-css-accent, #00a9ff) 23.2% 23.55%, transparent 24.2% 68%, var(--okip-hero-css-accent-2, #6ee7ff) 68.2% 68.45%, transparent 69.1% 100%);
+    background-size: 100% 100%, 160% 100%, 100% 100%;
+    mix-blend-mode: screen;
+    opacity: calc(var(--okip-hero-css-scanline-opacity, .16) * (.55 + var(--okip-hero-css-glitch-intensity, .42)));
+    transform: translate3d(0, 0, 0);
 }
 
-.okip-hero-map__routes path:nth-child(2n) {
-    animation-duration: var(--okip-hero-route-slow, 15s);
-    animation-direction: reverse;
-    opacity: calc(var(--okip-hero-svg-node-intensity, .85) * .34);
+.okip-hero__css-bg.is-glitch-enabled .okip-hero__css-signal {
+    animation: okip-hero-signal-drift var(--okip-hero-css-signal-duration, 24s) linear infinite;
+    will-change: background-position;
 }
 
-.okip-hero-map__nodes circle {
-    fill: var(--okip-hero-svg-accent-2, #6ee7ff);
-    opacity: var(--okip-hero-svg-node-intensity, .85);
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: okip-hero-node-pulse var(--okip-hero-node-duration, 3.6s) ease-in-out infinite;
+.okip-hero__css-noise {
+    background-image:
+        radial-gradient(circle at 18% 28%, rgba(255, 255, 255, .72) 0 1px, transparent 1.35px),
+        radial-gradient(circle at 78% 62%, var(--okip-hero-css-accent-2, #6ee7ff) 0 1px, transparent 1.45px),
+        repeating-linear-gradient(90deg, transparent 0 3px, rgba(255, 255, 255, .12) 3px 4px, transparent 4px 7px);
+    background-size: 37px 31px, 53px 47px, 9px 100%;
+    mix-blend-mode: screen;
+    opacity: calc(var(--okip-hero-css-noise-opacity, .1) * (.52 + var(--okip-hero-css-glitch-intensity, .42)));
 }
 
-.okip-hero-map__nodes circle:nth-child(3n) { animation-delay: -.8s; }
-.okip-hero-map__nodes circle:nth-child(4n) { animation-delay: -1.6s; }
-
-.okip-hero-map__particles .p {
-    fill: var(--okip-hero-svg-accent-2, #6ee7ff);
-    opacity: 0;
-    transform-box: fill-box;
-    transform-origin: center;
-    will-change: transform, opacity;
-    animation: okip-hero-particle-drift var(--okip-pdur, 7s) linear infinite;
+.okip-hero__css-bg.is-glitch-enabled .okip-hero__css-noise {
+    animation: okip-hero-noise-step var(--okip-hero-css-noise-duration, 1.35s) steps(6, end) infinite;
+    will-change: background-position;
 }
 
-.okip-hero-map__particles .alt {
-    animation-name: okip-hero-particle-glide;
-}
-
-.okip-hero-map__particles .p1 { --okip-pdur: var(--okip-hero-p1-duration, 6.2s); animation-delay: -1.4s; }
-.okip-hero-map__particles .p2 { --okip-pdur: var(--okip-hero-p2-duration, 8.4s); animation-delay: -3.6s; }
-.okip-hero-map__particles .p3 { --okip-pdur: var(--okip-hero-p3-duration, 7.1s); animation-delay: -2.1s; }
-.okip-hero-map__particles .p4 { --okip-pdur: var(--okip-hero-p4-duration, 9.2s); animation-delay: -5.4s; }
-.okip-hero-map__particles .p5 { --okip-pdur: var(--okip-hero-p5-duration, 6.8s); animation-delay: -4.2s; }
-.okip-hero-map__particles .p6 { --okip-pdur: var(--okip-hero-p6-duration, 8.8s); animation-delay: -2.8s; }
-.okip-hero-map__particles .p7 { --okip-pdur: var(--okip-hero-p7-duration, 7.6s); animation-delay: -5.9s; }
-.okip-hero-map__particles .p8 { --okip-pdur: var(--okip-hero-p8-duration, 6.4s); animation-delay: -3.1s; }
-.okip-hero-map__particles .p9 { --okip-pdur: var(--okip-hero-p9-duration, 8.1s); animation-delay: -1.8s; }
-.okip-hero-map__particles .p10 { --okip-pdur: var(--okip-hero-p10-duration, 9.6s); animation-delay: -6.2s; }
-.okip-hero-map__particles .p11 { --okip-pdur: var(--okip-hero-p11-duration, 7.8s); animation-delay: -3.9s; }
-.okip-hero-map__particles .p12 { --okip-pdur: var(--okip-hero-p12-duration, 6.9s); animation-delay: -4.8s; }
-
-.okip-hero-map__hud {
-    opacity: .58;
-}
-.okip-hero-map__hud rect {
-    fill: rgba(2, 16, 31, .38);
-    stroke: var(--okip-hero-svg-accent-2, #6ee7ff);
-    stroke-opacity: .34;
-}
-.okip-hero-map__hud path,
-.okip-hero-map__hud circle {
-    fill: none;
-    stroke: var(--okip-hero-svg-accent-2, #6ee7ff);
-    stroke-width: 1.4;
-    stroke-opacity: .58;
-}
-.okip-hero-map__hud rect:nth-last-child(-n+2) {
-    fill: var(--okip-hero-svg-accent, #00a9ff);
-    opacity: .25;
-}
-.okip-hero-map__hud-wave {
-    stroke-dasharray: 34 18;
-    animation: okip-hero-route-flow var(--okip-hero-hud-duration, 7s) linear infinite;
-}
-
-@keyframes okip-hero-route-flow {
-    to { stroke-dashoffset: -180; }
-}
-
-@keyframes okip-hero-node-pulse {
-    0%, 100% {
-        transform: scale(.84);
-        opacity: calc(var(--okip-hero-svg-node-intensity, .85) * .55);
-    }
-    50% {
-        transform: scale(1.45);
-        opacity: var(--okip-hero-svg-node-intensity, .85);
-    }
-}
-
-@keyframes okip-hero-particle-drift {
+@keyframes okip-hero-glitch-in {
     0% {
-        transform: translate3d(-36px, 20px, 0) scale(.8);
-        opacity: 0;
+        clip-path: inset(38% 0 48% 0);
+        filter: saturate(1.55) contrast(1.08);
+        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * -.18), 0, 0);
     }
     18% {
-        opacity: var(--okip-hero-svg-particle-alpha, .62);
+        clip-path: inset(8% 0 75% 0);
+        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * .12), -1px, 0);
     }
-    72% {
-        opacity: calc(var(--okip-hero-svg-particle-alpha, .62) * .72);
+    36% {
+        clip-path: inset(72% 0 10% 0);
+        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * -.08), 1px, 0);
+    }
+    62% {
+        clip-path: inset(0);
+        filter: saturate(1.12) contrast(1.02);
+        transform: translate3d(0, 0, 0);
     }
     100% {
-        transform: translate3d(78px, -18px, 0) scale(1.12);
-        opacity: 0;
+        clip-path: inset(0);
+        filter: none;
+        transform: translate3d(0, 0, 0);
     }
 }
 
-@keyframes okip-hero-particle-glide {
-    0% {
-        transform: translate3d(46px, -12px, 0) scale(.86);
-        opacity: 0;
+@keyframes okip-hero-signal-drift {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 0 0, -28% 0, 0 0; }
+}
+
+@keyframes okip-hero-noise-step {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    33% { background-position: 19px -11px, -17px 13px, 4px 0; }
+    66% { background-position: -23px 17px, 11px -19px, -5px 0; }
+    100% { background-position: 7px -5px, -9px 8px, 0 0; }
+}
+
+@keyframes okip-hero-chroma-jolt {
+    0%, 88%, 100% {
+        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .12);
+        transform: translate3d(0, 0, 0);
     }
-    22% {
-        opacity: calc(var(--okip-hero-svg-particle-alpha, .62) * .82);
+    89% {
+        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .34);
+        transform: translate3d(var(--okip-hero-css-chroma-offset, 8px), -1px, 0);
     }
-    76% {
-        opacity: var(--okip-hero-svg-particle-alpha, .62);
+    90% {
+        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .24);
+        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * -1), 1px, 0);
     }
-    100% {
-        transform: translate3d(-68px, 26px, 0) scale(1.06);
-        opacity: 0;
+    91% {
+        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .18);
+        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * .35), 0, 0);
     }
 }
 
@@ -479,14 +474,11 @@
     .okip-hero__card--scanline .okip-hero__card-scan {
         animation: none;
     }
-    .okip-hero-map__routes path,
-    .okip-hero-map__nodes circle,
-    .okip-hero-map__particles .p,
-    .okip-hero-map__hud-wave {
-        animation: none;
-    }
-    .okip-hero-map__particles .p {
-        opacity: calc(var(--okip-hero-svg-particle-alpha, .62) * .45);
+    .okip-hero__css-bg,
+    .okip-hero__css-bg::after,
+    .okip-hero__css-signal,
+    .okip-hero__css-noise {
+        animation: none !important;
     }
     .okip-hero.is-bg-failed .okip-hero__media {
         transition: none;
