@@ -72,7 +72,7 @@ if (! function_exists('okip_normalize_mission_statement_data')) {
 
         // Animation.
         $data['animation']['enabled'] = okip_bool($data['animation']['enabled']);
-        $data['animation']['text']    = okip_one_of($data['animation']['text'], array('fade-up', 'stagger-lines', 'reveal', 'none'), 'fade-up');
+        $data['animation']['text']    = okip_one_of($data['animation']['text'], array('scroll-letters', 'fade-up', 'stagger-lines', 'reveal', 'none'), 'scroll-letters');
 
         return $data;
     }
@@ -94,10 +94,10 @@ return array(
         'gradient' => array(
             'dark_color'  => '#000000',
             'blue_color'  => '#006fcf',
-            'duration_ms' => 6500,
-            'intensity'   => 0.82,
+            'duration_ms' => 7200,
+            'intensity'   => 0.95,
             'x'           => 50,
-            'y'           => 104,
+            'y'           => 108,
         ),
     ),
     'layout' => array(
@@ -108,6 +108,6 @@ return array(
     ),
     'animation' => array(
         'enabled' => true,
-        'text'    => 'fade-up',
+        'text'    => 'scroll-letters',
     ),
 );

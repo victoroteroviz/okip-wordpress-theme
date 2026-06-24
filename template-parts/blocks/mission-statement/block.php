@@ -13,6 +13,37 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+if (! function_exists('okip_ms_render_chars')) {
+    /**
+     * Renderiza texto como caracteres animables.
+     *
+     * @param string $text
+     * @param int    $offset
+     * @return int Nuevo offset.
+     */
+    function okip_ms_render_chars($text, $offset = 0)
+    {
+        $chars = preg_split('//u', (string) $text, -1, PREG_SPLIT_NO_EMPTY);
+        if (! is_array($chars)) {
+            $chars = str_split((string) $text);
+        }
+
+        foreach ($chars as $char) {
+            $is_space = trim($char) === '';
+            $class    = $is_space ? 'okip-ms__char okip-ms__char--space' : 'okip-ms__char';
+            printf(
+                '<span class="%1$s" data-okip-ms-char style="--okip-ms-char:%2$d;">%3$s</span>',
+                esc_attr($class),
+                $offset,
+                $is_space ? '&nbsp;' : esc_html($char)
+            );
+            $offset++;
+        }
+
+        return $offset;
+    }
+}
+
 $okip_instance = isset($args['instance_id']) ? $args['instance_id'] : 'mission-statement';
 $okip_data     = isset($args['data']) && is_array($args['data']) ? $args['data'] : array();
 
@@ -95,11 +126,12 @@ if (empty($lines) && $strong_line === '' && $kicker === '') {
 
     <div class="okip-ms__inner">
         <p class="okip-ms__statement" aria-label="<?php echo esc_attr(trim(implode(' ', $lines) . ' ' . $strong_line)); ?>">
+            <?php $char_offset = 0; ?>
             <?php foreach ($lines as $line) : ?>
-                <span class="okip-ms__line"><?php echo esc_html($line); ?></span>
+                <span class="okip-ms__line" aria-hidden="true"><?php $char_offset = okip_ms_render_chars($line, $char_offset); ?></span>
             <?php endforeach; ?>
             <?php if ($strong_line !== '') : ?>
-                <strong class="okip-ms__line okip-ms__line--strong"><?php echo esc_html($strong_line); ?></strong>
+                <strong class="okip-ms__line okip-ms__line--strong" aria-hidden="true"><?php $char_offset = okip_ms_render_chars($strong_line, $char_offset); ?></strong>
             <?php endif; ?>
         </p>
 
