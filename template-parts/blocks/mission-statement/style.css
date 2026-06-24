@@ -59,8 +59,18 @@
 
 .okip-ms--gradient .okip-ms__background::after {
     background:
+        radial-gradient(ellipse 44% 18% at 42% 104%, rgba(148, 218, 255, .34), transparent 72%),
+        radial-gradient(ellipse 66% 26% at 58% 112%, rgba(0, 122, 235, .42), transparent 74%),
+        radial-gradient(ellipse 92% 36% at 50% 124%, rgba(0, 48, 148, .56), transparent 72%),
         linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, .88) 45%, rgba(0, 0, 0, .46) 100%),
         radial-gradient(ellipse 100% 62% at 50% 118%, rgba(0, 127, 255, .22), transparent 64%);
+    background-size: 125% 100%, 135% 100%, 155% 100%, 100% 100%, 100% 100%;
+    background-position: 42% 104%, 58% 112%, 50% 124%, 50% 50%, 50% 50%;
+    filter: blur(7px) saturate(1.12);
+    opacity: .96;
+    transform: translateY(2%) scaleX(1.02);
+    animation: okip-ms-blue-viscous 14500ms cubic-bezier(.45, 0, .2, 1) infinite alternate;
+    will-change: background-position, transform, filter;
 }
 
 .okip-ms__media {
@@ -175,6 +185,24 @@
     }
 }
 
+@keyframes okip-ms-blue-viscous {
+    0% {
+        background-position: 38% 105%, 63% 113%, 47% 125%, 50% 50%, 50% 50%;
+        filter: blur(8px) saturate(1.04);
+        transform: translateY(4%) scaleX(.96) scaleY(.98);
+    }
+    42% {
+        background-position: 52% 102%, 48% 108%, 55% 122%, 50% 50%, 50% 50%;
+        filter: blur(10px) saturate(1.22);
+        transform: translateY(1%) scaleX(1.09) scaleY(1.03);
+    }
+    100% {
+        background-position: 62% 106%, 39% 112%, 51% 126%, 50% 50%, 50% 50%;
+        filter: blur(8px) saturate(1.14);
+        transform: translateY(3%) scaleX(1.01) scaleY(1.07);
+    }
+}
+
 @media (max-width: 1024px) {
     .okip-ms {
         padding-top: 5.5rem;
@@ -204,8 +232,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .okip-ms--gradient .okip-ms__background::before {
+    .okip-ms--gradient .okip-ms__background::before,
+    .okip-ms--gradient .okip-ms__background::after {
         animation: none;
+    }
+
+    .okip-ms--gradient .okip-ms__background::before {
         opacity: var(--okip-ms-intensity, .82);
         transform: translateY(0) scale(1);
     }

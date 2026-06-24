@@ -32,7 +32,7 @@ function okip_allowed_blocks()
         'industry-carousel',
         'product-story',
         'mission-statement',
-        // 'news'  ← se habilitará en fases posteriores.
+        'news',
     ));
 }
 

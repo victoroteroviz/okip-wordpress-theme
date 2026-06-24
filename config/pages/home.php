@@ -181,4 +181,19 @@ return array(
             // Defaults editables en config/blocks/mission-statement.php.
         ),
     ),
+
+    array(
+        'type'        => 'news',
+        'instance_id' => 'home-news',
+        'data'        => array(
+            // Bloque 6: carrusel de noticias/referencias.
+            // Consulta posts de categoría `noticias`; sin posts usa placeholders.
+            // Cambiar posts_per_page para ajustar cuántas noticias se muestran.
+            'query' => array(
+                'source'         => 'category',
+                'category'       => 'noticias',
+                'posts_per_page' => 6,
+            ),
+        ),
+    ),
 );
