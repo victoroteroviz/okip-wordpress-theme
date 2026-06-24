@@ -116,6 +116,24 @@
     height: auto;
 }
 
+/* Video en la zona de logo (logo-title): mismo tamaño que el placeholder de logo */
+.okip-ps__logo-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: clamp(48px, 9vw, 88px);
+    object-fit: contain;
+}
+
+/* Recuadro con video: cursor pointer + contorno de foco accesible */
+.okip-ps__visual:has(video) {
+    cursor: pointer;
+}
+.okip-ps__visual:focus {
+    outline: 2px solid rgba(255, 90, 20, .55);
+    outline-offset: 3px;
+}
+
 /* Título dentro del recuadro negro (bottom-left) */
 .okip-ps__title {
     margin: 0;

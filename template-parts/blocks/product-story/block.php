@@ -118,11 +118,11 @@ if (empty($items)) {
                                     aria-label="<?php echo esc_attr($alt); ?>">
                                     <source src="<?php echo esc_url($media_url); ?>" type="video/mp4">
                                 </video>
-                            <?php elseif ($has_media) : ?>
+                            <?php elseif ($has_media) : /* image, gif, svg */ ?>
                                 <img class="okip-ps__media"
                                     src="<?php echo esc_url($media_url); ?>"
                                     alt="<?php echo esc_attr($alt); ?>"
-                                    loading="lazy">
+                                    loading="<?php echo $media_type === 'gif' ? 'eager' : 'lazy'; ?>">
                             <?php else : ?>
                                 <span class="okip-ps__media-ph" aria-hidden="true"></span>
                             <?php endif; ?>
@@ -131,11 +131,15 @@ if (empty($items)) {
                             <?php endif; ?>
                         <?php else : /* logo-title */ ?>
                             <span class="okip-ps__logo" aria-hidden="true">
-                                <?php if ($has_media && in_array($media_type, array('image', 'svg'), true)) : ?>
+                                <?php if ($has_media && $media_type === 'video') : ?>
+                                    <video class="okip-ps__logo-video" muted loop playsinline preload="none">
+                                        <source src="<?php echo esc_url($media_url); ?>" type="video/mp4">
+                                    </video>
+                                <?php elseif ($has_media) : /* image, gif, svg */ ?>
                                     <img class="okip-ps__logo-img"
                                         src="<?php echo esc_url($media_url); ?>"
                                         alt=""
-                                        loading="lazy">
+                                        loading="<?php echo $media_type === 'gif' ? 'eager' : 'lazy'; ?>">
                                 <?php else : ?>
                                     <!-- Placeholder sobrio: marca abstracta de nodos -->
                                     <svg class="okip-ps__logo-ph" viewBox="0 0 64 40" fill="none" aria-hidden="true">

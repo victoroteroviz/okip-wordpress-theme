@@ -76,6 +76,33 @@
         return chars;
     }
 
+    /* Hover / focus play+reset para videos dentro de .okip-ps__visual.
+       Se llama en todos los modos (incluyendo is-static): en móvil no hay hover,
+       y en desktop sin GSAP el video sigue siendo interactivo.
+       Si noMotion es true, los videos quedan estáticos. */
+    function setupVideoInteraction(section, noMotion, small) {
+        if (noMotion) { return; }
+        var visuals = Array.prototype.slice.call(section.querySelectorAll('.okip-ps__visual'));
+        visuals.forEach(function (visual) {
+            var vid = visual.querySelector('video');
+            if (!vid) { return; }
+            if (!small) { visual.setAttribute('tabindex', '0'); }
+            function doPlay() {
+                var pr = vid.play();
+                if (pr && typeof pr.catch === 'function') { pr.catch(function () {}); }
+            }
+            function doReset() {
+                try { vid.pause(); vid.currentTime = 0; } catch (e) {}
+            }
+            visual.addEventListener('mouseenter', doPlay,  { passive: true });
+            visual.addEventListener('mouseleave', doReset, { passive: true });
+            if (!small) {
+                visual.addEventListener('focus', doPlay);
+                visual.addEventListener('blur',  doReset);
+            }
+        });
+    }
+
     function initPs(section) {
         if (section.__okipPsInit) { return; }
         section.__okipPsInit = true;
@@ -94,6 +121,8 @@
         var psId    = section.id || d.blockInstance || 'ps';
         var rows    = Array.prototype.slice.call(section.querySelectorAll('[data-okip-ps-row]'));
         var isSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
+
+        setupVideoInteraction(section, reduceMotion, isSmall);
 
         var canAnimate = animOn && !reduceMotion && !isSmall;
 

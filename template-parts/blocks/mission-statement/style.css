@@ -1,0 +1,193 @@
+/*
+ * Bloque Mission Statement.
+ */
+.okip-ms {
+    position: relative;
+    z-index: var(--okip-ms-z, 5);
+    overflow: hidden;
+    isolation: isolate;
+    min-height: 0;
+    padding: var(--okip-ms-pt, 7rem) var(--okip-container-pad) var(--okip-ms-pb, 6.5rem);
+    background: var(--okip-ms-bg, #000);
+    color: #fff;
+}
+
+.okip-ms__background,
+.okip-ms__background::before,
+.okip-ms__background::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.okip-ms__background::before,
+.okip-ms__background::after {
+    content: "";
+}
+
+.okip-ms--gradient .okip-ms__background::before {
+    background:
+        radial-gradient(
+            ellipse 68% 52% at var(--okip-ms-x, 50%) var(--okip-ms-y, 104%),
+            var(--okip-ms-blue-glow, rgba(0, 111, 207, .82)) 0%,
+            var(--okip-ms-blue-soft, rgba(0, 111, 207, .3)) 30%,
+            rgba(0, 37, 82, .2) 46%,
+            transparent 72%
+        );
+    opacity: var(--okip-ms-intensity, .82);
+    transform: translateY(7%) scale(.9);
+    filter: blur(5px);
+    animation: okip-ms-glow var(--okip-ms-duration, 6500ms) var(--okip-ease) infinite alternate;
+}
+
+.okip-ms--gradient .okip-ms__background::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, .98) 0%, rgba(0, 0, 0, .72) 56%, rgba(0, 0, 0, .34) 100%);
+}
+
+.okip-ms__media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.okip-ms--has-media .okip-ms__background::after {
+    background: rgba(0, 0, 0, .42);
+}
+
+.okip-ms__inner {
+    width: min(100%, var(--okip-ms-cw, 820px));
+    margin: 0 auto;
+    text-align: center;
+}
+
+.okip-ms__statement {
+    margin: 0;
+    color: rgba(255, 255, 255, .88);
+    font-size: 1.75rem;
+    font-weight: 300;
+    letter-spacing: 0;
+    line-height: 1.15;
+}
+
+.okip-ms__line {
+    display: block;
+}
+
+.okip-ms__line--strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+.okip-ms__kicker {
+    margin: 1rem 0 0;
+    color: rgba(255, 255, 255, .62);
+    font-size: .58rem;
+    font-weight: 600;
+    letter-spacing: .18em;
+    line-height: 1.4;
+}
+
+.okip-js .okip-ms--animated .okip-ms__line,
+.okip-js .okip-ms--animated .okip-ms__kicker {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+        opacity .72s var(--okip-ease),
+        transform .72s var(--okip-ease);
+}
+
+.okip-js .okip-ms--animated.is-visible .okip-ms__line,
+.okip-js .okip-ms--animated.is-visible .okip-ms__kicker {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.okip-ms--anim-stagger-lines .okip-ms__line:nth-child(1) {
+    transition-delay: .02s;
+}
+
+.okip-ms--anim-stagger-lines .okip-ms__line:nth-child(2) {
+    transition-delay: .12s;
+}
+
+.okip-ms--anim-stagger-lines .okip-ms__line:nth-child(3) {
+    transition-delay: .22s;
+}
+
+.okip-ms--anim-stagger-lines .okip-ms__line:nth-child(4) {
+    transition-delay: .32s;
+}
+
+.okip-ms--anim-stagger-lines .okip-ms__kicker {
+    transition-delay: .44s;
+}
+
+.okip-js .okip-ms--anim-reveal .okip-ms__line,
+.okip-js .okip-ms--anim-reveal .okip-ms__kicker {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(0);
+    transition:
+        opacity .64s var(--okip-ease),
+        clip-path .84s var(--okip-ease);
+}
+
+.okip-js .okip-ms--anim-reveal.is-visible .okip-ms__line,
+.okip-js .okip-ms--anim-reveal.is-visible .okip-ms__kicker {
+    clip-path: inset(0);
+}
+
+@keyframes okip-ms-glow {
+    0% {
+        opacity: calc(var(--okip-ms-intensity, .82) * .42);
+        transform: translateY(12%) scale(.82);
+    }
+    100% {
+        opacity: var(--okip-ms-intensity, .82);
+        transform: translateY(0) scale(1.08);
+    }
+}
+
+@media (max-width: 1024px) {
+    .okip-ms {
+        padding-top: 5.5rem;
+        padding-bottom: 5.25rem;
+    }
+
+    .okip-ms__statement {
+        font-size: 1.45rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .okip-ms {
+        padding-top: 4.5rem;
+        padding-bottom: 4.25rem;
+    }
+
+    .okip-ms__statement {
+        font-size: 1.2rem;
+        line-height: 1.22;
+    }
+
+    .okip-ms__kicker {
+        font-size: .54rem;
+        letter-spacing: .14em;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .okip-ms--gradient .okip-ms__background::before {
+        animation: none;
+        opacity: var(--okip-ms-intensity, .82);
+        transform: translateY(0) scale(1);
+    }
+
+    .okip-js .okip-ms--animated .okip-ms__line,
+    .okip-js .okip-ms--animated .okip-ms__kicker {
+        opacity: 1;
+        transform: none;
+        clip-path: none;
+        transition: none;
+    }
+}

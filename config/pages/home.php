@@ -172,4 +172,13 @@ return array(
             // (config/blocks/product-story.php): RIA, COVIA, GIA.
         ),
     ),
+
+    array(
+        'type'        => 'mission-statement',
+        'instance_id' => 'home-mission-statement',
+        'data'        => array(
+            // Bloque 5: texto institucional y gradiente animado desde la base.
+            // Defaults editables en config/blocks/mission-statement.php.
+        ),
+    ),
 );

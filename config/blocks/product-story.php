@@ -91,7 +91,7 @@ if (! function_exists('okip_normalize_product_story_data')) {
                 $merged['description']    = sanitize_text_field((string) $merged['description']);
                 $merged['alt']            = sanitize_text_field((string) $merged['alt']);
                 $merged['media']          = sanitize_text_field((string) $merged['media']);
-                $merged['media_type']     = okip_one_of($merged['media_type'], array('image', 'video', 'svg', 'placeholder'), 'placeholder');
+                $merged['media_type']     = okip_one_of($merged['media_type'], array('image', 'gif', 'video', 'svg', 'placeholder'), 'placeholder');
                 $merged['visual_variant'] = okip_one_of($merged['visual_variant'], array('logo-title', 'media-caption'), 'logo-title');
                 $out[] = $merged;
             }
