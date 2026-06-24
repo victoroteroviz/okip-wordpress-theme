@@ -36,8 +36,9 @@
         var cardsDelay = parseInt(d.cardsDelay, 10) || 0;
         var textDelay  = parseInt(d.textDelay, 10) || 0;
         var introFail  = parseInt(d.introFail, 10) || 2500;
+        var revealAfterIntro = d.revealAfterIntro !== '0';
         var crossfade  = d.crossfade === '1';
-        var crossfadeMs = parseInt(d.crossfadeMs, 10) || 700;
+        var crossfadeMs = crossfade ? (parseInt(d.crossfadeMs, 10) || 700) : 0;
         var pauseBlur  = d.pauseBlur === '1';
         var hasFallback = d.hasFallback === '1';
 
@@ -126,10 +127,13 @@
         function beginIntro() {
             if (loop) { try { loop.load(); } catch (e) {} } // precarga del loop
             safePlay(intro);
+            if (!revealAfterIntro) {
+                timers.push(setTimeout(finishReveal, imgDelay));
+            }
 
             intro.addEventListener('ended', function () {
                 startLoop();
-                finishReveal();
+                if (revealAfterIntro) { finishReveal(); }
             }, { once: true });
             intro.addEventListener('error', introFailPath, { once: true });
 

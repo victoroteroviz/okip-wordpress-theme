@@ -73,6 +73,76 @@ function okip_get_page_blocks($slug)
 }
 
 /**
+ * Opción donde el panel guarda overrides de una página.
+ *
+ * @param string $slug
+ * @return string
+ */
+function okip_page_overrides_option_key($slug)
+{
+    return 'okip_page_blocks_overrides_' . sanitize_key($slug);
+}
+
+/**
+ * Overrides guardados por el panel para una página.
+ *
+ * Formato:
+ * [
+ *   instance_id => ['type' => 'hero', 'data' => [...]],
+ * ]
+ *
+ * @param string $slug
+ * @return array
+ */
+function okip_get_page_block_overrides($slug)
+{
+    $overrides = get_option(okip_page_overrides_option_key($slug), array());
+    return is_array($overrides) ? $overrides : array();
+}
+
+/**
+ * Mezcla overrides del panel sobre la configuración base del theme.
+ *
+ * @param array  $blocks
+ * @param string $slug
+ * @return array
+ */
+function okip_apply_page_block_overrides($blocks, $slug)
+{
+    if (! is_array($blocks)) {
+        return array();
+    }
+
+    $overrides = okip_get_page_block_overrides($slug);
+    if (empty($overrides)) {
+        return $blocks;
+    }
+
+    foreach ($blocks as $i => $block) {
+        if (empty($block['instance_id']) || ! isset($overrides[$block['instance_id']])) {
+            continue;
+        }
+
+        $override = $overrides[$block['instance_id']];
+        if (! is_array($override)) {
+            continue;
+        }
+
+        if (isset($override['type']) && isset($block['type']) && $override['type'] !== $block['type']) {
+            continue;
+        }
+
+        if (! empty($override['data']) && is_array($override['data'])) {
+            $base_data = isset($block['data']) && is_array($block['data']) ? $block['data'] : array();
+            $blocks[$i]['data'] = okip_merge_defaults($override['data'], $base_data);
+        }
+    }
+
+    return $blocks;
+}
+add_filter('okip_page_blocks', 'okip_apply_page_block_overrides', 20, 2);
+
+/**
  * Slug de la página actualmente en pantalla (para enqueue condicional y render).
  *
  * @return string '' si la vista no es una página por bloques.

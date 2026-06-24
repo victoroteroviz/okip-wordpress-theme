@@ -32,6 +32,7 @@ $reveal     = isset($okip_data['reveal']) ? $okip_data['reveal'] : array();
 $transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
 $cards      = isset($okip_data['cards']) && is_array($okip_data['cards']) ? $okip_data['cards'] : array();
 $animation  = isset($okip_data['animation']) ? $okip_data['animation'] : array();
+$typography = isset($okip_data['typography']) ? $okip_data['typography'] : array();
 
 $bg_type = isset($background['type']) ? $background['type'] : 'gradient';
 $poster  = isset($background['poster']) && okip_media_exists($background['poster']) ? okip_media_url($background['poster']) : '';
@@ -69,8 +70,10 @@ if ($img_on) {
     $single_img_url = $fallback_url; // sin videos pero con fallback → es el fondo
 }
 
-// Render del fondo: video | image | svg | missing (neutro).
-if ($has_video_layer) {
+// Render del fondo: video | image | svg | svg-inline | missing (neutro).
+if ($bg_type === 'svg_inline') {
+    $bg_render = 'svg-inline';
+} elseif ($has_video_layer) {
     $bg_render = 'video';
 } elseif ($single_img_url !== '') {
     $bg_render = ($bg_type === 'svg') ? 'svg' : 'image';
@@ -92,13 +95,56 @@ $img_delay   = isset($reveal['image_reveal_delay']) ? (int) $reveal['image_revea
 $cards_d     = isset($reveal['cards_delay_after_intro']) ? (int) $reveal['cards_delay_after_intro'] : 300;
 $text_d      = isset($reveal['text_delay_after_intro']) ? (int) $reveal['text_delay_after_intro'] : 600;
 $pause_blur  = ! empty($reveal['pause_or_blur_on_fail']);
+$reveal_after_intro = ! empty($reveal['reveal_after_intro']);
 $intro_fail  = isset($intro['fail_timeout']) ? (int) $intro['fail_timeout'] : 2500;
 
 $crossfade    = ! empty($transition['intro_to_loop_crossfade']);
 $crossfade_ms = isset($transition['crossfade_duration']) ? (int) $transition['crossfade_duration'] : 700;
+$effective_crossfade_ms = $crossfade ? $crossfade_ms : 0;
 
 // Fallback de fondo disponible para el crossfade de FALLO (solo en modo video).
 $has_fallback_layer = $has_video_layer && $fallback_url !== '';
+
+$title_typography = okip_normalize_typography(
+    isset($typography['title']) ? $typography['title'] : array(),
+    'hero_title'
+);
+$desc_typography = okip_normalize_typography(
+    isset($typography['description']) ? $typography['description'] : array(),
+    'hero_description'
+);
+
+$svg_particle_speed = isset($background['svg_particle_speed']) ? max(0.25, min(3, (float) $background['svg_particle_speed'])) : 1;
+$svg_duration = function ($seconds) use ($svg_particle_speed) {
+    return okip_css_number(((float) $seconds) / $svg_particle_speed) . 's';
+};
+$hero_style = '--okip-hero-xfade:' . esc_attr((string) $effective_crossfade_ms) . 'ms;';
+$hero_style .= okip_typography_css_vars('okip-hero-title', $title_typography);
+$hero_style .= okip_typography_css_vars('okip-hero-desc', $desc_typography);
+$hero_style .= okip_css_vars(array(
+    'okip-hero-svg-bg'             => isset($background['svg_bg']) ? $background['svg_bg'] : '#020711',
+    'okip-hero-svg-accent'         => isset($background['svg_accent']) ? $background['svg_accent'] : '#00a9ff',
+    'okip-hero-svg-accent-2'       => isset($background['svg_accent_2']) ? $background['svg_accent_2'] : '#6ee7ff',
+    'okip-hero-svg-grid-opacity'   => isset($background['svg_grid_opacity']) ? okip_css_number($background['svg_grid_opacity']) : '0.32',
+    'okip-hero-svg-node-intensity' => isset($background['svg_node_intensity']) ? okip_css_number($background['svg_node_intensity']) : '0.85',
+    'okip-hero-svg-particle-alpha' => isset($background['svg_particle_opacity']) ? okip_css_number($background['svg_particle_opacity']) : '0.62',
+    'okip-hero-route-fast'         => $svg_duration(11),
+    'okip-hero-route-slow'         => $svg_duration(15),
+    'okip-hero-node-duration'      => $svg_duration(3.6),
+    'okip-hero-hud-duration'       => $svg_duration(7),
+    'okip-hero-p1-duration'        => $svg_duration(6.2),
+    'okip-hero-p2-duration'        => $svg_duration(8.4),
+    'okip-hero-p3-duration'        => $svg_duration(7.1),
+    'okip-hero-p4-duration'        => $svg_duration(9.2),
+    'okip-hero-p5-duration'        => $svg_duration(6.8),
+    'okip-hero-p6-duration'        => $svg_duration(8.8),
+    'okip-hero-p7-duration'        => $svg_duration(7.6),
+    'okip-hero-p8-duration'        => $svg_duration(6.4),
+    'okip-hero-p9-duration'        => $svg_duration(8.1),
+    'okip-hero-p10-duration'       => $svg_duration(9.6),
+    'okip-hero-p11-duration'       => $svg_duration(7.8),
+    'okip-hero-p12-duration'       => $svg_duration(6.9),
+));
 
 $overlay_style = sprintf(
     'background-color:%s;opacity:%s;',
@@ -126,10 +172,11 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     data-cards-delay="<?php echo esc_attr((string) $cards_d); ?>"
     data-text-delay="<?php echo esc_attr((string) $text_d); ?>"
     data-intro-fail="<?php echo esc_attr((string) $intro_fail); ?>"
+    data-reveal-after-intro="<?php echo $reveal_after_intro ? '1' : '0'; ?>"
     data-crossfade="<?php echo $crossfade ? '1' : '0'; ?>"
     data-crossfade-ms="<?php echo esc_attr((string) $crossfade_ms); ?>"
     data-pause-blur="<?php echo $pause_blur ? '1' : '0'; ?>"
-    style="--okip-hero-xfade:<?php echo esc_attr((string) $crossfade_ms); ?>ms;">
+    style="<?php echo $hero_style; ?>">
 
     <!-- Capa 1: fondo media-driven. Intro (una vez) → crossfade → loop (bucle).
          Sin videos: imagen/svg o fallback neutro (solo color). -->
@@ -155,6 +202,17 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 <img class="okip-hero__media okip-hero__media--fallback" src="<?php echo esc_url($fallback_url); ?>"
                     alt="" aria-hidden="true" style="object-position:<?php echo esc_attr($obj_pos); ?>;">
             <?php endif; ?>
+        <?php elseif ($bg_render === 'svg-inline') : ?>
+            <?php
+            get_template_part(
+                'template-parts/blocks/hero/svg-mexico-network',
+                null,
+                array(
+                    'instance_id' => $okip_instance,
+                    'background'  => $background,
+                )
+            );
+            ?>
         <?php elseif ($bg_render === 'image') : ?>
             <img class="okip-hero__media" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true"
                 style="object-position:<?php echo esc_attr($obj_pos); ?>;">

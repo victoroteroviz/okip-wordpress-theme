@@ -47,6 +47,169 @@
     object-fit: cover;
 }
 
+/* ---- Fondo SVG inline: mapa México + red de inteligencia ---- */
+.okip-hero__bg--svg-inline {
+    background: var(--okip-hero-svg-bg, #020711);
+}
+
+.okip-hero-map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.okip-hero-map__grid {
+    opacity: var(--okip-hero-svg-grid-opacity, .32);
+    mix-blend-mode: screen;
+}
+
+.okip-hero-map__ambient circle {
+    fill: var(--okip-hero-svg-accent, #00a9ff);
+    opacity: .09;
+    filter: blur(22px);
+}
+
+.okip-hero-map__land path {
+    fill: rgba(0, 18, 34, .54);
+    stroke: var(--okip-hero-svg-accent, #00a9ff);
+    stroke-width: 2.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.okip-hero-map__baja,
+.okip-hero-map__main,
+.okip-hero-map__yucatan {
+    opacity: .92;
+}
+
+.okip-hero-map__routes path {
+    fill: none;
+    stroke: var(--okip-hero-svg-accent-2, #6ee7ff);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    stroke-dasharray: 2 16;
+    opacity: calc(var(--okip-hero-svg-node-intensity, .85) * .48);
+    animation: okip-hero-route-flow var(--okip-hero-route-fast, 11s) linear infinite;
+}
+
+.okip-hero-map__routes path:nth-child(2n) {
+    animation-duration: var(--okip-hero-route-slow, 15s);
+    animation-direction: reverse;
+    opacity: calc(var(--okip-hero-svg-node-intensity, .85) * .34);
+}
+
+.okip-hero-map__nodes circle {
+    fill: var(--okip-hero-svg-accent-2, #6ee7ff);
+    opacity: var(--okip-hero-svg-node-intensity, .85);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: okip-hero-node-pulse var(--okip-hero-node-duration, 3.6s) ease-in-out infinite;
+}
+
+.okip-hero-map__nodes circle:nth-child(3n) { animation-delay: -.8s; }
+.okip-hero-map__nodes circle:nth-child(4n) { animation-delay: -1.6s; }
+
+.okip-hero-map__particles .p {
+    fill: var(--okip-hero-svg-accent-2, #6ee7ff);
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    will-change: transform, opacity;
+    animation: okip-hero-particle-drift var(--okip-pdur, 7s) linear infinite;
+}
+
+.okip-hero-map__particles .alt {
+    animation-name: okip-hero-particle-glide;
+}
+
+.okip-hero-map__particles .p1 { --okip-pdur: var(--okip-hero-p1-duration, 6.2s); animation-delay: -1.4s; }
+.okip-hero-map__particles .p2 { --okip-pdur: var(--okip-hero-p2-duration, 8.4s); animation-delay: -3.6s; }
+.okip-hero-map__particles .p3 { --okip-pdur: var(--okip-hero-p3-duration, 7.1s); animation-delay: -2.1s; }
+.okip-hero-map__particles .p4 { --okip-pdur: var(--okip-hero-p4-duration, 9.2s); animation-delay: -5.4s; }
+.okip-hero-map__particles .p5 { --okip-pdur: var(--okip-hero-p5-duration, 6.8s); animation-delay: -4.2s; }
+.okip-hero-map__particles .p6 { --okip-pdur: var(--okip-hero-p6-duration, 8.8s); animation-delay: -2.8s; }
+.okip-hero-map__particles .p7 { --okip-pdur: var(--okip-hero-p7-duration, 7.6s); animation-delay: -5.9s; }
+.okip-hero-map__particles .p8 { --okip-pdur: var(--okip-hero-p8-duration, 6.4s); animation-delay: -3.1s; }
+.okip-hero-map__particles .p9 { --okip-pdur: var(--okip-hero-p9-duration, 8.1s); animation-delay: -1.8s; }
+.okip-hero-map__particles .p10 { --okip-pdur: var(--okip-hero-p10-duration, 9.6s); animation-delay: -6.2s; }
+.okip-hero-map__particles .p11 { --okip-pdur: var(--okip-hero-p11-duration, 7.8s); animation-delay: -3.9s; }
+.okip-hero-map__particles .p12 { --okip-pdur: var(--okip-hero-p12-duration, 6.9s); animation-delay: -4.8s; }
+
+.okip-hero-map__hud {
+    opacity: .58;
+}
+.okip-hero-map__hud rect {
+    fill: rgba(2, 16, 31, .38);
+    stroke: var(--okip-hero-svg-accent-2, #6ee7ff);
+    stroke-opacity: .34;
+}
+.okip-hero-map__hud path,
+.okip-hero-map__hud circle {
+    fill: none;
+    stroke: var(--okip-hero-svg-accent-2, #6ee7ff);
+    stroke-width: 1.4;
+    stroke-opacity: .58;
+}
+.okip-hero-map__hud rect:nth-last-child(-n+2) {
+    fill: var(--okip-hero-svg-accent, #00a9ff);
+    opacity: .25;
+}
+.okip-hero-map__hud-wave {
+    stroke-dasharray: 34 18;
+    animation: okip-hero-route-flow var(--okip-hero-hud-duration, 7s) linear infinite;
+}
+
+@keyframes okip-hero-route-flow {
+    to { stroke-dashoffset: -180; }
+}
+
+@keyframes okip-hero-node-pulse {
+    0%, 100% {
+        transform: scale(.84);
+        opacity: calc(var(--okip-hero-svg-node-intensity, .85) * .55);
+    }
+    50% {
+        transform: scale(1.45);
+        opacity: var(--okip-hero-svg-node-intensity, .85);
+    }
+}
+
+@keyframes okip-hero-particle-drift {
+    0% {
+        transform: translate3d(-36px, 20px, 0) scale(.8);
+        opacity: 0;
+    }
+    18% {
+        opacity: var(--okip-hero-svg-particle-alpha, .62);
+    }
+    72% {
+        opacity: calc(var(--okip-hero-svg-particle-alpha, .62) * .72);
+    }
+    100% {
+        transform: translate3d(78px, -18px, 0) scale(1.12);
+        opacity: 0;
+    }
+}
+
+@keyframes okip-hero-particle-glide {
+    0% {
+        transform: translate3d(46px, -12px, 0) scale(.86);
+        opacity: 0;
+    }
+    22% {
+        opacity: calc(var(--okip-hero-svg-particle-alpha, .62) * .82);
+    }
+    76% {
+        opacity: var(--okip-hero-svg-particle-alpha, .62);
+    }
+    100% {
+        transform: translate3d(-68px, 26px, 0) scale(1.06);
+        opacity: 0;
+    }
+}
+
 /* ---- Crossfade intro → loop (sin parpadeo negro) ----
    Tres posibles capas apiladas: intro (encima), loop y fallback (debajo).
    El loop/fallback se reproducen/cargan detrás y el intro se desvanece por
@@ -220,17 +383,25 @@
 
 .okip-hero__title {
     margin: 0;
-    font-size: clamp(2rem, 6vw, 4.5rem);
-    line-height: 1.05;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-family: var(--okip-hero-title-font-family, var(--okip-font-base));
+    font-size: var(--okip-hero-title-font-size, clamp(2.625rem, 5.2vw, 4.875rem));
+    line-height: var(--okip-hero-title-line-height, 1.08);
+    font-weight: var(--okip-hero-title-font-weight, 300);
+    letter-spacing: var(--okip-hero-title-letter-spacing, 0);
+    color: var(--okip-hero-title-color, #ffffff);
+    text-shadow: 0 2px 24px rgba(0, 8, 18, .62);
 }
 .okip-hero__title-line { display: block; }
 
 .okip-hero__desc {
     margin-top: var(--okip-space-3, 1rem);
-    font-size: clamp(1rem, 2vw, 1.25rem);
-    color: var(--okip-color-text-muted, #b9c4d4);
+    font-family: var(--okip-hero-desc-font-family, var(--okip-font-base));
+    font-size: var(--okip-hero-desc-font-size, clamp(1rem, 1.8vw, 1.375rem));
+    line-height: var(--okip-hero-desc-line-height, 1.5);
+    font-weight: var(--okip-hero-desc-font-weight, 400);
+    letter-spacing: var(--okip-hero-desc-letter-spacing, 0);
+    color: var(--okip-hero-desc-color, var(--okip-color-text-muted, #b9c4d4));
+    text-shadow: 0 2px 16px rgba(0, 8, 18, .52);
 }
 
 /* ============================================================
@@ -307,6 +478,15 @@
     }
     .okip-hero__card--scanline .okip-hero__card-scan {
         animation: none;
+    }
+    .okip-hero-map__routes path,
+    .okip-hero-map__nodes circle,
+    .okip-hero-map__particles .p,
+    .okip-hero-map__hud-wave {
+        animation: none;
+    }
+    .okip-hero-map__particles .p {
+        opacity: calc(var(--okip-hero-svg-particle-alpha, .62) * .45);
     }
     .okip-hero.is-bg-failed .okip-hero__media {
         transition: none;

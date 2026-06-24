@@ -15,7 +15,7 @@
  * (replay_on_enter = false): el intro solo se repite recargando la página.
  *
  * Whitelists:
- *   background.type  : video | image | svg | gradient   (gradient = fallback)
+     *   background.type  : video | image | svg | svg_inline | gradient
  *   card.type        : video | image | svg
  *
  * Regla del fondo: el fondo real es el MEDIA (video/image/svg) limpio. El
@@ -70,7 +70,7 @@ if (! function_exists('okip_normalize_hero_data')) {
     function okip_normalize_hero_data($data)
     {
         $align_allowed = array('left', 'center', 'right');
-        $bg_allowed    = array('video', 'image', 'svg', 'gradient');
+        $bg_allowed    = array('video', 'image', 'svg', 'svg_inline', 'gradient');
         $card_allowed  = array('video', 'image', 'svg');
         $play_allowed  = array('hover', 'tap', 'manual');
 
@@ -79,6 +79,14 @@ if (! function_exists('okip_normalize_hero_data')) {
 
         // Fondo (media-driven: intro + loop + fallback).
         $data['background']['type'] = okip_one_of($data['background']['type'], $bg_allowed, 'gradient');
+        $data['background']['svg_variant'] = okip_one_of($data['background']['svg_variant'], array('mexico_network'), 'mexico_network');
+        $data['background']['svg_bg'] = sanitize_hex_color((string) $data['background']['svg_bg']) ?: '#020711';
+        $data['background']['svg_accent'] = sanitize_hex_color((string) $data['background']['svg_accent']) ?: '#00a9ff';
+        $data['background']['svg_accent_2'] = sanitize_hex_color((string) $data['background']['svg_accent_2']) ?: '#6ee7ff';
+        $data['background']['svg_grid_opacity'] = okip_clamp_float($data['background']['svg_grid_opacity'], 0, 1);
+        $data['background']['svg_node_intensity'] = okip_clamp_float($data['background']['svg_node_intensity'], 0, 1);
+        $data['background']['svg_particle_opacity'] = okip_clamp_float($data['background']['svg_particle_opacity'], 0, 1);
+        $data['background']['svg_particle_speed'] = okip_clamp_float($data['background']['svg_particle_speed'], 0.25, 3);
 
         // Intro (video introductorio, una sola vez).
         $data['intro']['enabled']      = okip_bool($data['intro']['enabled']);
@@ -110,6 +118,16 @@ if (! function_exists('okip_normalize_hero_data')) {
         // Animación.
         $data['animation']['enabled']   = okip_bool($data['animation']['enabled']);
         $data['animation']['scroll_3d'] = okip_bool($data['animation']['scroll_3d']);
+
+        // Tipografía reusable.
+        $data['typography']['title'] = okip_normalize_typography(
+            isset($data['typography']['title']) ? $data['typography']['title'] : array(),
+            'hero_title'
+        );
+        $data['typography']['description'] = okip_normalize_typography(
+            isset($data['typography']['description']) ? $data['typography']['description'] : array(),
+            'hero_description'
+        );
 
         // Tarjetas.
         $cards  = isset($data['cards']) && is_array($data['cards']) ? $data['cards'] : array();
@@ -149,13 +167,21 @@ return array(
         'max_width'    => '1000px',
     ),
     'background' => array(
-        'type'            => 'video', // video | image | svg | gradient (gradient = fallback)
+        'type'            => 'svg_inline', // video | image | svg | svg_inline | gradient
         'media'           => '',      // compat: media único (si no hay intro/loop, se usa como loop)
         'intro_media'     => '',      // ruta/URL/ID del video introductorio
         'loop_media'      => '',      // ruta/URL/ID del video de bucle
         'poster'          => '',      // imagen de respaldo para los videos
         'fallback_image'  => '',      // imagen estática si los videos no cargan
         'object_position' => 'center center',
+        'svg_variant'          => 'mexico_network',
+        'svg_bg'               => '#020711',
+        'svg_accent'           => '#00a9ff',
+        'svg_accent_2'         => '#6ee7ff',
+        'svg_grid_opacity'     => 0.32,
+        'svg_node_intensity'   => 0.85,
+        'svg_particle_opacity' => 0.62,
+        'svg_particle_speed'   => 1.15,
     ),
     'intro' => array(
         'enabled'      => true,
@@ -189,6 +215,10 @@ return array(
     ),
     'cards' => array(
         // Lista de tarjetas multimedia flotantes (ver okip_hero_card_defaults()).
+    ),
+    'typography' => array(
+        'title'       => okip_typography_defaults('hero_title'),
+        'description' => okip_typography_defaults('hero_description'),
     ),
     'animation' => array(
         'enabled'   => true,

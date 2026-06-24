@@ -29,18 +29,46 @@ return array(
                 'alignment'    => 'center',
             ),
             'background' => array(
-                // Escena de entrada con dos videos. Sin media real todavía → fondo
-                // neutro (color sólido) y reveal tras image_reveal_delay.
-                // Para activarla, coloca los archivos en assets/video/ y descomenta:
-                //   'intro_media'    => 'video/hero-intro.mp4',
-                //   'loop_media'     => 'video/hero-loop.mp4',
-                //   'fallback_image' => 'img/hero-fallback.jpg',
-                'type' => 'video',
+                // Fondo SVG inline editable: mapa tecnológico de México.
+                // El flujo video intro/loop sigue soportado por el bloque si se cambia el type.
+                'type'                 => 'svg_inline',
+                'svg_variant'          => 'mexico_network',
+                'svg_bg'               => '#020711',
+                'svg_accent'           => '#00a9ff',
+                'svg_accent_2'         => '#6ee7ff',
+                'svg_grid_opacity'     => 0.32,
+                'svg_node_intensity'   => 0.9,
+                'svg_particle_opacity' => 0.62,
+                'svg_particle_speed'   => 1.2,
             ),
             'overlay' => array(
                 'enabled' => true,
                 'color'   => '#020711',
-                'opacity' => 0.35,
+                'opacity' => 0.18,
+            ),
+            'typography' => array(
+                'title' => array(
+                    'font_family'    => 'Montserrat',
+                    'google_family'  => 'Montserrat',
+                    'font_weight'    => 300,
+                    'min_px'         => 42,
+                    'fluid_vw'       => 5.2,
+                    'max_px'         => 78,
+                    'line_height'    => 1.08,
+                    'letter_spacing' => 0,
+                    'color'          => '#ffffff',
+                ),
+                'description' => array(
+                    'font_family'    => 'Inter',
+                    'google_family'  => 'Inter',
+                    'font_weight'    => 400,
+                    'min_px'         => 16,
+                    'fluid_vw'       => 1.8,
+                    'max_px'         => 22,
+                    'line_height'    => 1.5,
+                    'letter_spacing' => 0,
+                    'color'          => '#d9e8f7',
+                ),
             ),
             'reveal' => array(
                 // image_reveal_delay usa el default de 1000ms del esquema.
@@ -67,6 +95,7 @@ return array(
                     'glow'              => true,
                     'scanline'          => true,
                     'placeholder_label' => 'Monitoreo en vivo',
+                    'placeholder_enabled' => false,
                 ),
                 array(
                     'id'                => 'card-analysis',
@@ -75,6 +104,7 @@ return array(
                     'y'                 => 64,
                     'glow'              => true,
                     'placeholder_label' => 'Análisis',
+                    'placeholder_enabled' => false,
                 ),
                 array(
                     'id'                => 'card-alert',
@@ -83,6 +113,7 @@ return array(
                     'y'                 => 74,
                     'glow'              => true,
                     'placeholder_label' => 'Alertas',
+                    'placeholder_enabled' => false,
                 ),
             ),
         ),

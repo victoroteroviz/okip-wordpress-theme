@@ -1,0 +1,166 @@
+.okip-admin {
+    max-width: 1180px;
+}
+
+.okip-admin-toolbar,
+.okip-admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.okip-admin-toolbar label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.okip-admin-block {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    margin: 18px 0;
+    overflow: hidden;
+}
+
+.okip-admin-block__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    background: #101828;
+    color: #fff;
+}
+
+.okip-admin-block__head span {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.okip-admin-block__head code {
+    color: #d1e9ff;
+    background: rgba(255, 255, 255, .08);
+}
+
+.okip-admin-block > .description {
+    margin: 18px;
+}
+
+.okip-admin-panel {
+    margin: 0;
+    padding: 16px 18px;
+    border-top: 1px solid #eaecf0;
+}
+
+.okip-admin-panel summary,
+.okip-admin-panel legend {
+    font-weight: 700;
+    color: #101828;
+    cursor: pointer;
+}
+
+.okip-admin-panel--nested {
+    border: 1px solid #eaecf0;
+    border-radius: 8px;
+    margin: 14px 0;
+    padding: 14px;
+    background: #f8fafc;
+}
+
+.okip-admin-grid {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.okip-admin-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.okip-admin-field,
+.okip-admin-check {
+    display: grid;
+    gap: 6px;
+}
+
+.okip-admin-field__label {
+    font-weight: 600;
+    color: #344054;
+}
+
+.okip-admin-field__desc,
+.okip-admin-check small {
+    color: #667085;
+    font-size: 12px;
+}
+
+.okip-admin input[type="text"],
+.okip-admin input[type="search"],
+.okip-admin input[type="number"],
+.okip-admin select,
+.okip-admin textarea {
+    width: 100%;
+    max-width: none;
+}
+
+.okip-admin-check {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    padding-top: 26px;
+}
+
+.okip-admin-check small {
+    grid-column: 2;
+}
+
+.okip-admin-media-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.okip-admin-font-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.okip-admin-font-results[hidden] {
+    display: none;
+}
+
+.okip-admin-font-result {
+    border: 1px solid #d0d5dd;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.okip-admin-font-result:hover,
+.okip-admin-font-result:focus {
+    border-color: #2271b1;
+    color: #135e96;
+}
+
+.okip-admin-font-preview {
+    display: block;
+    min-height: 44px;
+    padding: 12px;
+    border: 1px solid #eaecf0;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+@media (max-width: 900px) {
+    .okip-admin-grid--two,
+    .okip-admin-media-field {
+        grid-template-columns: 1fr;
+    }
+}

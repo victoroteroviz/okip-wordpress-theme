@@ -57,8 +57,15 @@ function okip_enqueue_assets()
     $css_url = OKIP_URI . '/assets/css';
     $js_dir  = OKIP_DIR . '/assets/js';
     $js_url  = OKIP_URI . '/assets/js';
+    $slug    = okip_current_page_slug();
+    $blocks  = $slug !== '' ? okip_get_page_blocks($slug) : array();
 
     /* ---- CSS global (siempre, en cascada de dependencias) ---- */
+    $google_fonts_url = okip_google_fonts_url(okip_collect_page_google_fonts($blocks));
+    if ($google_fonts_url !== '') {
+        wp_enqueue_style('okip-google-fonts', $google_fonts_url, array(), null);
+    }
+
     wp_enqueue_style('okip-tokens', $css_url . '/tokens.css', array(), okip_asset_version($css_dir . '/tokens.css'));
     wp_enqueue_style('okip-base', $css_url . '/base.css', array('okip-tokens'), okip_asset_version($css_dir . '/base.css'));
     wp_enqueue_style('okip-layout', $css_url . '/layout.css', array('okip-base'), okip_asset_version($css_dir . '/layout.css'));
@@ -93,8 +100,6 @@ function okip_enqueue_assets()
     wp_enqueue_script('okip-navbar', $js_url . '/navbar.js', array('okip-gsap-init'), okip_asset_version($js_dir . '/navbar.js'), true);
 
     /* ---- Assets por bloque (solo los usados en esta página) ---- */
-    $slug   = okip_current_page_slug();
-    $blocks = $slug !== '' ? okip_get_page_blocks($slug) : array();
     okip_enqueue_block_assets(okip_used_block_types($blocks));
 }
 add_action('wp_enqueue_scripts', 'okip_enqueue_assets');
