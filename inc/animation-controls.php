@@ -152,7 +152,7 @@ function okip_motion_stage_defaults($target, $phase)
             'y_from'       => 8,
             'scale_from'   => 1.026,
             'scale_to'     => 1,
-            'blur_from'    => 18,
+            'blur_from'    => 6,
             'blur_to'      => 0,
         ),
         'background.playback' => array(
@@ -326,6 +326,15 @@ function okip_admin_motion_stage_fields($label, $base_name, array $stage, $targe
     okip_admin_number_field(__('Delay ms', 'okip'), $base_name . '[delay_ms]', $stage['delay_ms'], '', array('min' => 0, 'max' => 20000, 'step' => 50));
     okip_admin_number_field(__('Stagger ms', 'okip'), $base_name . '[stagger_ms]', $stage['stagger_ms'], '', array('min' => 0, 'max' => 5000, 'step' => 25));
     okip_admin_select_field(__('Easing', 'okip'), $base_name . '[ease]', $stage['ease'], okip_motion_ease_options());
+    if ($phase === 'playback') {
+        okip_admin_number_field(__('Intensidad', 'okip'), $base_name . '[intensity]', $stage['intensity'], '', array('min' => 0, 'max' => 1, 'step' => .01));
+        okip_admin_number_field(__('Velocidad', 'okip'), $base_name . '[speed]', $stage['speed'], '', array('min' => .1, 'max' => 5, 'step' => .05));
+        okip_admin_select_field(__('Dirección', 'okip'), $base_name . '[direction]', $stage['direction'], okip_motion_direction_options());
+        okip_admin_checkbox_field(__('Yoyo', 'okip'), $base_name . '[yoyo]', $stage['yoyo']);
+    }
+    echo '</div>';
+    echo '<details class="okip-admin-panel okip-admin-panel--nested"><summary>' . esc_html__('Ajuste fino (transform / opacidad / blur)', 'okip') . '</summary>';
+    echo '<div class="okip-admin-grid okip-admin-grid--two">';
     okip_admin_number_field(__('Opacidad desde', 'okip'), $base_name . '[opacity_from]', $stage['opacity_from'], '', array('min' => 0, 'max' => 1, 'step' => .01));
     okip_admin_number_field(__('Opacidad hasta', 'okip'), $base_name . '[opacity_to]', $stage['opacity_to'], '', array('min' => 0, 'max' => 1, 'step' => .01));
     okip_admin_number_field(__('X desde px', 'okip'), $base_name . '[x_from]', $stage['x_from'], '', array('min' => -1000, 'max' => 1000, 'step' => .5));
@@ -338,13 +347,8 @@ function okip_admin_motion_stage_fields($label, $base_name, array $stage, $targe
     okip_admin_number_field(__('Rotación hasta', 'okip'), $base_name . '[rotate_to]', $stage['rotate_to'], '', array('min' => -360, 'max' => 360, 'step' => .5));
     okip_admin_number_field(__('Blur desde px', 'okip'), $base_name . '[blur_from]', $stage['blur_from'], '', array('min' => 0, 'max' => 80, 'step' => .5));
     okip_admin_number_field(__('Blur hasta px', 'okip'), $base_name . '[blur_to]', $stage['blur_to'], '', array('min' => 0, 'max' => 80, 'step' => .5));
-    if ($phase === 'playback') {
-        okip_admin_number_field(__('Intensidad', 'okip'), $base_name . '[intensity]', $stage['intensity'], '', array('min' => 0, 'max' => 1, 'step' => .01));
-        okip_admin_number_field(__('Velocidad', 'okip'), $base_name . '[speed]', $stage['speed'], '', array('min' => .1, 'max' => 5, 'step' => .05));
-        okip_admin_select_field(__('Dirección', 'okip'), $base_name . '[direction]', $stage['direction'], okip_motion_direction_options());
-        okip_admin_checkbox_field(__('Yoyo', 'okip'), $base_name . '[yoyo]', $stage['yoyo']);
-    }
     echo '</div>';
+    echo '</details>';
     echo '</fieldset>';
 }
 

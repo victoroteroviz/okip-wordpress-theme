@@ -13,6 +13,21 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+if (! function_exists('okip_news_sanitize_hex')) {
+    /**
+     * Sanitiza un color hex con fallback.
+     *
+     * @param mixed  $value
+     * @param string $fallback
+     * @return string
+     */
+    function okip_news_sanitize_hex($value, $fallback)
+    {
+        $color = function_exists('sanitize_hex_color') ? sanitize_hex_color((string) $value) : '';
+        return $color ? $color : $fallback;
+    }
+}
+
 if (! function_exists('okip_news_fallback_item_defaults')) {
     /**
      * Defaults de un placeholder de noticia.
@@ -63,6 +78,19 @@ if (! function_exists('okip_normalize_news_data')) {
         // Behavior.
         $data['behavior']['dots']   = okip_bool($data['behavior']['dots']);
         $data['behavior']['arrows'] = okip_bool($data['behavior']['arrows']);
+
+        // Transition.
+        $t = isset($data['transition']) && is_array($data['transition']) ? $data['transition'] : array();
+        $t['enabled']       = okip_bool(isset($t['enabled']) ? $t['enabled'] : true);
+        $t['disable_below'] = okip_clamp_int(isset($t['disable_below']) ? $t['disable_below'] : 768, 0, 9999);
+        $t['start']         = okip_clamp_float(isset($t['start']) ? $t['start'] : .92, .1, 1.4);
+        $t['end']           = okip_clamp_float(isset($t['end']) ? $t['end'] : .38, 0, 1.2);
+        if ($t['start'] <= $t['end']) {
+            $t['start'] = min(1.4, $t['end'] + .25);
+        }
+        $t['top_color']     = okip_news_sanitize_hex(isset($t['top_color']) ? $t['top_color'] : '#000000', '#000000');
+        $t['bottom_color']  = okip_news_sanitize_hex(isset($t['bottom_color']) ? $t['bottom_color'] : '#020711', '#020711');
+        $data['transition'] = $t;
 
         // Fallback items.
         $item_defaults = okip_news_fallback_item_defaults();
@@ -124,5 +152,13 @@ return array(
     'behavior' => array(
         'dots'   => true,
         'arrows' => true,
+    ),
+    'transition' => array(
+        'enabled'       => true,
+        'disable_below' => 768,
+        'start'         => .92,
+        'end'           => .38,
+        'top_color'     => '#000000',
+        'bottom_color'  => '#020711',
     ),
 );

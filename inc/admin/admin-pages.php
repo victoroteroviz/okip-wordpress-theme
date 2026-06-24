@@ -184,125 +184,169 @@ function okip_render_admin_hero_editor($instance_id, array $data)
     $cards = isset($data['cards']) && is_array($data['cards']) ? $data['cards'] : array();
     ?>
 
-    <details class="okip-admin-panel" open>
-        <summary><?php esc_html_e('Contenido', 'okip'); ?></summary>
-        <div class="okip-admin-grid okip-admin-grid--two">
+    <div class="okip-admin-tabs" data-okip-tabs>
+        <div class="okip-admin-tabs__nav" role="tablist">
+            <button type="button" class="okip-admin-tab-btn is-active" data-okip-tab-target="contenido"><?php esc_html_e('Contenido', 'okip'); ?></button>
+            <button type="button" class="okip-admin-tab-btn" data-okip-tab-target="fondo"><?php esc_html_e('Fondo', 'okip'); ?></button>
+            <button type="button" class="okip-admin-tab-btn" data-okip-tab-target="animacion"><?php esc_html_e('Animación', 'okip'); ?></button>
+            <button type="button" class="okip-admin-tab-btn" data-okip-tab-target="tarjetas"><?php esc_html_e('Tarjetas', 'okip'); ?></button>
+            <button type="button" class="okip-admin-tab-btn" data-okip-tab-target="avanzado"><?php esc_html_e('Avanzado', 'okip'); ?></button>
+        </div>
+
+        <!-- Tab: Contenido (texto + tipografía) -->
+        <div class="okip-admin-tab-panel is-active" data-okip-tab="contenido">
+            <div class="okip-admin-grid okip-admin-grid--two">
+                <?php
+                okip_admin_text_field(__('Título línea 1', 'okip'), $base . '[content][title_line_1]', $content['title_line_1']);
+                okip_admin_text_field(__('Título línea 2', 'okip'), $base . '[content][title_line_2]', $content['title_line_2']);
+                okip_admin_select_field(__('Alineación', 'okip'), $base . '[content][alignment]', $content['alignment'], array(
+                    'center' => __('Centro', 'okip'),
+                    'left'   => __('Izquierda', 'okip'),
+                    'right'  => __('Derecha', 'okip'),
+                ));
+                okip_admin_text_field(__('Ancho máximo', 'okip'), $base . '[content][max_width]', $content['max_width']);
+                ?>
+            </div>
+            <?php okip_admin_textarea_field(__('Descripción', 'okip'), $base . '[content][description]', $content['description']); ?>
             <?php
-            okip_admin_text_field(__('Título línea 1', 'okip'), $base . '[content][title_line_1]', $content['title_line_1']);
-            okip_admin_text_field(__('Título línea 2', 'okip'), $base . '[content][title_line_2]', $content['title_line_2']);
-            okip_admin_select_field(__('Alineación', 'okip'), $base . '[content][alignment]', $content['alignment'], array(
-                'center' => __('Centro', 'okip'),
-                'left'   => __('Izquierda', 'okip'),
-                'right'  => __('Derecha', 'okip'),
-            ));
-            okip_admin_text_field(__('Ancho máximo', 'okip'), $base . '[content][max_width]', $content['max_width']);
+            okip_admin_typography_group(__('Tipografía título', 'okip'), $base . '[typography][title]', $typography['title'], $content['title_line_1'] . ' ' . $content['title_line_2']);
+            okip_admin_typography_group(__('Tipografía descripción', 'okip'), $base . '[typography][description]', $typography['description'], $content['description'] ?: __('Texto descriptivo del Hero', 'okip'));
             ?>
         </div>
-        <?php okip_admin_textarea_field(__('Descripción', 'okip'), $base . '[content][description]', $content['description']); ?>
-    </details>
 
-    <details class="okip-admin-panel" open>
-        <summary><?php esc_html_e('Tipografía', 'okip'); ?></summary>
-        <?php
-        okip_admin_typography_group(__('Título', 'okip'), $base . '[typography][title]', $typography['title'], $content['title_line_1'] . ' ' . $content['title_line_2']);
-        okip_admin_typography_group(__('Descripción', 'okip'), $base . '[typography][description]', $typography['description'], $content['description'] ?: __('Texto descriptivo del Hero', 'okip'));
-        ?>
-    </details>
+        <!-- Tab: Fondo (tipo, variante, colores, motion CSS, media) -->
+        <div class="okip-admin-tab-panel" data-okip-tab="fondo">
+            <div class="okip-admin-grid okip-admin-grid--two">
+                <?php
+                okip_admin_select_field(__('Tipo de fondo', 'okip'), $base . '[background][type]', $background['type'], array(
+                    'css_motion' => __('Fondo CSS editable', 'okip'),
+                    'video'      => __('Video intro/loop', 'okip'),
+                    'image'      => __('Imagen', 'okip'),
+                    'svg'        => __('SVG externo', 'okip'),
+                    'gradient'   => __('Fallback neutro', 'okip'),
+                ));
+                okip_admin_select_field(__('Variante CSS', 'okip'), $base . '[background][css_variant]', $background['css_variant'], array(
+                    'liquid_aurora' => __('Aurora líquida', 'okip'),
+                    'future_grid'   => __('Grid futurista', 'okip'),
+                    'signal_field'  => __('Campo de señal', 'okip'),
+                ));
+                okip_admin_color_field(__('Fondo CSS', 'okip'), $base . '[background][css_bg]', $background['css_bg']);
+                okip_admin_color_field(__('Acento azul', 'okip'), $base . '[background][css_accent]', $background['css_accent']);
+                okip_admin_color_field(__('Acento claro', 'okip'), $base . '[background][css_accent_2]', $background['css_accent_2']);
+                okip_admin_number_field(__('Opacidad grid', 'okip'), $base . '[background][css_grid_opacity]', $background['css_grid_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+                okip_admin_number_field(__('Opacidad scanlines', 'okip'), $base . '[background][css_scanline_opacity]', $background['css_scanline_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+                okip_admin_number_field(__('Opacidad noise', 'okip'), $base . '[background][css_noise_opacity]', $background['css_noise_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+                okip_admin_checkbox_field(__('Movimiento CSS activo', 'okip'), $base . '[background][css_motion_enabled]', $background['css_motion_enabled']);
+                okip_admin_number_field(__('Intensidad fondo', 'okip'), $base . '[background][css_motion_intensity]', $background['css_motion_intensity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+                okip_admin_number_field(__('Velocidad fondo', 'okip'), $base . '[background][css_motion_speed]', $background['css_motion_speed'], __('1 = normal, mayor = mas rapido.', 'okip'), array('min' => .2, 'max' => 3, 'step' => '.05'));
+                okip_admin_media_field(__('Media único / imagen / SVG externo', 'okip'), $base . '[background][media]', $background['media']);
+                okip_admin_media_field(__('Intro video', 'okip'), $base . '[background][intro_media]', $background['intro_media']);
+                okip_admin_media_field(__('Loop video', 'okip'), $base . '[background][loop_media]', $background['loop_media']);
+                okip_admin_media_field(__('Poster', 'okip'), $base . '[background][poster]', $background['poster']);
+                okip_admin_media_field(__('Fallback image', 'okip'), $base . '[background][fallback_image]', $background['fallback_image']);
+                ?>
+            </div>
+        </div>
 
-    <details class="okip-admin-panel" open>
-        <summary><?php esc_html_e('Fondo CSS / media', 'okip'); ?></summary>
-        <div class="okip-admin-grid okip-admin-grid--two">
+        <!-- Tab: Animación (sistema + targets) -->
+        <div class="okip-admin-tab-panel" data-okip-tab="animacion">
+            <div class="okip-admin-grid okip-admin-grid--two">
+                <?php
+                okip_admin_checkbox_field(__('Sistema activo', 'okip'), $base . '[motion][enabled]', $motion['enabled']);
+                okip_admin_select_field(__('Replay', 'okip'), $base . '[motion][replay_mode]', $motion['replay_mode'], okip_motion_replay_options());
+                okip_admin_select_field(__('Salida', 'okip'), $base . '[motion][exit_trigger]', $motion['exit_trigger'], okip_motion_exit_trigger_options());
+                ?>
+            </div>
             <?php
-            okip_admin_select_field(__('Tipo de fondo', 'okip'), $base . '[background][type]', $background['type'], array(
-                'css_motion' => __('Fondo CSS editable', 'okip'),
-                'video'      => __('Video intro/loop', 'okip'),
-                'image'      => __('Imagen', 'okip'),
-                'svg'        => __('SVG externo', 'okip'),
-                'gradient'   => __('Fallback neutro', 'okip'),
-            ));
-            okip_admin_select_field(__('Variante CSS', 'okip'), $base . '[background][css_variant]', $background['css_variant'], array(
-                'liquid_aurora' => __('Aurora líquida', 'okip'),
-                'future_grid'   => __('Grid futurista', 'okip'),
-                'signal_field'  => __('Campo de señal', 'okip'),
-            ));
-            okip_admin_color_field(__('Fondo CSS', 'okip'), $base . '[background][css_bg]', $background['css_bg']);
-            okip_admin_color_field(__('Acento azul', 'okip'), $base . '[background][css_accent]', $background['css_accent']);
-            okip_admin_color_field(__('Acento claro', 'okip'), $base . '[background][css_accent_2]', $background['css_accent_2']);
-            okip_admin_number_field(__('Opacidad grid', 'okip'), $base . '[background][css_grid_opacity]', $background['css_grid_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_number_field(__('Opacidad scanlines', 'okip'), $base . '[background][css_scanline_opacity]', $background['css_scanline_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_number_field(__('Opacidad noise', 'okip'), $base . '[background][css_noise_opacity]', $background['css_noise_opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_checkbox_field(__('Movimiento CSS activo', 'okip'), $base . '[background][css_motion_enabled]', $background['css_motion_enabled']);
-            okip_admin_number_field(__('Intensidad fondo', 'okip'), $base . '[background][css_motion_intensity]', $background['css_motion_intensity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_number_field(__('Velocidad fondo', 'okip'), $base . '[background][css_motion_speed]', $background['css_motion_speed'], __('1 = normal, mayor = mas rapido.', 'okip'), array('min' => .2, 'max' => 3, 'step' => '.05'));
-            okip_admin_number_field(__('Intervalo pulso', 'okip'), $base . '[background][css_motion_interval]', $background['css_motion_interval'], __('Segundos entre micro desplazamientos o pulsos.', 'okip'), array('min' => 2, 'max' => 20, 'step' => '.25'));
-            okip_admin_number_field(__('Chroma offset px', 'okip'), $base . '[background][css_chroma_offset]', $background['css_chroma_offset'], '', array('min' => 0, 'max' => 32, 'step' => '.5'));
-            okip_admin_text_field(__('Object position', 'okip'), $base . '[background][object_position]', $background['object_position']);
-            okip_admin_media_field(__('Media único / imagen / SVG externo', 'okip'), $base . '[background][media]', $background['media']);
-            okip_admin_media_field(__('Intro video', 'okip'), $base . '[background][intro_media]', $background['intro_media']);
-            okip_admin_media_field(__('Loop video', 'okip'), $base . '[background][loop_media]', $background['loop_media']);
-            okip_admin_media_field(__('Poster', 'okip'), $base . '[background][poster]', $background['poster']);
-            okip_admin_media_field(__('Fallback image', 'okip'), $base . '[background][fallback_image]', $background['fallback_image']);
+            okip_admin_motion_target_group(__('Fondo', 'okip'), $base . '[motion][background]', $motion['background'], 'background', true);
+            okip_admin_motion_target_group(__('Letras', 'okip'), $base . '[motion][text]', $motion['text'], 'text', false);
+            okip_admin_motion_target_group(__('Tarjetas', 'okip'), $base . '[motion][cards]', $motion['cards'], 'cards', true);
             ?>
         </div>
-    </details>
 
-    <details class="okip-admin-panel">
-        <summary><?php esc_html_e('Overlay y transición', 'okip'); ?></summary>
-        <div class="okip-admin-grid okip-admin-grid--two">
-            <?php
-            okip_admin_checkbox_field(__('Overlay activo', 'okip'), $base . '[overlay][enabled]', $overlay['enabled']);
-            okip_admin_color_field(__('Color overlay', 'okip'), $base . '[overlay][color]', $overlay['color']);
-            okip_admin_number_field(__('Opacidad overlay', 'okip'), $base . '[overlay][opacity]', $overlay['opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
-            okip_admin_checkbox_field(__('Crossfade intro/loop', 'okip'), $base . '[transition][intro_to_loop_crossfade]', $transition['intro_to_loop_crossfade']);
-            okip_admin_number_field(__('Duración crossfade', 'okip'), $base . '[transition][crossfade_duration]', $transition['crossfade_duration'], '', array('min' => 0, 'max' => 5000, 'step' => '50'));
-            ?>
-        </div>
-    </details>
-
-    <details class="okip-admin-panel">
-        <summary><?php esc_html_e('Animaciones', 'okip'); ?></summary>
-        <div class="okip-admin-grid okip-admin-grid--two">
-            <?php
-            okip_admin_checkbox_field(__('Sistema activo', 'okip'), $base . '[motion][enabled]', $motion['enabled']);
-            okip_admin_select_field(__('Replay', 'okip'), $base . '[motion][replay_mode]', $motion['replay_mode'], okip_motion_replay_options());
-            okip_admin_select_field(__('Salida', 'okip'), $base . '[motion][exit_trigger]', $motion['exit_trigger'], okip_motion_exit_trigger_options());
-            ?>
-        </div>
-        <?php
-        okip_admin_motion_target_group(__('Fondo', 'okip'), $base . '[motion][background]', $motion['background'], 'background', true);
-        okip_admin_motion_target_group(__('Letras', 'okip'), $base . '[motion][text]', $motion['text'], 'text', false);
-        okip_admin_motion_target_group(__('Tarjetas', 'okip'), $base . '[motion][cards]', $motion['cards'], 'cards', true);
-        ?>
-    </details>
-
-    <details class="okip-admin-panel">
-        <summary><?php esc_html_e('Tarjetas', 'okip'); ?></summary>
-        <?php foreach ($cards as $i => $card) : ?>
-            <?php $card_base = $base . '[cards][' . (int) $i . ']'; ?>
-            <fieldset class="okip-admin-panel okip-admin-panel--nested">
-                <legend><?php echo esc_html(isset($card['id']) ? $card['id'] : 'card-' . ($i + 1)); ?></legend>
-                <div class="okip-admin-grid okip-admin-grid--two">
-                    <?php
-                    okip_admin_text_field(__('ID', 'okip'), $card_base . '[id]', $card['id']);
-                    okip_admin_checkbox_field(__('Activa', 'okip'), $card_base . '[active]', $card['active']);
-                    okip_admin_select_field(__('Tipo', 'okip'), $card_base . '[type]', $card['type'], array(
-                        'video' => __('Video', 'okip'),
-                        'image' => __('Imagen', 'okip'),
-                        'svg'   => __('SVG', 'okip'),
-                    ));
-                    okip_admin_media_field(__('Media', 'okip'), $card_base . '[media]', $card['media']);
-                    okip_admin_media_field(__('Poster', 'okip'), $card_base . '[poster]', $card['poster']);
-                    okip_admin_text_field(__('Alt', 'okip'), $card_base . '[alt]', $card['alt']);
-                    okip_admin_number_field(__('X %', 'okip'), $card_base . '[x]', $card['x'], '', array('min' => 0, 'max' => 100, 'step' => '.5'));
-                    okip_admin_number_field(__('Y %', 'okip'), $card_base . '[y]', $card['y'], '', array('min' => 0, 'max' => 100, 'step' => '.5'));
-                    okip_admin_checkbox_field(__('Glow', 'okip'), $card_base . '[glow]', $card['glow']);
-                    okip_admin_checkbox_field(__('Scanline', 'okip'), $card_base . '[scanline]', $card['scanline']);
-                    okip_admin_checkbox_field(__('Placeholder', 'okip'), $card_base . '[placeholder_enabled]', $card['placeholder_enabled']);
-                    okip_admin_text_field(__('Label placeholder', 'okip'), $card_base . '[placeholder_label]', $card['placeholder_label']);
-                    ?>
+        <!-- Tab: Tarjetas (gestión dinámica + maqueta de posición) -->
+        <div class="okip-admin-tab-panel" data-okip-tab="tarjetas">
+            <div class="okip-admin-cards" data-okip-cards data-okip-max="10">
+                <div class="okip-admin-stage" data-okip-stage aria-hidden="true"></div>
+                <p class="description"><?php esc_html_e('Arrastra las tarjetas en la maqueta para posicionarlas; usa la esquina inferior derecha para redimensionar. X/Y y ancho aplican en escritorio; en móvil el Hero usa un layout apilado.', 'okip'); ?></p>
+                <div class="okip-admin-cards__list" data-okip-cards-list>
+                    <?php foreach ($cards as $i => $card) : ?>
+                        <?php okip_admin_render_hero_card($base . '[cards][' . (int) $i . ']', $card, isset($card['id']) ? $card['id'] : 'card-' . ($i + 1)); ?>
+                    <?php endforeach; ?>
                 </div>
-            </fieldset>
-        <?php endforeach; ?>
-    </details>
+                <p class="okip-admin-cards__actions">
+                    <button type="button" class="button button-secondary" data-okip-card-add><?php esc_html_e('Añadir tarjeta', 'okip'); ?></button>
+                    <span class="description" data-okip-card-count></span>
+                </p>
+                <template data-okip-card-template>
+                    <?php okip_admin_render_hero_card($base . '[cards][__INDEX__]', okip_hero_card_defaults(), __('Nueva tarjeta', 'okip')); ?>
+                </template>
+            </div>
+        </div>
+
+        <!-- Tab: Avanzado (object-position, chroma, overlay, transición) -->
+        <div class="okip-admin-tab-panel" data-okip-tab="avanzado">
+            <div class="okip-admin-grid okip-admin-grid--two">
+                <?php
+                okip_admin_text_field(__('Object position', 'okip'), $base . '[background][object_position]', $background['object_position']);
+                okip_admin_number_field(__('Intervalo pulso', 'okip'), $base . '[background][css_motion_interval]', $background['css_motion_interval'], __('Segundos entre micro desplazamientos o pulsos.', 'okip'), array('min' => 2, 'max' => 20, 'step' => '.25'));
+                okip_admin_number_field(__('Chroma offset px', 'okip'), $base . '[background][css_chroma_offset]', $background['css_chroma_offset'], '', array('min' => 0, 'max' => 32, 'step' => '.5'));
+                okip_admin_checkbox_field(__('Overlay activo', 'okip'), $base . '[overlay][enabled]', $overlay['enabled']);
+                okip_admin_color_field(__('Color overlay', 'okip'), $base . '[overlay][color]', $overlay['color']);
+                okip_admin_number_field(__('Opacidad overlay', 'okip'), $base . '[overlay][opacity]', $overlay['opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
+                okip_admin_checkbox_field(__('Crossfade intro/loop', 'okip'), $base . '[transition][intro_to_loop_crossfade]', $transition['intro_to_loop_crossfade']);
+                okip_admin_number_field(__('Duración crossfade', 'okip'), $base . '[transition][crossfade_duration]', $transition['crossfade_duration'], '', array('min' => 0, 'max' => 5000, 'step' => '50'));
+                ?>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+/**
+ * Renderiza una tarjeta del Hero (reutilizado por las tarjetas existentes y por la
+ * plantilla `<template>` que el JS clona al añadir/duplicar).
+ *
+ * @param string $card_base Base del name (p.ej. okip_blocks[inst][data][cards][0]).
+ * @param array  $card      Datos de la tarjeta (se completan con los defaults).
+ * @param string $legend    Etiqueta visible (el JS la sincroniza con el ID).
+ * @return void
+ */
+function okip_admin_render_hero_card($card_base, array $card, $legend)
+{
+    if (function_exists('okip_hero_card_defaults')) {
+        $card = okip_merge_defaults($card, okip_hero_card_defaults());
+    }
+    ?>
+    <fieldset class="okip-admin-card okip-admin-panel okip-admin-panel--nested" data-okip-card>
+        <div class="okip-admin-card__head">
+            <legend class="okip-admin-card__title" data-okip-card-legend><?php echo esc_html($legend); ?></legend>
+            <span class="okip-admin-card__tools">
+                <button type="button" class="button-link" data-okip-card-dup><?php esc_html_e('Duplicar', 'okip'); ?></button>
+                <button type="button" class="button-link okip-admin-card__remove" data-okip-card-remove><?php esc_html_e('Eliminar', 'okip'); ?></button>
+            </span>
+        </div>
+        <div class="okip-admin-grid okip-admin-grid--two">
+            <?php
+            okip_admin_text_field(__('ID', 'okip'), $card_base . '[id]', $card['id']);
+            okip_admin_checkbox_field(__('Activa', 'okip'), $card_base . '[active]', $card['active']);
+            okip_admin_select_field(__('Tipo', 'okip'), $card_base . '[type]', $card['type'], array(
+                'video' => __('Video', 'okip'),
+                'image' => __('Imagen', 'okip'),
+                'svg'   => __('SVG', 'okip'),
+            ));
+            okip_admin_media_field(__('Media', 'okip'), $card_base . '[media]', $card['media']);
+            okip_admin_media_field(__('Poster', 'okip'), $card_base . '[poster]', $card['poster']);
+            okip_admin_text_field(__('Alt', 'okip'), $card_base . '[alt]', $card['alt']);
+            okip_admin_number_field(__('X %', 'okip'), $card_base . '[x]', $card['x'], '', array('min' => 0, 'max' => 100, 'step' => '.5'));
+            okip_admin_number_field(__('Y %', 'okip'), $card_base . '[y]', $card['y'], '', array('min' => 0, 'max' => 100, 'step' => '.5'));
+            okip_admin_number_field(__('Ancho vw', 'okip'), $card_base . '[width_pct]', $card['width_pct'], '', array('min' => 6, 'max' => 30, 'step' => '.5'));
+            okip_admin_checkbox_field(__('Glow', 'okip'), $card_base . '[glow]', $card['glow']);
+            okip_admin_checkbox_field(__('Scanline', 'okip'), $card_base . '[scanline]', $card['scanline']);
+            okip_admin_checkbox_field(__('Placeholder', 'okip'), $card_base . '[placeholder_enabled]', $card['placeholder_enabled']);
+            okip_admin_text_field(__('Label placeholder', 'okip'), $card_base . '[placeholder_label]', $card['placeholder_label']);
+            ?>
+        </div>
+    </fieldset>
     <?php
 }

@@ -20,6 +20,7 @@ $content  = isset($okip_data['content']) ? $okip_data['content'] : array();
 $query    = isset($okip_data['query']) ? $okip_data['query'] : array();
 $layout   = isset($okip_data['layout']) ? $okip_data['layout'] : array();
 $behavior = isset($okip_data['behavior']) ? $okip_data['behavior'] : array();
+$transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
 $fallback = isset($okip_data['fallback_items']) && is_array($okip_data['fallback_items']) ? $okip_data['fallback_items'] : array();
 
 $aria_label = isset($content['aria_label']) ? $content['aria_label'] : 'Noticias y referencias';
@@ -41,6 +42,13 @@ $z_index        = isset($layout['z_index']) ? (int) $layout['z_index'] : 6;
 
 $dots_on   = ! empty($behavior['dots']);
 $arrows_on = ! empty($behavior['arrows']);
+
+$reveal_enabled = ! empty($transition['enabled']);
+$reveal_disable_below = isset($transition['disable_below']) ? (int) $transition['disable_below'] : 768;
+$reveal_start = isset($transition['start']) ? (float) $transition['start'] : .92;
+$reveal_end = isset($transition['end']) ? (float) $transition['end'] : .38;
+$reveal_top_color = isset($transition['top_color']) ? $transition['top_color'] : '#000000';
+$reveal_bottom_color = isset($transition['bottom_color']) ? $transition['bottom_color'] : '#020711';
 
 $items = array();
 $query_args = array(
@@ -100,21 +108,27 @@ if (empty($items)) {
 }
 
 $section_style = sprintf(
-    '--okip-news-bg:%s;--okip-news-pt:%s;--okip-news-pb:%s;--okip-news-card-w:%s;--okip-news-card-h:%s;--okip-news-gap:%s;--okip-news-z:%d;',
+    '--okip-news-bg:%s;--okip-news-pt:%s;--okip-news-pb:%s;--okip-news-card-w:%s;--okip-news-card-h:%s;--okip-news-gap:%s;--okip-news-z:%d;--okip-news-reveal-top:%s;--okip-news-reveal-bottom:%s;',
     esc_attr($background),
     esc_attr($padding_top),
     esc_attr($padding_bottom),
     esc_attr($card_width),
     esc_attr($card_height),
     esc_attr($gap),
-    $z_index
+    $z_index,
+    esc_attr($reveal_top_color),
+    esc_attr($reveal_bottom_color)
 );
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
-    class="okip-news"
+    class="okip-news<?php echo $reveal_enabled ? ' okip-news--split-reveal' : ''; ?>"
     data-block-instance="<?php echo esc_attr($okip_instance); ?>"
     data-okip-news
+    data-reveal="<?php echo $reveal_enabled ? '1' : '0'; ?>"
+    data-reveal-disable-below="<?php echo esc_attr((string) $reveal_disable_below); ?>"
+    data-reveal-start="<?php echo esc_attr((string) $reveal_start); ?>"
+    data-reveal-end="<?php echo esc_attr((string) $reveal_end); ?>"
     style="<?php echo $section_style; ?>">
 
     <div class="okip-news__viewport" aria-label="<?php echo esc_attr($aria_label); ?>">

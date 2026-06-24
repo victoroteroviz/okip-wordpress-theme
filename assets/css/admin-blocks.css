@@ -158,6 +158,169 @@
     line-height: 1.2;
 }
 
+/* ---- Tabs del editor de bloque ---- */
+.okip-admin-tabs__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0;
+    padding: 14px 18px 0;
+    border-bottom: 1px solid #dcdcde;
+    background: #f6f7f7;
+}
+
+.okip-admin-tab-btn {
+    appearance: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    padding: 9px 16px;
+    font-weight: 600;
+    color: #50575e;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+}
+
+.okip-admin-tab-btn:hover,
+.okip-admin-tab-btn:focus {
+    color: #135e96;
+}
+
+.okip-admin-tab-btn.is-active {
+    background: #fff;
+    border-color: #dcdcde;
+    color: #101828;
+    margin-bottom: -1px;
+}
+
+.okip-admin-tab-panel {
+    display: none;
+    padding: 18px;
+}
+
+.okip-admin-tab-panel.is-active {
+    display: block;
+}
+
+/* ---- Tarjetas dinámicas + maqueta de posición ---- */
+.okip-admin-cards__list {
+    display: grid;
+    gap: 14px;
+    margin: 14px 0;
+}
+
+.okip-admin-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.okip-admin-card__title {
+    font-weight: 700;
+    color: #101828;
+}
+
+.okip-admin-card__tools {
+    display: flex;
+    gap: 12px;
+}
+
+.okip-admin-card__remove {
+    color: #b32d2e;
+}
+
+.okip-admin-cards__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Maqueta ligera: caja proporcional al Hero (NO una preview real del bloque). */
+.okip-admin-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0a1422;
+    border: 1px solid #cfd6e4;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    touch-action: none;
+}
+
+.okip-admin-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, .08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, .08) 1px, transparent 1px);
+    background-size: 25% 25%;
+}
+
+.okip-admin-stage__card {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    aspect-ratio: 3 / 4;
+    border: 1px solid rgba(120, 180, 255, .85);
+    border-radius: 6px;
+    background: rgba(60, 140, 255, .22);
+    color: #eaf2ff;
+    font-size: 10px;
+    line-height: 1.1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2px;
+    cursor: grab;
+    user-select: none;
+    box-sizing: border-box;
+    overflow: visible;
+    touch-action: none;
+}
+
+.okip-admin-stage__card span {
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.okip-admin-stage__card.is-dragging {
+    cursor: grabbing;
+    z-index: 3;
+    box-shadow: 0 0 0 2px rgba(120, 180, 255, .9);
+}
+
+.okip-admin-stage__card.is-inactive {
+    opacity: .45;
+    border-style: dashed;
+}
+
+.okip-admin-stage__resize {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffb020;
+    border: 2px solid #fff;
+    cursor: nwse-resize;
+}
+
+.okip-admin-stage__snap {
+    position: absolute;
+    background: rgba(255, 176, 32, .9);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.okip-admin-stage__snap--v { top: 0; bottom: 0; width: 1px; }
+.okip-admin-stage__snap--h { left: 0; right: 0; height: 1px; }
+
 @media (max-width: 900px) {
     .okip-admin-grid--two,
     .okip-admin-media-field {

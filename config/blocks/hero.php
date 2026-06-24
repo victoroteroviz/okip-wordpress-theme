@@ -49,6 +49,7 @@ if (! function_exists('okip_hero_card_defaults')) {
             'alt'                 => '',
             'x'                   => 50.0,     // % (0..100) — solo desktop
             'y'                   => 50.0,     // % (0..100) — solo desktop
+            'width_pct'           => 14.0,     // ancho en vw (desktop); clamp 6..30
             'glow'                => true,
             'scanline'            => false,
             'placeholder_label'   => '',      // texto del placeholder temporal
@@ -152,6 +153,7 @@ if (! function_exists('okip_normalize_hero_data')) {
             $card['type']   = okip_one_of($card['type'], $card_allowed, 'image');
             $card['x']      = okip_clamp_float($card['x'], 0, 100);
             $card['y']      = okip_clamp_float($card['y'], 0, 100);
+            $card['width_pct'] = okip_clamp_float($card['width_pct'], 6, 30);
             $card['glow']                = okip_bool($card['glow']);
             $card['scanline']            = okip_bool($card['scanline']);
             $card['placeholder_enabled'] = okip_bool($card['placeholder_enabled']);

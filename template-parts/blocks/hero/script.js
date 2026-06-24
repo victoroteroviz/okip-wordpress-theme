@@ -6,6 +6,16 @@
 
     var reduceMotion = !!(window.OKIPAnimations && window.OKIPAnimations.reduceMotion);
 
+    /* Milisegundos hasta que una fase de entrada termina (delay + duración + stagger
+       del último elemento). 0 si la fase está deshabilitada. */
+    function entryEnd(stage, count) {
+        if (!stage || !stage.enabled || stage.preset === 'none') { return 0; }
+        var delay = parseInt(stage.delay_ms, 10) || 0;
+        var dur = parseInt(stage.duration_ms, 10) || 700;
+        var stagger = parseInt(stage.stagger_ms, 10) || 0;
+        return delay + dur + stagger * Math.max(0, count - 1);
+    }
+
     function initHero(hero) {
         if (hero.__okipHeroInit) { return; }
         hero.__okipHeroInit = true;
@@ -22,6 +32,10 @@
         var animator = window.OKIPAnimations && window.OKIPAnimations.create
             ? window.OKIPAnimations.create(hero)
             : null;
+        var motionConfig = window.OKIPAnimations && window.OKIPAnimations.parseConfig
+            ? window.OKIPAnimations.parseConfig(hero)
+            : null;
+        var motionCfg = motionConfig && motionConfig.motion ? motionConfig.motion : null;
 
         var timers = [];
         var done = false;
@@ -32,6 +46,11 @@
             if (!v) { return; }
             var p = v.play();
             if (p && typeof p.catch === 'function') { p.catch(function () {}); }
+        }
+
+        // Reanuda las animaciones pesadas del fondo (pausadas durante la entrada).
+        function stopEntering() {
+            hero.classList.remove('is-hero-entering');
         }
 
         function prepareMotion() {
@@ -45,11 +64,13 @@
             done = true;
             if (!animator) {
                 hero.classList.add('is-motion-complete');
+                stopEntering();
                 return;
             }
             if (!motionOn || reduceMotion) {
                 animator.finishAll(motionTargets);
                 hero.classList.add('is-motion-complete');
+                stopEntering();
                 return;
             }
             animator.enter('text');
@@ -57,6 +78,14 @@
             animator.enterThenPlayback('cards');
             animator.watchExit(motionTargets);
             hero.classList.add('is-motion-complete');
+            // Reanudar el fondo pesado SOLO cuando texto y tarjetas terminen de entrar.
+            var textCount = hero.querySelectorAll('[data-okip-motion-target="text"]').length;
+            var cardCount = hero.querySelectorAll('[data-okip-motion-target="cards"]').length;
+            var wait = Math.max(
+                entryEnd(motionCfg && motionCfg.text ? motionCfg.text.entry : null, textCount),
+                entryEnd(motionCfg && motionCfg.cards ? motionCfg.cards.entry : null, cardCount)
+            );
+            timers.push(setTimeout(stopEntering, wait + 60));
         }
 
         function startLoop() {
@@ -113,6 +142,9 @@
 
         prepareMotion();
 
+        // Salvaguarda: nunca dejar el fondo congelado si la secuencia no completa.
+        timers.push(setTimeout(stopEntering, 5000));
+
         if (reduceMotion) {
             if (hasFallback) {
                 hero.classList.add('is-fallback-shown', 'is-intro-hidden');
@@ -137,6 +169,42 @@
         }
 
         setupCards(hero);
+        setupCoverPause(hero);
+    }
+
+    /*
+     * Pausa las animaciones del Hero cuando queda CUBIERTO por el bloque siguiente.
+     * El Hero es position:sticky → puede seguir intersectando el viewport aunque ya
+     * esté tapado; por eso NO usamos IntersectionObserver de "offscreen" sino una
+     * comparación por scroll/rAF: cubierto = el bloque siguiente alcanzó el top del
+     * viewport (o, sin bloque siguiente, el Hero ya pasó de largo).
+     */
+    function setupCoverPause(hero) {
+        var next = hero.nextElementSibling;
+        var paused = false;
+        var ticking = false;
+
+        function evaluate() {
+            ticking = false;
+            var covered = next
+                ? next.getBoundingClientRect().top <= 0
+                : hero.getBoundingClientRect().bottom <= 0;
+            if (covered !== paused) {
+                paused = covered;
+                hero.classList.toggle('is-hero-paused', covered);
+            }
+        }
+
+        function onScroll() {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(evaluate);
+            }
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        evaluate();
     }
 
     function setupCards(hero) {

@@ -6,14 +6,28 @@
     z-index: var(--okip-ms-z, 5);
     overflow: hidden;
     isolation: isolate;
-    min-height: 0;
+    display: grid;
+    place-items: center;
+    min-height: var(--okip-ms-minh, 100svh);
     padding: var(--okip-ms-pt, 7rem) var(--okip-container-pad) var(--okip-ms-pb, 6.5rem);
-    background: var(--okip-ms-bg, #000);
     color: #fff;
     --okip-ms-scroll: 0;
     --okip-ms-glow-boost: 0;
     --okip-ms-glow-shift: 0%;
     --okip-ms-glow-scale: 0;
+    background: var(--okip-ms-bg, #000);
+}
+
+.okip-ms::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 2;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(153, 218, 255, .52), transparent);
+    opacity: .48;
+    pointer-events: none;
 }
 
 .okip-ms__background,
@@ -28,6 +42,11 @@
 .okip-ms__background::before,
 .okip-ms__background::after {
     content: "";
+}
+
+.okip-ms__background {
+    opacity: 1;
+    transition: opacity .2s linear;
 }
 
 .okip-ms--gradient .okip-ms__background {
@@ -84,18 +103,22 @@
 }
 
 .okip-ms__inner {
+    position: relative;
     width: min(100%, var(--okip-ms-cw, 820px));
     margin: 0 auto;
     text-align: center;
+    z-index: 3;
+    will-change: opacity, transform, filter;
 }
 
 .okip-ms__statement {
     margin: 0;
-    color: rgba(255, 255, 255, .88);
-    font-size: 1.75rem;
+    color: rgba(255, 255, 255, .9);
+    font-size: clamp(1.45rem, 3vw, 2.38rem);
     font-weight: 300;
     letter-spacing: 0;
-    line-height: 1.15;
+    line-height: 1.12;
+    text-wrap: balance;
 }
 
 .okip-ms__line {
@@ -118,7 +141,7 @@
 }
 
 .okip-ms__kicker {
-    margin: 1rem 0 0;
+    margin: clamp(1rem, 2.4vh, 1.55rem) 0 0;
     color: rgba(255, 255, 255, .62);
     font-size: .58rem;
     font-weight: 600;

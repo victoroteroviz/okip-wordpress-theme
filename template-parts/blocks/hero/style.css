@@ -71,10 +71,6 @@
     transform: translateZ(0);
 }
 
-.okip-hero__css-bg.is-motion-enabled {
-    will-change: opacity, filter, transform;
-}
-
 .okip-hero__css-bg::before {
     content: "";
     opacity: 0;
@@ -100,14 +96,6 @@
 .okip-hero__css-noise {
     mix-blend-mode: screen;
     opacity: var(--okip-hero-css-noise-opacity, .07);
-}
-
-.okip-hero__css-bg.is-motion-enabled .okip-hero__css-signal {
-    will-change: background-position, transform;
-}
-
-.okip-hero__css-bg.is-motion-enabled .okip-hero__css-noise {
-    will-change: background-position, opacity;
 }
 
 /* Variante 1: grid futurista, ahora con entrada suave y chroma controlado. */
@@ -139,7 +127,6 @@
 
 .okip-hero__css-bg--future-grid.is-motion-enabled::after {
     animation: okip-hero-chroma-jolt var(--okip-hero-css-chroma-duration, 8s) ease-in-out infinite;
-    will-change: opacity, transform;
 }
 
 .okip-hero__css-bg--future-grid .okip-hero__css-grid {
@@ -209,12 +196,10 @@
 
 .okip-hero__css-bg--liquid-aurora.is-motion-enabled::before {
     animation: okip-hero-liquid-current var(--okip-hero-css-liquid-duration, 18s) ease-in-out infinite alternate;
-    will-change: background-position, transform;
 }
 
 .okip-hero__css-bg--liquid-aurora.is-motion-enabled::after {
     animation: okip-hero-liquid-haze var(--okip-hero-css-field-duration, 34s) ease-in-out infinite alternate;
-    will-change: transform, opacity;
 }
 
 .okip-hero__css-bg--liquid-aurora .okip-hero__css-grid {
@@ -273,7 +258,6 @@
 
 .okip-hero__css-bg--signal-field.is-motion-enabled::before {
     animation: okip-hero-field-turn var(--okip-hero-css-field-duration, 34s) linear infinite;
-    will-change: transform;
 }
 
 .okip-hero__css-bg--signal-field::after {
@@ -287,7 +271,6 @@
 
 .okip-hero__css-bg--signal-field.is-motion-enabled::after {
     animation: okip-hero-field-scan var(--okip-hero-css-signal-duration, 28s) ease-in-out infinite alternate;
-    will-change: background-position;
 }
 
 .okip-hero__css-bg--signal-field .okip-hero__css-grid {
@@ -397,6 +380,36 @@
     100% { background-position: 100% 0, 70% 0; }
 }
 
+/* ---- Pausa de animaciones cuando el Hero queda CUBIERTO ----
+   El Hero es position:sticky → puede seguir intersectando el viewport aunque el
+   Bloque 2 ya lo tape. script.js detecta el cubrimiento por scroll/rAF (comparando
+   el bloque siguiente) y latchea `.is-hero-paused`. Detener las animaciones
+   infinitas full-viewport ahorra repaints/compositing (sobre todo en Firefox).
+   `!important` es necesario: el shorthand `animation:` de cada variante reinicia
+   `animation-play-state` a `running` y gana por especificidad si no se fuerza. */
+.okip-hero.is-hero-paused .okip-hero__css-bg,
+.okip-hero.is-hero-paused .okip-hero__css-bg::before,
+.okip-hero.is-hero-paused .okip-hero__css-bg::after,
+.okip-hero.is-hero-paused .okip-hero__css-signal,
+.okip-hero.is-hero-paused .okip-hero__css-noise,
+.okip-hero.is-hero-paused .okip-hero__card-scan,
+.okip-hero.is-hero-paused [data-okip-motion-target] {
+    animation-play-state: paused !important;
+}
+
+/* ---- Pausa de las animaciones PESADAS del fondo durante la ENTRADA ----
+   Mientras entran texto y tarjetas, las animaciones infinitas del fondo (blur +
+   blend a viewport completo) le roban frames a la entrada → bajones de fluidez en
+   la primera carga/recarga. Se pausan durante la entrada y script.js quita
+   `is-hero-entering` cuando texto+tarjetas terminan de entrar. Gated por `.okip-js`:
+   sin JS el fondo anima con normalidad y la clase no congela nada. */
+.okip-js .okip-hero.is-hero-entering .okip-hero__css-bg::before,
+.okip-js .okip-hero.is-hero-entering .okip-hero__css-bg::after,
+.okip-js .okip-hero.is-hero-entering .okip-hero__css-signal,
+.okip-js .okip-hero.is-hero-entering .okip-hero__css-noise {
+    animation-play-state: paused !important;
+}
+
 /* ---- Crossfade intro → loop (sin parpadeo negro) ----
    Tres posibles capas apiladas: intro (encima), loop y fallback (debajo).
    El loop/fallback se reproducen/cargan detrás y el intro se desvanece por
@@ -452,7 +465,7 @@
     position: absolute;
     left: var(--okip-card-x, 50%);
     top: var(--okip-card-y, 50%);
-    width: clamp(120px, 14vw, 220px);
+    width: clamp(90px, var(--okip-card-w, 14vw), 360px);
     transform: translate(-50%, -50%); /* centrado: NO se anima (lo animamos en el media) */
     pointer-events: auto;
 }

@@ -5,9 +5,31 @@
     'use strict';
 
     var blocks = document.querySelectorAll('[data-okip-news]');
+    var reduceMotion = (window.OKIP && typeof window.OKIP.reduceMotion === 'boolean')
+        ? window.OKIP.reduceMotion
+        : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
     if (!blocks.length) {
         return;
+    }
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function dataFloat(block, key, fallback) {
+        var value = parseFloat(block.dataset[key]);
+        return isNaN(value) ? fallback : value;
+    }
+
+    function dataInt(block, key, fallback) {
+        var value = parseInt(block.dataset[key], 10);
+        return isNaN(value) ? fallback : value;
+    }
+
+    function isSmallViewport(block) {
+        var disableBelow = dataInt(block, 'revealDisableBelow', 768);
+        return !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
     }
 
     function setActive(dots, activeIndex) {
@@ -112,5 +134,60 @@
         track.addEventListener('scroll', requestUpdate, { passive: true });
         window.addEventListener('resize', requestUpdate);
         requestUpdate();
+
+        initSplitReveal(block);
     });
+
+    function initSplitReveal(block) {
+        if (block.dataset.reveal !== '1' || reduceMotion || isSmallViewport(block)) {
+            setReveal(block, 1);
+            block.classList.add('is-revealed');
+            return;
+        }
+
+        var tickingReveal = false;
+
+        function updateReveal() {
+            tickingReveal = false;
+            var viewport = window.innerHeight || document.documentElement.clientHeight || 1;
+            var rect = block.getBoundingClientRect();
+            var start = dataFloat(block, 'revealStart', .92);
+            var end = dataFloat(block, 'revealEnd', .38);
+            if (start <= end) {
+                start = end + .25;
+            }
+            var startPx = viewport * start;
+            var endPx = viewport * end;
+            var progress = clamp((startPx - rect.top) / Math.max(1, startPx - endPx), 0, 1);
+            setReveal(block, progress);
+            block.classList.toggle('is-revealed', progress >= .98);
+        }
+
+        function requestReveal() {
+            if (tickingReveal) {
+                return;
+            }
+            tickingReveal = true;
+            window.requestAnimationFrame(updateReveal);
+        }
+
+        window.addEventListener('scroll', requestReveal, { passive: true });
+        window.addEventListener('resize', requestReveal);
+        updateReveal();
+    }
+
+    function setReveal(block, progress) {
+        var p = clamp(progress, 0, 1);
+        var clip = (46 * (1 - p)).toFixed(2) + '%';
+        var topY = (-102 * p).toFixed(2) + '%';
+        var bottomY = (102 * p).toFixed(2) + '%';
+        var contentY = (18 * (1 - p)).toFixed(2) + 'px';
+        var opacity = (0.2 + (p * 0.8)).toFixed(3);
+
+        block.style.setProperty('--okip-news-clip', clip);
+        block.style.setProperty('--okip-news-top-y', topY);
+        block.style.setProperty('--okip-news-bottom-y', bottomY);
+        block.style.setProperty('--okip-news-content-y', contentY);
+        block.style.setProperty('--okip-news-content-opacity', opacity);
+    }
 })();

@@ -71,8 +71,20 @@ if (! function_exists('okip_normalize_mission_statement_data')) {
         $data['layout']['z_index'] = okip_clamp_int($data['layout']['z_index'], 0, 50);
 
         // Animation.
-        $data['animation']['enabled'] = okip_bool($data['animation']['enabled']);
-        $data['animation']['text']    = okip_one_of($data['animation']['text'], array('scroll-letters', 'fade-up', 'stagger-lines', 'reveal', 'none'), 'scroll-letters');
+        $a = $data['animation'];
+        $a['enabled']              = okip_bool($a['enabled']);
+        $a['use_vanilla_fallback'] = okip_bool($a['use_vanilla_fallback']);
+        $a['disable_below']        = okip_clamp_int($a['disable_below'], 0, 9999);
+        $a['scroll_duration_vh']   = okip_clamp_int($a['scroll_duration_vh'], 100, 520);
+        $a['text']                 = okip_one_of($a['text'], array('scroll-letters', 'fade-up', 'stagger-lines', 'reveal', 'none'), 'scroll-letters');
+        $a['text_reveal_start']    = okip_clamp_float($a['text_reveal_start'], 0, .85);
+        $a['text_reveal_end']      = okip_clamp_float($a['text_reveal_end'], .15, .95);
+        if ($a['text_reveal_end'] <= $a['text_reveal_start']) {
+            $a['text_reveal_end'] = min(.95, $a['text_reveal_start'] + .2);
+        }
+        $a['char_window']          = okip_clamp_float($a['char_window'], .08, .65);
+        $a['kicker_reveal_start']  = okip_clamp_float($a['kicker_reveal_start'], 0, .98);
+        $data['animation']         = $a;
 
         return $data;
     }
@@ -103,11 +115,19 @@ return array(
     'layout' => array(
         'padding_top'    => '7rem',
         'padding_bottom' => '6.5rem',
+        'min_height'     => '100svh',
         'content_width'  => '820px',
         'z_index'        => 5,
     ),
     'animation' => array(
-        'enabled' => true,
-        'text'    => 'scroll-letters',
+        'enabled'              => true,
+        'use_vanilla_fallback' => true,
+        'disable_below'        => 1024,
+        'scroll_duration_vh'   => 260,
+        'text'                 => 'scroll-letters',
+        'text_reveal_start'    => .08,
+        'text_reveal_end'      => .76,
+        'char_window'          => .34,
+        'kicker_reveal_start'  => .72,
     ),
 );

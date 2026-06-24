@@ -156,7 +156,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
-    class="okip-hero<?php echo $motion_on ? ' okip-hero--animated' : ''; ?>"
+    class="okip-hero<?php echo $motion_on ? ' okip-hero--animated is-hero-entering' : ''; ?>"
     data-block-instance="<?php echo esc_attr($okip_instance); ?>"
     data-okip-hero
     data-bg-type="<?php echo esc_attr($bg_render); ?>"
@@ -171,8 +171,11 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     <script type="application/json" data-okip-motion-config><?php echo $motion_json; ?></script>
 
     <!-- Capa 1: fondo CSS o media-driven. Intro (una vez) → crossfade → loop (bucle).
-         Sin CSS/media: fallback neutro (solo color). -->
-    <div class="okip-hero__bg okip-hero__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>" data-okip-hero-bg>
+         Sin CSS/media: fallback neutro (solo color).
+         En modo video el target de MOTION va en este wrapper (drift/reveal de toda la
+         capa); el CROSSFADE vive SOLO en los nodos intro/loop/fallback (opacidad por
+         clase). Nunca el mismo nodo para ambas cosas → el motion no pisa el crossfade. -->
+    <div class="okip-hero__bg okip-hero__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>" data-okip-hero-bg<?php echo $bg_render === 'video' ? ' data-okip-motion-target="background"' : ''; ?>>
         <?php if ($bg_render === 'video') : ?>
             <?php if ($intro_url !== '') : ?>
                 <video class="okip-hero__media okip-hero__media--intro" data-okip-hero-intro data-okip-motion-target="background"
@@ -248,6 +251,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 $c_alt   = isset($card['alt']) ? $card['alt'] : '';
                 $c_x     = isset($card['x']) ? (float) $card['x'] : 50;
                 $c_y     = isset($card['y']) ? (float) $card['y'] : 50;
+                $c_w     = isset($card['width_pct']) ? (float) $card['width_pct'] : 14;
                 $c_glow  = ! empty($card['glow']);
                 $c_scan  = ! empty($card['scanline']);
                 $c_label = isset($card['placeholder_label']) ? $card['placeholder_label'] : '';
@@ -265,7 +269,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                     data-has-media="<?php echo $c_has ? '1' : '0'; ?>"
                     data-play-mode="<?php echo esc_attr($c_play); ?>"
                     data-reset-on-leave="<?php echo $c_reset ? '1' : '0'; ?>"
-                    style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;">
+                    style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;--okip-card-w:<?php echo esc_attr((string) $c_w); ?>vw;">
                     <!-- Wrapper de MOTION (entry/playback/exit): nodo separado del media.
                          El transform del runtime vive aquí; el hover/glow/scanline en
                          .okip-hero__card-media (nodos distintos → sin conflicto). -->
