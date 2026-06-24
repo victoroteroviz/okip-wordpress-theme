@@ -88,6 +88,8 @@ if (! function_exists('okip_normalize_news_data')) {
         if ($t['start'] <= $t['end']) {
             $t['start'] = min(1.4, $t['end'] + .25);
         }
+        $t['paper_inset']   = okip_clamp_float(isset($t['paper_inset']) ? $t['paper_inset'] : 49, 32, 50);
+        $t['mission_lift_vh'] = okip_clamp_float(isset($t['mission_lift_vh']) ? $t['mission_lift_vh'] : 30, 0, 80);
         $t['top_color']     = okip_news_sanitize_hex(isset($t['top_color']) ? $t['top_color'] : '#000000', '#000000');
         $t['bottom_color']  = okip_news_sanitize_hex(isset($t['bottom_color']) ? $t['bottom_color'] : '#020711', '#020711');
         $data['transition'] = $t;
@@ -156,8 +158,15 @@ return array(
     'transition' => array(
         'enabled'       => true,
         'disable_below' => 768,
-        'start'         => .92,
+        // start MÁS BAJO = News abre MÁS TARDE (su top debe subir más antes de
+        // empezar el papel). Con .72 la apertura ocurre cuando Mission ya terminó
+        // su texto, evitando la banda negra prematura y el solape de reveals.
+        'start'         => .72,
         'end'           => .38,
+        'paper_inset'   => 49,
+        // Lift de Mission al abrir News: sutil. Valores altos exponen banda oscura
+        // y refuerzan el "hueco" entre bloques; 16vh mantiene el parallax discreto.
+        'mission_lift_vh' => 16,
         'top_color'     => '#000000',
         'bottom_color'  => '#020711',
     ),

@@ -11,8 +11,8 @@
  *   - Etiqueta gris (pill) debajo del recuadro (RIA / COVIA / GIA).
  *   - Tarjeta gris clara a la derecha: heading + descripción monoespaciados.
  *
- * Animación (desktop, GSAP): un ScrollTrigger con scrub POR FILA. No se pinea el
- * bloque; el root NUNCA recibe transform (se animan nodos internos):
+ * Animación (desktop, GSAP): un ScrollTrigger con scrub POR FILA. El bloque puede
+ * tener un handoff pin final hacia Mission; el root NUNCA recibe transform:
  *   1) recuadro izquierdo entra (left_enter, p.ej. mask-slide),
  *   2) fondo de la tarjeta derecha hace wipe horizontal (copy_bg_enter),
  *   3) heading + descripción se revelan como escritura progresiva (text_reveal).
@@ -36,6 +36,7 @@ $content   = isset($okip_data['content'])   ? $okip_data['content']   : array();
 $layout    = isset($okip_data['layout'])    ? $okip_data['layout']    : array();
 $items     = isset($okip_data['items'])     ? $okip_data['items']     : array();
 $animation = isset($okip_data['animation']) ? $okip_data['animation'] : array();
+$transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
 
 // Layout.
 $min_height    = isset($layout['min_height'])    ? $layout['min_height']    : 'auto';
@@ -54,6 +55,9 @@ $scrub         = isset($animation['scrub']) ? (float) $animation['scrub'] : 1;
 $left_enter    = isset($animation['left_enter'])    ? $animation['left_enter']    : 'mask-slide';
 $copy_bg_enter = isset($animation['copy_bg_enter']) ? $animation['copy_bg_enter'] : 'wipe-left';
 $text_reveal   = isset($animation['text_reveal'])   ? $animation['text_reveal']   : 'scroll-typewriter';
+$handoff_pin   = ! empty($transition['handoff_pin']);
+$handoff_duration_vh = isset($transition['duration_vh']) ? (int) $transition['duration_vh'] : 132;
+$handoff_disable_below = isset($transition['disable_below']) ? (int) $transition['disable_below'] : $disable_below;
 
 $section_classes = 'okip-ps';
 $section_classes .= $anim_on ? ' okip-ps--animated' : '';
@@ -82,6 +86,9 @@ if (empty($items)) {
     data-left-enter="<?php echo esc_attr($left_enter); ?>"
     data-copy-bg-enter="<?php echo esc_attr($copy_bg_enter); ?>"
     data-text-reveal="<?php echo esc_attr($text_reveal); ?>"
+    data-handoff-pin="<?php echo $handoff_pin ? '1' : '0'; ?>"
+    data-handoff-duration-vh="<?php echo esc_attr((string) $handoff_duration_vh); ?>"
+    data-handoff-disable-below="<?php echo esc_attr((string) $handoff_disable_below); ?>"
     style="<?php echo $section_style; ?>">
 
     <div class="okip-ps__inner">

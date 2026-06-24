@@ -11,8 +11,9 @@
  *   - Tarjeta gris clara a la derecha: heading + descripción en monoespaciado.
  *
  * Animación scroll-driven por FILA (desktop, GSAP): cada fila tiene su propio
- * ScrollTrigger con scrub; NO se pinea el bloque (fluye natural tras el carrusel).
- * Móvil/tablet ≤disable_below, sin GSAP o reduce-motion: is-static, todo legible.
+ * ScrollTrigger con scrub. Al final puede activar un handoff pin corto para que
+ * Mission se superponga. Móvil/tablet ≤disable_below, sin GSAP o reduce-motion:
+ * is-static, todo legible.
  *
  * El esquema está pensado para que el FUTURO panel admin edite: lista de
  * productos, variante visual del recuadro, texto, etiqueta, tipo de animación,
@@ -75,6 +76,13 @@ if (! function_exists('okip_normalize_product_story_data')) {
         $a['copy_bg_enter'] = okip_one_of($a['copy_bg_enter'], array('wipe-left', 'fade', 'none'), 'wipe-left');
         $a['text_reveal']   = okip_one_of($a['text_reveal'], array('scroll-typewriter', 'fade-lines', 'none'), 'scroll-typewriter');
         $data['animation']  = $a;
+
+        // Transición de entrega al bloque siguiente.
+        $t = isset($data['transition']) && is_array($data['transition']) ? $data['transition'] : array();
+        $t['handoff_pin']     = okip_bool(isset($t['handoff_pin']) ? $t['handoff_pin'] : true);
+        $t['duration_vh']     = okip_clamp_int(isset($t['duration_vh']) ? $t['duration_vh'] : 108, 40, 260);
+        $t['disable_below']   = okip_clamp_int(isset($t['disable_below']) ? $t['disable_below'] : 1024, 0, 9999);
+        $data['transition']   = $t;
 
         // Normalizar ítems (productos).
         $item_defaults = okip_ps_item_defaults();
@@ -154,5 +162,13 @@ return array(
         'left_enter'           => 'mask-slide',        // mask-slide | fade-up | scale-soft | none
         'copy_bg_enter'        => 'wipe-left',         // wipe-left | fade | none
         'text_reveal'          => 'scroll-typewriter', // scroll-typewriter | fade-lines | none
+    ),
+    'transition' => array(
+        'handoff_pin'   => true, // fija el bloque al terminar para que Mission se superponga
+        // Duración del solape Product Story → Mission. ~108vh ≈ una altura de
+        // viewport: Mission sube y cubre por completo a Product Story; el pin se
+        // libera MIENTRAS Mission cubre (no cuando News abre), ocultando el snap.
+        'duration_vh'   => 108,
+        'disable_below' => 1024,
     ),
 );

@@ -8,7 +8,8 @@
  *   - Etiqueta gris (pill) debajo del recuadro.
  *   - Derecha: tarjeta gris clara con heading + descripción monoespaciados.
  *
- * Animación (desktop, GSAP): por fila, sin pin, sin transform en el root.
+ * Animación (desktop, GSAP): por fila, con handoff pin opcional al final y sin
+ * transform en el root.
  * Estados iniciales ocultos SOLO bajo `.okip-js .okip-ps--animated:not(.is-static)`
  * → sin JS, todo visible.
  *

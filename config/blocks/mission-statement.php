@@ -75,7 +75,8 @@ if (! function_exists('okip_normalize_mission_statement_data')) {
         $a['enabled']              = okip_bool($a['enabled']);
         $a['use_vanilla_fallback'] = okip_bool($a['use_vanilla_fallback']);
         $a['disable_below']        = okip_clamp_int($a['disable_below'], 0, 9999);
-        $a['scroll_duration_vh']   = okip_clamp_int($a['scroll_duration_vh'], 100, 520);
+        $a['scroll_start_vh']      = okip_clamp_int(isset($a['scroll_start_vh']) ? $a['scroll_start_vh'] : 108, 50, 140);
+        $a['scroll_duration_vh']   = okip_clamp_int($a['scroll_duration_vh'], 70, 520);
         $a['text']                 = okip_one_of($a['text'], array('scroll-letters', 'fade-up', 'stagger-lines', 'reveal', 'none'), 'scroll-letters');
         $a['text_reveal_start']    = okip_clamp_float($a['text_reveal_start'], 0, .85);
         $a['text_reveal_end']      = okip_clamp_float($a['text_reveal_end'], .15, .95);
@@ -84,6 +85,7 @@ if (! function_exists('okip_normalize_mission_statement_data')) {
         }
         $a['char_window']          = okip_clamp_float($a['char_window'], .08, .65);
         $a['kicker_reveal_start']  = okip_clamp_float($a['kicker_reveal_start'], 0, .98);
+        $a['kicker_reveal_duration'] = okip_clamp_float(isset($a['kicker_reveal_duration']) ? $a['kicker_reveal_duration'] : .14, .06, .5);
         $data['animation']         = $a;
 
         return $data;
@@ -123,11 +125,17 @@ return array(
         'enabled'              => true,
         'use_vanilla_fallback' => true,
         'disable_below'        => 1024,
-        'scroll_duration_vh'   => 260,
+        'scroll_start_vh'      => 108,
+        'scroll_duration_vh'   => 150,
         'text'                 => 'scroll-letters',
-        'text_reveal_start'    => .08,
-        'text_reveal_end'      => .76,
-        'char_window'          => .34,
-        'kicker_reveal_start'  => .72,
+        'text_reveal_start'    => .04,
+        // Las letras (y el kicker) deben llegar a 100% bastante ANTES de que News
+        // empiece a abrir. Con start_vh=108 y duration_vh=150, terminar en .68
+        // deja el texto completo ~mientras Mission llega al tope del viewport,
+        // con ~34vh de margen antes de la apertura de News (news.start=.72).
+        'text_reveal_end'      => .68,
+        'char_window'          => .32,
+        'kicker_reveal_start'  => .52,
+        'kicker_reveal_duration' => .14,
     ),
 );

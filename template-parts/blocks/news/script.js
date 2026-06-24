@@ -32,6 +32,17 @@
         return !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
     }
 
+    function previousMission(block) {
+        var node = block.previousElementSibling;
+        while (node) {
+            if (node.matches && node.matches('[data-okip-ms]')) {
+                return node;
+            }
+            node = node.previousElementSibling;
+        }
+        return null;
+    }
+
     function setActive(dots, activeIndex) {
         dots.forEach(function (dot, index) {
             var active = index === activeIndex;
@@ -139,8 +150,14 @@
     });
 
     function initSplitReveal(block) {
+        var mission = previousMission(block);
+
         if (block.dataset.reveal !== '1' || reduceMotion || isSmallViewport(block)) {
-            setReveal(block, 1);
+            if (mission) {
+                mission.style.setProperty('--okip-ms-news-lift', '0px');
+                mission.classList.remove('is-news-lifting');
+            }
+            setReveal(block, 1, null);
             block.classList.add('is-revealed');
             return;
         }
@@ -149,9 +166,18 @@
 
         function updateReveal() {
             tickingReveal = false;
+            if (isSmallViewport(block)) {
+                if (mission) {
+                    mission.style.setProperty('--okip-ms-news-lift', '0px');
+                    mission.classList.remove('is-news-lifting');
+                }
+                setReveal(block, 1, null);
+                block.classList.add('is-revealed');
+                return;
+            }
             var viewport = window.innerHeight || document.documentElement.clientHeight || 1;
             var rect = block.getBoundingClientRect();
-            var start = dataFloat(block, 'revealStart', .92);
+            var start = dataFloat(block, 'revealStart', .98);
             var end = dataFloat(block, 'revealEnd', .38);
             if (start <= end) {
                 start = end + .25;
@@ -159,7 +185,7 @@
             var startPx = viewport * start;
             var endPx = viewport * end;
             var progress = clamp((startPx - rect.top) / Math.max(1, startPx - endPx), 0, 1);
-            setReveal(block, progress);
+            setReveal(block, progress, mission);
             block.classList.toggle('is-revealed', progress >= .98);
         }
 
@@ -176,18 +202,28 @@
         updateReveal();
     }
 
-    function setReveal(block, progress) {
+    function setReveal(block, progress, mission) {
         var p = clamp(progress, 0, 1);
-        var clip = (46 * (1 - p)).toFixed(2) + '%';
-        var topY = (-102 * p).toFixed(2) + '%';
-        var bottomY = (102 * p).toFixed(2) + '%';
-        var contentY = (18 * (1 - p)).toFixed(2) + 'px';
-        var opacity = (0.2 + (p * 0.8)).toFixed(3);
+        var viewport = window.innerHeight || document.documentElement.clientHeight || 1;
+        var paperInset = dataFloat(block, 'revealPaperInset', 49);
+        var liftVh = dataFloat(block, 'revealMissionLiftVh', 30);
+        var clip = (paperInset * (1 - p)).toFixed(2) + '%';
+        var contentY = (28 * (1 - p)).toFixed(2) + 'px';
+        var opacity = clamp((p - 0.12) / 0.88, 0, 1).toFixed(3);
+        var scale = (0.985 + (p * 0.015)).toFixed(4);
+        var foldOpacity = clamp(Math.sin(p * Math.PI) * 1.15, 0, 1).toFixed(3);
+        var lift = Math.round(viewport * (liftVh / 100) * p * -1) + 'px';
 
         block.style.setProperty('--okip-news-clip', clip);
-        block.style.setProperty('--okip-news-top-y', topY);
-        block.style.setProperty('--okip-news-bottom-y', bottomY);
+        block.style.setProperty('--okip-news-paper-inset', clip);
+        block.style.setProperty('--okip-news-fold-opacity', foldOpacity);
         block.style.setProperty('--okip-news-content-y', contentY);
         block.style.setProperty('--okip-news-content-opacity', opacity);
+        block.style.setProperty('--okip-news-content-scale', scale);
+
+        if (mission && !reduceMotion) {
+            mission.style.setProperty('--okip-ms-news-lift', lift);
+            mission.classList.toggle('is-news-lifting', p > 0.001);
+        }
     }
 })();

@@ -178,7 +178,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     <div class="okip-hero__bg okip-hero__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>" data-okip-hero-bg<?php echo $bg_render === 'video' ? ' data-okip-motion-target="background"' : ''; ?>>
         <?php if ($bg_render === 'video') : ?>
             <?php if ($intro_url !== '') : ?>
-                <video class="okip-hero__media okip-hero__media--intro" data-okip-hero-intro data-okip-motion-target="background"
+                <video class="okip-hero__media okip-hero__media--intro" data-okip-hero-intro
                     muted playsinline preload="auto"
                     style="object-position:<?php echo esc_attr($obj_pos); ?>;"
                     <?php echo $poster ? 'poster="' . esc_url($poster) . '"' : ''; ?>>
@@ -186,7 +186,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 </video>
             <?php endif; ?>
             <?php if ($loop_url !== '') : ?>
-                <video class="okip-hero__media okip-hero__media--loop" data-okip-hero-loop data-okip-motion-target="background"
+                <video class="okip-hero__media okip-hero__media--loop" data-okip-hero-loop
                     <?php echo $loop_attrs; ?> preload="auto"
                     style="object-position:<?php echo esc_attr($obj_pos); ?>;"
                     <?php echo $poster ? 'poster="' . esc_url($poster) . '"' : ''; ?>>
@@ -194,7 +194,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 </video>
             <?php endif; ?>
             <?php if ($has_fallback_layer) : ?>
-                <img class="okip-hero__media okip-hero__media--fallback" data-okip-motion-target="background" src="<?php echo esc_url($fallback_url); ?>"
+                <img class="okip-hero__media okip-hero__media--fallback" src="<?php echo esc_url($fallback_url); ?>"
                     alt="" aria-hidden="true" style="object-position:<?php echo esc_attr($obj_pos); ?>;">
             <?php endif; ?>
         <?php elseif ($bg_render === 'css-motion') : ?>

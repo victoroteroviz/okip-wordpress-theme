@@ -3,8 +3,8 @@
  * Scope por instancia via [data-okip-ps].
  *
  * Desktop con GSAP + ScrollTrigger (>disable_below px):
- *   UN ScrollTrigger con scrub POR FILA (no se pinea el bloque; el root no se
- *   transforma — solo nodos internos). Cada timeline:
+ *   UN ScrollTrigger con scrub POR FILA (el root no se transforma — solo nodos
+ *   internos). Cada timeline:
  *     1) recuadro izquierdo entra (left_enter: mask-slide|fade-up|scale-soft|none),
  *     2) fondo de la tarjeta derecha hace wipe (copy_bg_enter: wipe-left|fade|none),
  *     3) heading + descripción se revelan (text_reveal: scroll-typewriter|fade-lines|none).
@@ -14,6 +14,8 @@
  * Sin GSAP (pero desktop y use_vanilla_fallback): IO añade `is-revealed` por fila.
  * Móvil/tablet ≤disable_below, reduce-motion o anim off: `is-static`, todo legible.
  *
+ * El único pin posible es el handoff final hacia Mission, sin pinSpacing, para
+ * que el siguiente bloque se superponga cuando las filas ya terminaron.
  * No autoplay. No intervalos. Respeta prefers-reduced-motion. Nunca deja texto
  * invisible si GSAP falla (los estados ocultos solo viven con JS + animado).
  */
@@ -117,10 +119,16 @@
         var leftEnter    = d.leftEnter   || 'mask-slide';
         var copyBgEnter  = d.copyBgEnter || 'wipe-left';
         var textReveal   = d.textReveal  || 'scroll-typewriter';
+        var handoffPin   = d.handoffPin === '1';
+        var handoffDurationVh = parseInt(d.handoffDurationVh, 10);
+        if (isNaN(handoffDurationVh)) { handoffDurationVh = 132; }
+        var handoffDisableBelow = parseInt(d.handoffDisableBelow, 10);
+        if (isNaN(handoffDisableBelow)) { handoffDisableBelow = disableBelow; }
 
         var psId    = section.id || d.blockInstance || 'ps';
         var rows    = Array.prototype.slice.call(section.querySelectorAll('[data-okip-ps-row]'));
         var isSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
+        var isHandoffSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + handoffDisableBelow + 'px)').matches);
 
         setupVideoInteraction(section, reduceMotion, isSmall);
 
@@ -164,6 +172,50 @@
             buildRowTimeline(gsap, row, i);
         });
 
+        if (handoffPin && !isHandoffSmall) {
+            buildHandoffPin();
+        }
+
+        function buildHandoffPin() {
+            var lastRow = rows[rows.length - 1];
+            if (!lastRow) { return; }
+
+            var handoffId = psId + '-mission-handoff';
+            triggerIds.push(handoffId);
+
+            // HOLD (no overlap): cuando el ÚLTIMO producto queda centrado, fijamos
+            // la sección (pinSpacing:true) durante `handoffDurationVh` para que se
+            // vea limpio y completo un momento ANTES de que Mission suba a cubrir.
+            // Con pinSpacing:true el siguiente bloque NO se solapa durante el hold;
+            // al liberarse, Mission entra por scroll natural (z-index mayor) y cubre.
+            ST.create({
+                id: handoffId,
+                trigger: lastRow,
+                start: 'center center',
+                end: function () {
+                    var viewport = window.innerHeight || document.documentElement.clientHeight || 1;
+                    return '+=' + Math.round(viewport * (handoffDurationVh / 100));
+                },
+                pin: section,
+                pinSpacing: true,
+                anticipatePin: 1,
+                invalidateOnRefresh: true,
+                refreshPriority: -10,
+                onEnter: function () {
+                    section.classList.add('is-handoff-pinned');
+                },
+                onEnterBack: function () {
+                    section.classList.add('is-handoff-pinned');
+                },
+                onLeave: function () {
+                    section.classList.remove('is-handoff-pinned');
+                },
+                onLeaveBack: function () {
+                    section.classList.remove('is-handoff-pinned');
+                }
+            });
+        }
+
         function buildRowTimeline(gsap, row, i) {
             var visual = row.querySelector('.okip-ps__visual');
             var cardBg = row.querySelector('.okip-ps__card-bg');
@@ -173,18 +225,30 @@
             var tlId = psId + '-row-' + i;
             triggerIds.push(tlId);
 
-            var tl = gsap.timeline({
-                scrollTrigger: {
-                    id:                  tlId,
-                    trigger:             row,
-                    start:               'top 82%',
-                    // Clamp evita que la última fila quede a medias cuando no hay
-                    // suficiente contenido debajo para alcanzar el end geométrico.
-                    end:                 'clamp(top 32%)',
-                    scrub:               scrub,
-                    invalidateOnRefresh: true
-                }
-            });
+            var stVars = {
+                id:                  tlId,
+                trigger:             row,
+                start:               'top 82%',
+                // Clamp evita que la última fila quede a medias cuando no hay
+                // suficiente contenido debajo para alcanzar el end geométrico.
+                end:                 'clamp(top 32%)',
+                scrub:               scrub,
+                invalidateOnRefresh: true
+            };
+
+            /* La ÚLTIMA fila debe terminar su reveal ANTES de que el handoff pin
+               congele la sección (al pinear, las filas dejan de moverse y el scrub
+               se latchearía a medias). Anclamos su fin al fondo de la sección — el
+               mismo evento que dispara el pin ('bottom bottom') — con un pequeño
+               adelanto (+=8%) para que quede 100% completa y se asiente antes del
+               solape con Mission. Solo cuando el pin está activo en este viewport. */
+            var isLastRow = i === rows.length - 1;
+            if (isLastRow && handoffPin && !isHandoffSmall) {
+                stVars.endTrigger = section;
+                stVars.end        = 'bottom bottom+=8%';
+            }
+
+            var tl = gsap.timeline({ scrollTrigger: stVars });
 
             /* 1) Recuadro izquierdo */
             if (visual) {
@@ -258,6 +322,7 @@
                         var nodes = row.querySelectorAll('.okip-ps__visual, .okip-ps__card-bg, .okip-ps__type, .okip-ps__char, .okip-ps__label');
                         gsap.set(nodes, { clearProps: 'opacity,transform,clipPath' });
                     });
+                    section.classList.remove('is-handoff-pinned');
                     section.classList.add('is-static');
                 } else {
                     ST.refresh();

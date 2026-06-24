@@ -15,7 +15,14 @@
     --okip-ms-glow-boost: 0;
     --okip-ms-glow-shift: 0%;
     --okip-ms-glow-scale: 0;
+    --okip-ms-news-lift: 0px;
     background: var(--okip-ms-bg, #000);
+}
+
+.okip-ms.is-news-lifting .okip-ms__background,
+.okip-ms.is-news-lifting .okip-ms__inner {
+    transform: translate3d(0, var(--okip-ms-news-lift, 0px), 0);
+    will-change: transform;
 }
 
 .okip-ms::before {
@@ -255,6 +262,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .okip-ms.is-news-lifting .okip-ms__background,
+    .okip-ms.is-news-lifting .okip-ms__inner {
+        transform: none !important;
+    }
+
     .okip-ms--gradient .okip-ms__background::before,
     .okip-ms--gradient .okip-ms__background::after {
         animation: none;

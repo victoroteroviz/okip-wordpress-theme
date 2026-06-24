@@ -50,7 +50,8 @@
             end: end,
             span: Math.max(0.01, end - start),
             charWindow: clamp(dataFloat(block, 'charWindow', 0.34), 0.08, 0.65),
-            kickerStart: clamp(dataFloat(block, 'kickerRevealStart', 0.72), 0, 0.98)
+            kickerStart: clamp(dataFloat(block, 'kickerRevealStart', 0.56), 0, 0.98),
+            kickerDuration: clamp(dataFloat(block, 'kickerRevealDuration', 0.14), 0.06, 0.5)
         };
     }
 
@@ -101,8 +102,9 @@
         var scrollY = window.pageYOffset || doc.scrollTop || 0;
         var maxScroll = Math.max(0, doc.scrollHeight - viewport);
         var blockTop = rect.top + scrollY;
-        var rangeVh = dataInt(block, 'scrollDurationVh', 260);
-        var startScroll = blockTop - (viewport * 0.92);
+        var startVh = dataInt(block, 'scrollStartVh', 108);
+        var rangeVh = dataInt(block, 'scrollDurationVh', 150);
+        var startScroll = blockTop - (viewport * startVh / 100);
         var endScroll = startScroll + (viewport * rangeVh / 100);
         var reachableEnd = Math.min(endScroll, maxScroll);
         var range = Math.max(1, reachableEnd - startScroll);
@@ -123,8 +125,7 @@
         });
 
         if (nodes.kicker) {
-            var kickerDuration = Math.max(0.06, 1 - t.kickerStart);
-            var kickerProgress = clamp((progress - t.kickerStart) / kickerDuration, 0, 1);
+            var kickerProgress = clamp((progress - t.kickerStart) / t.kickerDuration, 0, 1);
             setChar(nodes.kicker, kickerProgress);
         }
 

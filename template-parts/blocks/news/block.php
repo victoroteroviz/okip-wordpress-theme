@@ -45,8 +45,10 @@ $arrows_on = ! empty($behavior['arrows']);
 
 $reveal_enabled = ! empty($transition['enabled']);
 $reveal_disable_below = isset($transition['disable_below']) ? (int) $transition['disable_below'] : 768;
-$reveal_start = isset($transition['start']) ? (float) $transition['start'] : .92;
+$reveal_start = isset($transition['start']) ? (float) $transition['start'] : .98;
 $reveal_end = isset($transition['end']) ? (float) $transition['end'] : .38;
+$reveal_paper_inset = isset($transition['paper_inset']) ? (float) $transition['paper_inset'] : 49;
+$reveal_mission_lift_vh = isset($transition['mission_lift_vh']) ? (float) $transition['mission_lift_vh'] : 30;
 $reveal_top_color = isset($transition['top_color']) ? $transition['top_color'] : '#000000';
 $reveal_bottom_color = isset($transition['bottom_color']) ? $transition['bottom_color'] : '#020711';
 
@@ -129,6 +131,8 @@ $section_style = sprintf(
     data-reveal-disable-below="<?php echo esc_attr((string) $reveal_disable_below); ?>"
     data-reveal-start="<?php echo esc_attr((string) $reveal_start); ?>"
     data-reveal-end="<?php echo esc_attr((string) $reveal_end); ?>"
+    data-reveal-paper-inset="<?php echo esc_attr((string) $reveal_paper_inset); ?>"
+    data-reveal-mission-lift-vh="<?php echo esc_attr((string) $reveal_mission_lift_vh); ?>"
     style="<?php echo $section_style; ?>">
 
     <div class="okip-news__viewport" aria-label="<?php echo esc_attr($aria_label); ?>">
