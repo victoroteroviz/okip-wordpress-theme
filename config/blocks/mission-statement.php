@@ -125,8 +125,11 @@ return array(
         'enabled'              => true,
         'use_vanilla_fallback' => true,
         'disable_below'        => 1024,
-        'scroll_start_vh'      => 108,
-        'scroll_duration_vh'   => 150,
+        'scroll_start_vh'      => 108,   // solo fallback rAF (sin GSAP); el pin usa 'top top'
+        // Con GSAP la sección se PINEA y el reveal se scrubbea sobre este recorrido:
+        // 220vh = más scroll dedicado para que la animación de letras se reproduzca
+        // despacio y completamente ligada al scroll antes de soltar hacia News.
+        'scroll_duration_vh'   => 220,
         'text'                 => 'scroll-letters',
         'text_reveal_start'    => .04,
         // Las letras (y el kicker) deben llegar a 100% bastante ANTES de que News

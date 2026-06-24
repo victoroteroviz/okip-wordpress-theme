@@ -1,5 +1,11 @@
 /*
- * Bloque News — dots sincronizados con scroll horizontal nativo.
+ * Bloque News — carrusel horizontal + transición cover-rise hacia Mission.
+ *
+ * Cover-rise (desktop, sin pin): News sube por scroll natural (z-index mayor,
+ * fondo claro opaco) y CUBRE a Mission. Mientras lo hace:
+ *   - el contenido de News entra con un fade + leve translate (orgánico),
+ *   - Mission hace "depth-out" (lift + scale + fade) para dar profundidad.
+ * Móvil/tablet ≤disable_below o reduce-motion: todo visible, sin transform.
  */
 (function () {
     'use strict';
@@ -15,6 +21,10 @@
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    function vh() {
+        return window.innerHeight || document.documentElement.clientHeight || 1;
     }
 
     function dataFloat(block, key, fallback) {
@@ -37,6 +47,15 @@
         while (node) {
             if (node.matches && node.matches('[data-okip-ms]')) {
                 return node;
+            }
+            // Al PINEAR Mission, ScrollTrigger la envuelve en un .pin-spacer, así
+            // que deja de ser hermano directo: hay que buscarla también DENTRO del
+            // hermano previo (el spacer). Si no, el depth-out no encontraría Mission.
+            if (node.querySelector) {
+                var inner = node.querySelector('[data-okip-ms]');
+                if (inner) {
+                    return inner;
+                }
             }
             node = node.previousElementSibling;
         }
@@ -146,17 +165,24 @@
         window.addEventListener('resize', requestUpdate);
         requestUpdate();
 
-        initSplitReveal(block);
+        initCoverReveal(block);
     });
 
-    function initSplitReveal(block) {
+    function resetMission(mission) {
+        if (!mission) {
+            return;
+        }
+        mission.style.setProperty('--okip-ms-news-lift', '0px');
+        mission.style.setProperty('--okip-ms-news-scale', '1');
+        mission.style.setProperty('--okip-ms-news-fade', '1');
+        mission.classList.remove('is-news-lifting');
+    }
+
+    function initCoverReveal(block) {
         var mission = previousMission(block);
 
         if (block.dataset.reveal !== '1' || reduceMotion || isSmallViewport(block)) {
-            if (mission) {
-                mission.style.setProperty('--okip-ms-news-lift', '0px');
-                mission.classList.remove('is-news-lifting');
-            }
+            resetMission(mission);
             setReveal(block, 1, null);
             block.classList.add('is-revealed');
             return;
@@ -167,18 +193,15 @@
         function updateReveal() {
             tickingReveal = false;
             if (isSmallViewport(block)) {
-                if (mission) {
-                    mission.style.setProperty('--okip-ms-news-lift', '0px');
-                    mission.classList.remove('is-news-lifting');
-                }
+                resetMission(mission);
                 setReveal(block, 1, null);
                 block.classList.add('is-revealed');
                 return;
             }
-            var viewport = window.innerHeight || document.documentElement.clientHeight || 1;
+            var viewport = vh();
             var rect = block.getBoundingClientRect();
-            var start = dataFloat(block, 'revealStart', .98);
-            var end = dataFloat(block, 'revealEnd', .38);
+            var start = dataFloat(block, 'revealStart', .95);
+            var end = dataFloat(block, 'revealEnd', .42);
             if (start <= end) {
                 start = end + .25;
             }
@@ -204,25 +227,23 @@
 
     function setReveal(block, progress, mission) {
         var p = clamp(progress, 0, 1);
-        var viewport = window.innerHeight || document.documentElement.clientHeight || 1;
-        var paperInset = dataFloat(block, 'revealPaperInset', 49);
-        var liftVh = dataFloat(block, 'revealMissionLiftVh', 30);
-        var clip = (paperInset * (1 - p)).toFixed(2) + '%';
-        var contentY = (28 * (1 - p)).toFixed(2) + 'px';
-        var opacity = clamp((p - 0.12) / 0.88, 0, 1).toFixed(3);
-        var scale = (0.985 + (p * 0.015)).toFixed(4);
-        var foldOpacity = clamp(Math.sin(p * Math.PI) * 1.15, 0, 1).toFixed(3);
-        var lift = Math.round(viewport * (liftVh / 100) * p * -1) + 'px';
+        var viewport = vh();
+        var liftVh = dataFloat(block, 'revealMissionLiftVh', 16);
 
-        block.style.setProperty('--okip-news-clip', clip);
-        block.style.setProperty('--okip-news-paper-inset', clip);
-        block.style.setProperty('--okip-news-fold-opacity', foldOpacity);
+        // Contenido de News: entra con fade + leve translate hacia arriba.
+        var contentOpacity = clamp(p / 0.55, 0, 1).toFixed(3);
+        var contentY = (26 * (1 - p)).toFixed(2) + 'px';
+        block.style.setProperty('--okip-news-content-opacity', contentOpacity);
         block.style.setProperty('--okip-news-content-y', contentY);
-        block.style.setProperty('--okip-news-content-opacity', opacity);
-        block.style.setProperty('--okip-news-content-scale', scale);
 
+        // Mission: depth-out (lift + scale + fade) mientras News la cubre.
         if (mission && !reduceMotion) {
+            var lift = Math.round(viewport * (liftVh / 100) * p * -1) + 'px';
+            var scale = (1 - 0.04 * p).toFixed(4);
+            var fade = (1 - 0.45 * p).toFixed(3);
             mission.style.setProperty('--okip-ms-news-lift', lift);
+            mission.style.setProperty('--okip-ms-news-scale', scale);
+            mission.style.setProperty('--okip-ms-news-fade', fade);
             mission.classList.toggle('is-news-lifting', p > 0.001);
         }
     }

@@ -80,7 +80,7 @@ if (! function_exists('okip_normalize_product_story_data')) {
         // Transición de entrega al bloque siguiente.
         $t = isset($data['transition']) && is_array($data['transition']) ? $data['transition'] : array();
         $t['handoff_pin']     = okip_bool(isset($t['handoff_pin']) ? $t['handoff_pin'] : true);
-        $t['duration_vh']     = okip_clamp_int(isset($t['duration_vh']) ? $t['duration_vh'] : 108, 40, 260);
+        $t['duration_vh']     = okip_clamp_int(isset($t['duration_vh']) ? $t['duration_vh'] : 55, 20, 200);
         $t['disable_below']   = okip_clamp_int(isset($t['disable_below']) ? $t['disable_below'] : 1024, 0, 9999);
         $data['transition']   = $t;
 
@@ -164,11 +164,11 @@ return array(
         'text_reveal'          => 'scroll-typewriter', // scroll-typewriter | fade-lines | none
     ),
     'transition' => array(
-        'handoff_pin'   => true, // fija el bloque al terminar para que Mission se superponga
-        // Duración del solape Product Story → Mission. ~108vh ≈ una altura de
-        // viewport: Mission sube y cubre por completo a Product Story; el pin se
-        // libera MIENTRAS Mission cubre (no cuando News abre), ocultando el snap.
-        'duration_vh'   => 108,
+        'handoff_pin'   => true, // HOLD: fija la sección con el último producto centrado
+        // Distancia del HOLD (pinSpacing:true): el último producto queda fijo y
+        // limpio ~55vh antes de liberarse; luego Mission sube por scroll natural y
+        // lo cubre (z-index mayor). No hay solape forzado → sin tapar el producto.
+        'duration_vh'   => 55,
         'disable_below' => 1024,
     ),
 );

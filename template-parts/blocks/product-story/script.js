@@ -236,16 +236,13 @@
                 invalidateOnRefresh: true
             };
 
-            /* La ÚLTIMA fila debe terminar su reveal ANTES de que el handoff pin
-               congele la sección (al pinear, las filas dejan de moverse y el scrub
-               se latchearía a medias). Anclamos su fin al fondo de la sección — el
-               mismo evento que dispara el pin ('bottom bottom') — con un pequeño
-               adelanto (+=8%) para que quede 100% completa y se asiente antes del
-               solape con Mission. Solo cuando el pin está activo en este viewport. */
+            /* La ÚLTIMA fila debe terminar su reveal ANTES del HOLD pin (que fija
+               la sección cuando la fila queda centrada, 'center center'). Cerramos
+               su reveal un poco antes del centro ('center 60%') para que llegue al
+               hold 100% completa y se asiente, sin congelarse a medias. */
             var isLastRow = i === rows.length - 1;
             if (isLastRow && handoffPin && !isHandoffSmall) {
-                stVars.endTrigger = section;
-                stVars.end        = 'bottom bottom+=8%';
+                stVars.end = 'center 60%';
             }
 
             var tl = gsap.timeline({ scrollTrigger: stVars });

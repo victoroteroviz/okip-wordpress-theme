@@ -16,13 +16,22 @@
     --okip-ms-glow-shift: 0%;
     --okip-ms-glow-scale: 0;
     --okip-ms-news-lift: 0px;
+    --okip-ms-news-scale: 1;
+    --okip-ms-news-fade: 1;
     background: var(--okip-ms-bg, #000);
 }
 
-.okip-ms.is-news-lifting .okip-ms__background,
-.okip-ms.is-news-lifting .okip-ms__inner {
+/* Depth-out al ser cubierta por News (cover-rise): la sección se aleja levemente
+   (lift + scale) y se atenúa para dar profundidad mientras News sube encima. */
+.okip-ms.is-news-lifting .okip-ms__background {
     transform: translate3d(0, var(--okip-ms-news-lift, 0px), 0);
     will-change: transform;
+}
+
+.okip-ms.is-news-lifting .okip-ms__inner {
+    transform: translate3d(0, var(--okip-ms-news-lift, 0px), 0) scale(var(--okip-ms-news-scale, 1));
+    opacity: var(--okip-ms-news-fade, 1);
+    will-change: transform, opacity;
 }
 
 .okip-ms::before {
@@ -265,6 +274,7 @@
     .okip-ms.is-news-lifting .okip-ms__background,
     .okip-ms.is-news-lifting .okip-ms__inner {
         transform: none !important;
+        opacity: 1 !important;
     }
 
     .okip-ms--gradient .okip-ms__background::before,

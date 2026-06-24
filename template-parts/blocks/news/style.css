@@ -12,55 +12,22 @@
     padding: var(--okip-news-pt, 1.45rem) 0 var(--okip-news-pb, 2.55rem);
     background: var(--okip-news-bg, #f6f6f4);
     color: #0b111b;
-    --okip-news-clip: 0%;
-    --okip-news-paper-inset: 0%;
-    --okip-news-fold-opacity: 0;
     --okip-news-content-y: 0px;
     --okip-news-content-opacity: 1;
-    --okip-news-content-scale: 1;
 }
 
-.okip-js .okip-news--split-reveal {
-    --okip-news-clip: 49%;
-    --okip-news-paper-inset: 49%;
-    --okip-news-fold-opacity: 1;
-    --okip-news-content-y: 28px;
+/* Cover-rise: News es una "hoja" clara opaca que sube y cubre a Mission. La sombra
+   superior se proyecta hacia arriba (sobre Mission) para que se lea como un panel
+   que se levanta encima — orgánico, sin clip de papel ni bandas oscuras. */
+.okip-news--cover {
+    isolation: isolate;
+    box-shadow: 0 -22px 50px rgba(0, 0, 0, .34);
+}
+
+/* Estado inicial (solo con JS): el contenido entra con fade + leve translate. */
+.okip-js .okip-news--cover {
+    --okip-news-content-y: 26px;
     --okip-news-content-opacity: 0;
-    --okip-news-content-scale: .985;
-    background: var(--okip-news-reveal-bottom, #020711);
-}
-
-.okip-news--split-reveal::before,
-.okip-news--split-reveal::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.okip-news--split-reveal::before {
-    z-index: 0;
-    background: var(--okip-news-bg, #f6f6f4);
-    clip-path: inset(var(--okip-news-paper-inset, 0%) 0 var(--okip-news-paper-inset, 0%) 0);
-    box-shadow:
-        0 -24px 46px rgba(0, 0, 0, .42),
-        0 24px 46px rgba(0, 0, 0, .34);
-    will-change: clip-path;
-}
-
-.okip-news--split-reveal::after {
-    z-index: 3;
-    background:
-        linear-gradient(
-            180deg,
-            transparent calc(50% - 4px),
-            rgba(255, 255, 255, .82) calc(50% - 2px),
-            rgba(0, 0, 0, .18) 50%,
-            transparent calc(50% + 4px)
-        ),
-        radial-gradient(ellipse 82% 10% at 50% 50%, rgba(0, 0, 0, .2), transparent 74%);
-    opacity: var(--okip-news-fold-opacity, 0);
-    will-change: opacity;
 }
 
 .okip-news__viewport {
@@ -73,10 +40,9 @@
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
     opacity: var(--okip-news-content-opacity, 1);
-    transform: translateY(var(--okip-news-content-y, 0)) scale(var(--okip-news-content-scale, 1));
-    clip-path: inset(var(--okip-news-paper-inset, var(--okip-news-clip, 0%)) 0 var(--okip-news-paper-inset, var(--okip-news-clip, 0%)) 0);
+    transform: translateY(var(--okip-news-content-y, 0));
     transform-origin: 50% 50%;
-    will-change: opacity, transform, clip-path;
+    will-change: opacity, transform;
 }
 
 .okip-news__viewport::-webkit-scrollbar {
@@ -179,7 +145,7 @@
     margin-top: .65rem;
     padding: 0 max(var(--okip-container-pad), calc((100vw - var(--okip-container)) / 2 + var(--okip-container-pad)));
     opacity: var(--okip-news-content-opacity, 1);
-    transform: translateY(var(--okip-news-content-y, 0)) scale(var(--okip-news-content-scale, 1));
+    transform: translateY(var(--okip-news-content-y, 0));
     transform-origin: 50% 50%;
     will-change: opacity, transform;
 }
@@ -280,20 +246,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .okip-news--split-reveal {
-        background: var(--okip-news-bg, #f6f6f4);
-    }
-
-    .okip-news--split-reveal::before,
-    .okip-news--split-reveal::after {
-        display: none;
+    .okip-news--cover {
+        box-shadow: none;
     }
 
     .okip-news__viewport,
     .okip-news__controls {
         opacity: 1;
         transform: none;
-        clip-path: none;
     }
 
     .okip-news__image,

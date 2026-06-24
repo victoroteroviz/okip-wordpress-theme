@@ -13,21 +13,6 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-if (! function_exists('okip_news_sanitize_hex')) {
-    /**
-     * Sanitiza un color hex con fallback.
-     *
-     * @param mixed  $value
-     * @param string $fallback
-     * @return string
-     */
-    function okip_news_sanitize_hex($value, $fallback)
-    {
-        $color = function_exists('sanitize_hex_color') ? sanitize_hex_color((string) $value) : '';
-        return $color ? $color : $fallback;
-    }
-}
-
 if (! function_exists('okip_news_fallback_item_defaults')) {
     /**
      * Defaults de un placeholder de noticia.
@@ -79,19 +64,16 @@ if (! function_exists('okip_normalize_news_data')) {
         $data['behavior']['dots']   = okip_bool($data['behavior']['dots']);
         $data['behavior']['arrows'] = okip_bool($data['behavior']['arrows']);
 
-        // Transition.
+        // Transition (cover-rise: News sube y cubre a Mission con fade + parallax).
         $t = isset($data['transition']) && is_array($data['transition']) ? $data['transition'] : array();
         $t['enabled']       = okip_bool(isset($t['enabled']) ? $t['enabled'] : true);
         $t['disable_below'] = okip_clamp_int(isset($t['disable_below']) ? $t['disable_below'] : 768, 0, 9999);
-        $t['start']         = okip_clamp_float(isset($t['start']) ? $t['start'] : .92, .1, 1.4);
-        $t['end']           = okip_clamp_float(isset($t['end']) ? $t['end'] : .38, 0, 1.2);
+        $t['start']         = okip_clamp_float(isset($t['start']) ? $t['start'] : .95, .1, 1.4);
+        $t['end']           = okip_clamp_float(isset($t['end']) ? $t['end'] : .42, 0, 1.2);
         if ($t['start'] <= $t['end']) {
             $t['start'] = min(1.4, $t['end'] + .25);
         }
-        $t['paper_inset']   = okip_clamp_float(isset($t['paper_inset']) ? $t['paper_inset'] : 49, 32, 50);
-        $t['mission_lift_vh'] = okip_clamp_float(isset($t['mission_lift_vh']) ? $t['mission_lift_vh'] : 30, 0, 80);
-        $t['top_color']     = okip_news_sanitize_hex(isset($t['top_color']) ? $t['top_color'] : '#000000', '#000000');
-        $t['bottom_color']  = okip_news_sanitize_hex(isset($t['bottom_color']) ? $t['bottom_color'] : '#020711', '#020711');
+        $t['mission_lift_vh'] = okip_clamp_float(isset($t['mission_lift_vh']) ? $t['mission_lift_vh'] : 16, 0, 80);
         $data['transition'] = $t;
 
         // Fallback items.
@@ -158,16 +140,12 @@ return array(
     'transition' => array(
         'enabled'       => true,
         'disable_below' => 768,
-        // start MÁS BAJO = News abre MÁS TARDE (su top debe subir más antes de
-        // empezar el papel). Con .72 la apertura ocurre cuando Mission ya terminó
-        // su texto, evitando la banda negra prematura y el solape de reveals.
-        'start'         => .72,
-        'end'           => .38,
-        'paper_inset'   => 49,
-        // Lift de Mission al abrir News: sutil. Valores altos exponen banda oscura
-        // y refuerzan el "hueco" entre bloques; 16vh mantiene el parallax discreto.
+        // Cover-rise: progreso del "depth-out" de Mission según el top de News.
+        // start = News top entra (~95vh, casi al fondo) → p=0;
+        // end   = News top sube hasta ~42vh → p=1 (Mission ya atenuada/escalada).
+        'start'         => .95,
+        'end'           => .42,
+        // Cuánto se "aleja" Mission al ser cubierta (lift en vh). Sutil = más limpio.
         'mission_lift_vh' => 16,
-        'top_color'     => '#000000',
-        'bottom_color'  => '#020711',
     ),
 );
