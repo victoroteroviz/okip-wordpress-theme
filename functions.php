@@ -49,6 +49,7 @@ function okip_require($relative)
 /* Núcleo (siempre). */
 okip_require('inc/sanitize.php');
 okip_require('inc/design-controls.php');
+okip_require('inc/animation-controls.php');
 okip_require('inc/media.php');
 okip_require('inc/data.php');
 okip_require('inc/blocks.php');

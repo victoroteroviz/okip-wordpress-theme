@@ -2,7 +2,7 @@
  * Bloque Hero — estilos.
  * Carga condicional: solo si la página usa el bloque `hero`.
  *
- * Regla del fondo: `css_glitch` es el fondo editable por defecto; media
+ * Regla del fondo: `css_motion` es el fondo editable por defecto; media
  * (video/image/svg) sigue disponible como alternativa limpia. El fallback neutro
  * aparece con tipo `gradient` sin media o `.is-bg-failed`.
  */
@@ -17,7 +17,6 @@
     overflow: hidden;
     isolation: isolate;
     color: var(--okip-color-text, #f4f7fb);
-    perspective: 1200px; /* para el efecto 3D al hacer scroll */
 }
 
 /* Overlap apilado B1→B2 (solo desktop): el Hero queda ESTÁTICO a pantalla completa
@@ -47,8 +46,8 @@
     object-fit: cover;
 }
 
-/* ---- Fondo CSS editable: glitch/grid tecnológico ---- */
-.okip-hero__bg--css-glitch {
+/* ---- Fondo CSS editable: motion/grid tecnologico ---- */
+.okip-hero__bg--css-motion {
     background: var(--okip-hero-css-bg, #020711);
     overflow: hidden;
 }
@@ -67,44 +66,83 @@
 .okip-hero__css-bg {
     overflow: hidden;
     background:
-        radial-gradient(78% 70% at 50% 46%, rgba(255, 255, 255, .045), transparent 64%),
-        linear-gradient(180deg, rgba(2, 7, 17, .08), rgba(2, 7, 17, .58));
+        radial-gradient(80% 70% at 50% 44%, rgba(255, 255, 255, .035), transparent 64%),
+        linear-gradient(180deg, rgba(2, 7, 17, .08), rgba(2, 7, 17, .7));
     transform: translateZ(0);
 }
 
-.okip-hero__css-bg.is-glitch-enabled {
-    animation: okip-hero-glitch-in var(--okip-hero-css-glitch-in-duration, .74s) steps(2, end) both;
-    will-change: filter, transform;
+.okip-hero__css-bg.is-motion-enabled {
+    will-change: opacity, filter, transform;
 }
 
 .okip-hero__css-bg::before {
     content: "";
-    background:
-        radial-gradient(42% 34% at 28% 31%, var(--okip-hero-css-accent, #00a9ff), transparent 68%),
-        radial-gradient(36% 30% at 74% 63%, var(--okip-hero-css-accent-2, #6ee7ff), transparent 70%),
-        radial-gradient(54% 44% at 50% 92%, rgba(255, 255, 255, .12), transparent 72%);
-    filter: blur(14px) saturate(1.08);
-    mix-blend-mode: screen;
-    opacity: calc(.08 + (var(--okip-hero-css-glitch-intensity, .42) * .16));
+    opacity: 0;
 }
 
 .okip-hero__css-bg::after {
     content: "";
-    background:
-        linear-gradient(90deg, transparent 0 13%, var(--okip-hero-css-accent, #00a9ff) 13.25% 13.42%, transparent 13.7% 46%, var(--okip-hero-css-accent-2, #6ee7ff) 46.15% 46.28%, transparent 46.6% 100%),
-        repeating-linear-gradient(180deg, transparent 0 24px, var(--okip-hero-css-accent-2, #6ee7ff) 25px 26px, transparent 27px 72px);
-    mix-blend-mode: screen;
-    opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .2);
-    transform: translate3d(0, 0, 0);
-}
-
-.okip-hero__css-bg.is-glitch-enabled::after {
-    animation: okip-hero-chroma-jolt var(--okip-hero-css-chroma-duration, 7s) steps(1, end) infinite;
-    will-change: opacity, transform;
+    opacity: 0;
 }
 
 .okip-hero__css-grid {
-    color: var(--okip-hero-css-accent, #00a9ff);
+    color: var(--okip-hero-css-accent, #ff5a14);
+    mix-blend-mode: screen;
+    opacity: var(--okip-hero-css-grid-opacity, .18);
+}
+
+.okip-hero__css-signal {
+    mix-blend-mode: screen;
+    opacity: var(--okip-hero-css-scanline-opacity, .12);
+    transform: translate3d(0, 0, 0);
+}
+
+.okip-hero__css-noise {
+    mix-blend-mode: screen;
+    opacity: var(--okip-hero-css-noise-opacity, .07);
+}
+
+.okip-hero__css-bg.is-motion-enabled .okip-hero__css-signal {
+    will-change: background-position, transform;
+}
+
+.okip-hero__css-bg.is-motion-enabled .okip-hero__css-noise {
+    will-change: background-position, opacity;
+}
+
+/* Variante 1: grid futurista, ahora con entrada suave y chroma controlado. */
+.okip-hero__css-bg--future-grid {
+    background:
+        radial-gradient(70% 64% at 50% 44%, rgba(255, 255, 255, .04), transparent 66%),
+        radial-gradient(52% 44% at 28% 34%, var(--okip-hero-css-accent, #ff5a14), transparent 72%),
+        linear-gradient(180deg, rgba(2, 7, 17, .1), rgba(2, 7, 17, .78));
+}
+
+.okip-hero__css-bg--future-grid::before {
+    background:
+        radial-gradient(42% 34% at 28% 31%, var(--okip-hero-css-accent, #ff5a14), transparent 68%),
+        radial-gradient(36% 30% at 74% 63%, var(--okip-hero-css-accent-2, #3c8cff), transparent 70%),
+        radial-gradient(54% 44% at 50% 92%, rgba(255, 255, 255, .12), transparent 72%);
+    filter: blur(14px) saturate(1.08);
+    mix-blend-mode: screen;
+    opacity: calc(.06 + (var(--okip-hero-css-motion-intensity, .34) * .14));
+}
+
+.okip-hero__css-bg--future-grid::after {
+    background:
+        linear-gradient(90deg, transparent 0 13%, var(--okip-hero-css-accent, #ff5a14) 13.25% 13.38%, transparent 13.7% 46%, var(--okip-hero-css-accent-2, #3c8cff) 46.15% 46.28%, transparent 46.6% 100%),
+        repeating-linear-gradient(180deg, transparent 0 24px, var(--okip-hero-css-accent-2, #3c8cff) 25px 26px, transparent 27px 72px);
+    mix-blend-mode: screen;
+    opacity: calc(var(--okip-hero-css-motion-alpha, 1) * var(--okip-hero-css-motion-intensity, .34) * .14);
+    transform: translate3d(0, 0, 0);
+}
+
+.okip-hero__css-bg--future-grid.is-motion-enabled::after {
+    animation: okip-hero-chroma-jolt var(--okip-hero-css-chroma-duration, 8s) ease-in-out infinite;
+    will-change: opacity, transform;
+}
+
+.okip-hero__css-bg--future-grid .okip-hero__css-grid {
     background-image:
         linear-gradient(to right, currentColor 1px, transparent 1px),
         linear-gradient(to bottom, currentColor 1px, transparent 1px),
@@ -113,65 +151,178 @@
     background-position: center;
     -webkit-mask-image: radial-gradient(ellipse at 50% 48%, #000 0 54%, transparent 82%);
     mask-image: radial-gradient(ellipse at 50% 48%, #000 0 54%, transparent 82%);
-    mix-blend-mode: screen;
-    opacity: var(--okip-hero-css-grid-opacity, .24);
 }
 
-.okip-hero__css-signal {
+.okip-hero__css-bg--future-grid .okip-hero__css-signal {
     background:
-        repeating-linear-gradient(180deg, transparent 0 8px, var(--okip-hero-css-accent-2, #6ee7ff) 9px 10px, transparent 11px 20px),
-        linear-gradient(90deg, transparent 0 9%, var(--okip-hero-css-accent, #00a9ff) 11% 11.45%, transparent 13% 38%, var(--okip-hero-css-accent-2, #6ee7ff) 39% 39.28%, transparent 41% 100%),
-        linear-gradient(180deg, transparent 0 23%, var(--okip-hero-css-accent, #00a9ff) 23.2% 23.55%, transparent 24.2% 68%, var(--okip-hero-css-accent-2, #6ee7ff) 68.2% 68.45%, transparent 69.1% 100%);
+        repeating-linear-gradient(180deg, transparent 0 8px, var(--okip-hero-css-accent-2, #3c8cff) 9px 10px, transparent 11px 20px),
+        linear-gradient(90deg, transparent 0 9%, var(--okip-hero-css-accent, #ff5a14) 11% 11.35%, transparent 13% 38%, var(--okip-hero-css-accent-2, #3c8cff) 39% 39.24%, transparent 41% 100%),
+        linear-gradient(180deg, transparent 0 23%, var(--okip-hero-css-accent, #ff5a14) 23.2% 23.42%, transparent 24.2% 68%, var(--okip-hero-css-accent-2, #3c8cff) 68.2% 68.38%, transparent 69.1% 100%);
     background-size: 100% 100%, 160% 100%, 100% 100%;
-    mix-blend-mode: screen;
-    opacity: calc(var(--okip-hero-css-scanline-opacity, .16) * (.55 + var(--okip-hero-css-glitch-intensity, .42)));
-    transform: translate3d(0, 0, 0);
+    opacity: calc(var(--okip-hero-css-scanline-opacity, .12) * (.45 + var(--okip-hero-css-motion-intensity, .34)));
 }
 
-.okip-hero__css-bg.is-glitch-enabled .okip-hero__css-signal {
-    animation: okip-hero-signal-drift var(--okip-hero-css-signal-duration, 24s) linear infinite;
-    will-change: background-position;
+.okip-hero__css-bg--future-grid.is-motion-enabled .okip-hero__css-signal {
+    animation: okip-hero-signal-drift var(--okip-hero-css-signal-duration, 28s) linear infinite;
 }
 
-.okip-hero__css-noise {
+.okip-hero__css-bg--future-grid .okip-hero__css-noise {
     background-image:
         radial-gradient(circle at 18% 28%, rgba(255, 255, 255, .72) 0 1px, transparent 1.35px),
-        radial-gradient(circle at 78% 62%, var(--okip-hero-css-accent-2, #6ee7ff) 0 1px, transparent 1.45px),
+        radial-gradient(circle at 78% 62%, var(--okip-hero-css-accent-2, #3c8cff) 0 1px, transparent 1.45px),
         repeating-linear-gradient(90deg, transparent 0 3px, rgba(255, 255, 255, .12) 3px 4px, transparent 4px 7px);
     background-size: 37px 31px, 53px 47px, 9px 100%;
-    mix-blend-mode: screen;
-    opacity: calc(var(--okip-hero-css-noise-opacity, .1) * (.52 + var(--okip-hero-css-glitch-intensity, .42)));
+    opacity: calc(var(--okip-hero-css-noise-opacity, .07) * (.48 + var(--okip-hero-css-motion-intensity, .34)));
 }
 
-.okip-hero__css-bg.is-glitch-enabled .okip-hero__css-noise {
-    animation: okip-hero-noise-step var(--okip-hero-css-noise-duration, 1.35s) steps(6, end) infinite;
+.okip-hero__css-bg--future-grid.is-motion-enabled .okip-hero__css-noise {
+    animation: okip-hero-noise-step var(--okip-hero-css-noise-duration, 1.65s) steps(6, end) infinite;
+}
+
+/* Variante 2: aurora liquida, inspirada en lava pero sin blobs discretos. */
+.okip-hero__css-bg--liquid-aurora {
+    background:
+        radial-gradient(82% 66% at 50% 46%, rgba(255, 255, 255, .035), transparent 64%),
+        linear-gradient(180deg, var(--okip-hero-css-bg, #020711) 0%, #071020 48%, var(--okip-hero-css-bg, #020711) 100%);
+}
+
+.okip-hero__css-bg--liquid-aurora::before {
+    background:
+        linear-gradient(112deg, transparent 0 12%, var(--okip-hero-css-accent, #ff5a14) 23%, transparent 42%, var(--okip-hero-css-accent-2, #3c8cff) 61%, transparent 82%),
+        linear-gradient(34deg, transparent 0 18%, var(--okip-hero-css-accent-2, #3c8cff) 32%, transparent 52%, var(--okip-hero-css-accent, #ff5a14) 76%, transparent 100%),
+        linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, .12) 50%, transparent 100%);
+    background-size: 170% 170%, 150% 160%, 100% 100%;
+    filter: blur(34px) saturate(1.28);
+    mix-blend-mode: screen;
+    opacity: calc(.08 + (var(--okip-hero-css-motion-intensity, .34) * .24));
+    transform: scale(1.14) translate3d(0, 0, 0);
+}
+
+.okip-hero__css-bg--liquid-aurora::after {
+    background:
+        conic-gradient(from 150deg at 50% 52%, transparent 0deg, var(--okip-hero-css-accent, #ff5a14) 48deg, transparent 110deg, var(--okip-hero-css-accent-2, #3c8cff) 178deg, transparent 250deg, rgba(255, 255, 255, .28) 318deg, transparent 360deg);
+    filter: blur(26px);
+    mix-blend-mode: screen;
+    opacity: calc(var(--okip-hero-css-motion-alpha, 1) * (.04 + (var(--okip-hero-css-motion-intensity, .34) * .12)));
+    transform: scale(1.22);
+}
+
+.okip-hero__css-bg--liquid-aurora.is-motion-enabled::before {
+    animation: okip-hero-liquid-current var(--okip-hero-css-liquid-duration, 18s) ease-in-out infinite alternate;
+    will-change: background-position, transform;
+}
+
+.okip-hero__css-bg--liquid-aurora.is-motion-enabled::after {
+    animation: okip-hero-liquid-haze var(--okip-hero-css-field-duration, 34s) ease-in-out infinite alternate;
+    will-change: transform, opacity;
+}
+
+.okip-hero__css-bg--liquid-aurora .okip-hero__css-grid {
+    background-image:
+        linear-gradient(to right, currentColor 1px, transparent 1px),
+        linear-gradient(to bottom, currentColor 1px, transparent 1px);
+    background-size: 96px 96px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    opacity: calc(var(--okip-hero-css-grid-opacity, .18) * .72);
+}
+
+.okip-hero__css-bg--liquid-aurora .okip-hero__css-signal {
+    background:
+        repeating-linear-gradient(180deg, transparent 0 14px, rgba(255, 255, 255, .5) 15px 16px, transparent 17px 34px),
+        linear-gradient(100deg, transparent 0 18%, var(--okip-hero-css-accent, #ff5a14) 34%, transparent 48%, var(--okip-hero-css-accent-2, #3c8cff) 68%, transparent 84% 100%);
+    background-size: 100% 100%, 190% 100%;
+    opacity: calc(var(--okip-hero-css-scanline-opacity, .12) * .7);
+}
+
+.okip-hero__css-bg--liquid-aurora.is-motion-enabled .okip-hero__css-signal {
+    animation: okip-hero-liquid-signal var(--okip-hero-css-liquid-duration, 18s) ease-in-out infinite alternate;
+}
+
+.okip-hero__css-bg--liquid-aurora .okip-hero__css-noise {
+    background-image:
+        radial-gradient(circle at 26% 36%, rgba(255, 255, 255, .58) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 66% 56%, rgba(255, 255, 255, .34) 0 1px, transparent 1.5px);
+    background-size: 49px 43px, 73px 67px;
+    opacity: calc(var(--okip-hero-css-noise-opacity, .07) * .7);
+}
+
+.okip-hero__css-bg--liquid-aurora.is-motion-enabled .okip-hero__css-noise {
+    animation: okip-hero-noise-step var(--okip-hero-css-noise-duration, 1.65s) steps(5, end) infinite;
+}
+
+/* Variante 3: campo de senal, un fondo de datos mas grafico y direccional. */
+.okip-hero__css-bg--signal-field {
+    background:
+        radial-gradient(70% 62% at 50% 46%, rgba(255, 255, 255, .04), transparent 70%),
+        linear-gradient(145deg, rgba(255, 90, 20, .08), transparent 36%),
+        linear-gradient(215deg, rgba(60, 140, 255, .12), transparent 42%),
+        var(--okip-hero-css-bg, #020711);
+}
+
+.okip-hero__css-bg--signal-field::before {
+    background:
+        repeating-conic-gradient(from 24deg at 50% 48%, transparent 0 14deg, var(--okip-hero-css-accent-2, #3c8cff) 15deg 15.8deg, transparent 17deg 42deg),
+        radial-gradient(ellipse at 50% 48%, transparent 0 24%, var(--okip-hero-css-accent, #ff5a14) 24.4% 24.8%, transparent 25.4% 43%, var(--okip-hero-css-accent-2, #3c8cff) 43.3% 43.8%, transparent 44.5% 100%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 48%, transparent 0 17%, #000 22%, #000 68%, transparent 82%);
+    mask-image: radial-gradient(ellipse at 50% 48%, transparent 0 17%, #000 22%, #000 68%, transparent 82%);
+    mix-blend-mode: screen;
+    opacity: calc(.05 + (var(--okip-hero-css-motion-intensity, .34) * .18));
+    transform: scale(1.08);
+}
+
+.okip-hero__css-bg--signal-field.is-motion-enabled::before {
+    animation: okip-hero-field-turn var(--okip-hero-css-field-duration, 34s) linear infinite;
+    will-change: transform;
+}
+
+.okip-hero__css-bg--signal-field::after {
+    background:
+        linear-gradient(110deg, transparent 0 32%, var(--okip-hero-css-accent, #ff5a14) 32.15% 32.42%, transparent 33% 58%, var(--okip-hero-css-accent-2, #3c8cff) 58.12% 58.36%, transparent 59% 100%),
+        linear-gradient(70deg, transparent 0 45%, rgba(255, 255, 255, .45) 45.1% 45.25%, transparent 45.7% 100%);
+    background-size: 150% 100%, 140% 100%;
+    mix-blend-mode: screen;
+    opacity: calc(var(--okip-hero-css-motion-alpha, 1) * (.06 + (var(--okip-hero-css-motion-intensity, .34) * .14)));
+}
+
+.okip-hero__css-bg--signal-field.is-motion-enabled::after {
+    animation: okip-hero-field-scan var(--okip-hero-css-signal-duration, 28s) ease-in-out infinite alternate;
     will-change: background-position;
 }
 
-@keyframes okip-hero-glitch-in {
-    0% {
-        clip-path: inset(38% 0 48% 0);
-        filter: saturate(1.55) contrast(1.08);
-        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * -.18), 0, 0);
-    }
-    18% {
-        clip-path: inset(8% 0 75% 0);
-        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * .12), -1px, 0);
-    }
-    36% {
-        clip-path: inset(72% 0 10% 0);
-        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * -.08), 1px, 0);
-    }
-    62% {
-        clip-path: inset(0);
-        filter: saturate(1.12) contrast(1.02);
-        transform: translate3d(0, 0, 0);
-    }
-    100% {
-        clip-path: inset(0);
-        filter: none;
-        transform: translate3d(0, 0, 0);
-    }
+.okip-hero__css-bg--signal-field .okip-hero__css-grid {
+    background-image:
+        linear-gradient(60deg, currentColor 1px, transparent 1px),
+        linear-gradient(120deg, currentColor 1px, transparent 1px),
+        linear-gradient(to bottom, currentColor 1px, transparent 1px);
+    background-size: 124px 124px, 124px 124px, 88px 88px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 48%, #000 0 58%, transparent 80%);
+    mask-image: radial-gradient(ellipse at 50% 48%, #000 0 58%, transparent 80%);
+    opacity: calc(var(--okip-hero-css-grid-opacity, .18) * .86);
+}
+
+.okip-hero__css-bg--signal-field .okip-hero__css-signal {
+    background:
+        repeating-linear-gradient(90deg, transparent 0 18px, var(--okip-hero-css-accent-2, #3c8cff) 19px 20px, transparent 21px 48px),
+        linear-gradient(90deg, transparent 0 20%, var(--okip-hero-css-accent, #ff5a14) 22% 22.28%, transparent 25% 74%, var(--okip-hero-css-accent-2, #3c8cff) 76% 76.24%, transparent 79% 100%);
+    background-size: 100% 100%, 160% 100%;
+    opacity: calc(var(--okip-hero-css-scanline-opacity, .12) * .75);
+}
+
+.okip-hero__css-bg--signal-field.is-motion-enabled .okip-hero__css-signal {
+    animation: okip-hero-signal-drift var(--okip-hero-css-signal-duration, 28s) linear infinite;
+}
+
+.okip-hero__css-bg--signal-field .okip-hero__css-noise {
+    background-image:
+        repeating-linear-gradient(0deg, transparent 0 5px, rgba(255, 255, 255, .18) 5px 6px, transparent 6px 13px),
+        radial-gradient(circle at 52% 48%, rgba(255, 255, 255, .32) 0 1px, transparent 1.4px);
+    background-size: 100% 100%, 59px 53px;
+    opacity: calc(var(--okip-hero-css-noise-opacity, .07) * .82);
+}
+
+.okip-hero__css-bg--signal-field.is-motion-enabled .okip-hero__css-noise {
+    animation: okip-hero-noise-step var(--okip-hero-css-noise-duration, 1.65s) steps(5, end) infinite;
 }
 
 @keyframes okip-hero-signal-drift {
@@ -187,22 +338,63 @@
 }
 
 @keyframes okip-hero-chroma-jolt {
-    0%, 88%, 100% {
-        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .12);
+    0%, 82%, 100% {
+        opacity: calc(var(--okip-hero-css-motion-alpha, 1) * var(--okip-hero-css-motion-intensity, .34) * .08);
         transform: translate3d(0, 0, 0);
     }
-    89% {
-        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .34);
-        transform: translate3d(var(--okip-hero-css-chroma-offset, 8px), -1px, 0);
+    86% {
+        opacity: calc(var(--okip-hero-css-motion-alpha, 1) * var(--okip-hero-css-motion-intensity, .34) * .22);
+        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 5px) * .35), -.5px, 0);
     }
     90% {
-        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .24);
-        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * -1), 1px, 0);
+        opacity: calc(var(--okip-hero-css-motion-alpha, 1) * var(--okip-hero-css-motion-intensity, .34) * .16);
+        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 5px) * -.22), .5px, 0);
     }
-    91% {
-        opacity: calc(var(--okip-hero-css-glitch-alpha, 1) * var(--okip-hero-css-glitch-intensity, .42) * .18);
-        transform: translate3d(calc(var(--okip-hero-css-chroma-offset, 8px) * .35), 0, 0);
+    94% {
+        opacity: calc(var(--okip-hero-css-motion-alpha, 1) * var(--okip-hero-css-motion-intensity, .34) * .1);
+        transform: translate3d(0, 0, 0);
     }
+}
+
+@keyframes okip-hero-liquid-current {
+    0% {
+        background-position: 0% 50%, 100% 50%, 0 0;
+        transform: scale(1.14) translate3d(-1.5%, 0, 0);
+    }
+    50% {
+        background-position: 58% 42%, 44% 58%, 0 0;
+        transform: scale(1.18) translate3d(1%, -1%, 0);
+    }
+    100% {
+        background-position: 100% 54%, 0% 46%, 0 0;
+        transform: scale(1.15) translate3d(1.5%, 1%, 0);
+    }
+}
+
+@keyframes okip-hero-liquid-haze {
+    0% {
+        transform: scale(1.22) rotate(-5deg);
+        opacity: calc(var(--okip-hero-css-motion-alpha, 1) * (.04 + (var(--okip-hero-css-motion-intensity, .34) * .1)));
+    }
+    100% {
+        transform: scale(1.28) rotate(7deg);
+        opacity: calc(var(--okip-hero-css-motion-alpha, 1) * (.06 + (var(--okip-hero-css-motion-intensity, .34) * .14)));
+    }
+}
+
+@keyframes okip-hero-liquid-signal {
+    0% { background-position: 0 0, 0% 0; }
+    100% { background-position: 0 0, 100% 0; }
+}
+
+@keyframes okip-hero-field-turn {
+    0% { transform: scale(1.08) rotate(0deg); }
+    100% { transform: scale(1.08) rotate(360deg); }
+}
+
+@keyframes okip-hero-field-scan {
+    0% { background-position: 0% 0, 0% 0; }
+    100% { background-position: 100% 0, 70% 0; }
 }
 
 /* ---- Crossfade intro → loop (sin parpadeo negro) ----
@@ -399,40 +591,6 @@
     text-shadow: 0 2px 16px rgba(0, 8, 18, .52);
 }
 
-/* ============================================================
-   Estados de animación (solo con JS: clase okip-js en <html>).
-   El fondo NO se oculta (debe verse/cargar primero). Se ocultan
-   tarjetas (su media interno) y texto, que revela el script por fases.
-   ============================================================ */
-.okip-js .okip-hero--animated .okip-hero__card-media,
-.okip-js .okip-hero--animated .okip-hero__title-line,
-.okip-js .okip-hero--animated .okip-hero__desc {
-    opacity: 0;
-    will-change: transform, opacity;
-}
-.okip-js .okip-hero--animated .okip-hero__card-media {
-    transform: translateY(24px) scale(.96);
-}
-.okip-js .okip-hero--animated .okip-hero__title-line,
-.okip-js .okip-hero--animated .okip-hero__desc {
-    transform: translateY(28px);
-}
-
-/* Revelado por CSS (fallback sin GSAP) — las clases las pone script.js */
-.okip-hero.is-cards-revealed .okip-hero__card-media {
-    opacity: 1;
-    transform: none;
-    transition: opacity .6s ease, transform .6s cubic-bezier(.22, 1, .36, 1);
-}
-.okip-hero.is-text-revealed .okip-hero__title-line,
-.okip-hero.is-text-revealed .okip-hero__desc {
-    opacity: 1;
-    transform: none;
-    transition: opacity .7s ease, transform .7s cubic-bezier(.22, 1, .36, 1);
-}
-.okip-hero.is-text-revealed .okip-hero__title-line:nth-child(2) { transition-delay: .12s; }
-.okip-hero.is-text-revealed .okip-hero__desc { transition-delay: .24s; }
-
 /* ---- Responsive: móvil/tablet ---- */
 @media (max-width: 768px) {
     .okip-hero {
@@ -457,12 +615,6 @@
 
 /* ---- Accesibilidad: reduce motion ---- */
 @media (prefers-reduced-motion: reduce) {
-    .okip-js .okip-hero--animated .okip-hero__card-media,
-    .okip-js .okip-hero--animated .okip-hero__title-line,
-    .okip-js .okip-hero--animated .okip-hero__desc {
-        opacity: 1;
-        transform: none;
-    }
     /* Sin crossfade: mostrar el loop/fallback (estático) y ocultar el intro. */
     .okip-js .okip-hero--animated .okip-hero__media--loop  { opacity: 1; }
     .okip-js .okip-hero--animated .okip-hero__media--intro { opacity: 0; }
@@ -475,6 +627,7 @@
         animation: none;
     }
     .okip-hero__css-bg,
+    .okip-hero__css-bg::before,
     .okip-hero__css-bg::after,
     .okip-hero__css-signal,
     .okip-hero__css-noise {

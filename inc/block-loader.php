@@ -9,7 +9,7 @@
  *
  * - Versionado con filemtime() (cache-busting en desarrollo).
  * - Sin duplicados: un handle por tipo, aunque el bloque se repita N veces.
- * - El JS de bloque depende de okip-gsap-init (que a su vez puede tener GSAP).
+ * - El JS de bloque depende del runtime compartido de animaciones.
  *
  * @package OKIP
  */
@@ -55,7 +55,7 @@ function okip_enqueue_block_assets($types)
             wp_enqueue_style(
                 'okip-block-' . $type,
                 $url . '/style.css',
-                array('okip-components'),
+                array('okip-animations'),
                 okip_asset_version($css)
             );
         }
@@ -65,7 +65,7 @@ function okip_enqueue_block_assets($types)
             wp_enqueue_script(
                 'okip-block-' . $type,
                 $url . '/script.js',
-                array('okip-gsap-init'),
+                array('okip-animations'),
                 okip_asset_version($js),
                 true
             );

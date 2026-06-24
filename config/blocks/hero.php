@@ -15,10 +15,10 @@
  * (replay_on_enter = false): el intro solo se repite recargando la página.
  *
  * Whitelists:
- *   background.type  : css_glitch | video | image | svg | gradient
+ *   background.type  : css_motion | video | image | svg | gradient
  *   card.type        : video | image | svg
  *
- * Regla del fondo: `css_glitch` es el fondo editable por defecto. Media
+ * Regla del fondo: `css_motion` es el fondo editable por defecto. Media
  * (video/image/svg) sigue disponible como alternativa limpia. El overlay es una
  * capa separada y opcional, no un reemplazo del fondo.
  *
@@ -70,7 +70,7 @@ if (! function_exists('okip_normalize_hero_data')) {
     function okip_normalize_hero_data($data)
     {
         $align_allowed = array('left', 'center', 'right');
-        $bg_allowed    = array('css_glitch', 'video', 'image', 'svg', 'gradient');
+        $bg_allowed    = array('css_motion', 'video', 'image', 'svg', 'gradient');
         $card_allowed  = array('video', 'image', 'svg');
         $play_allowed  = array('hover', 'tap', 'manual');
 
@@ -78,22 +78,31 @@ if (! function_exists('okip_normalize_hero_data')) {
         $data['content']['alignment'] = okip_one_of($data['content']['alignment'], $align_allowed, 'center');
 
         // Fondo (CSS editable por default, media intro/loop como alternativa).
-        if (isset($data['background']['type']) && $data['background']['type'] === 'svg' && empty($data['background']['media'])) {
-            $data['background']['type'] = 'css_glitch';
+        $bg = isset($data['background']) && is_array($data['background']) ? $data['background'] : array();
+        if (isset($bg['type']) && $bg['type'] === 'svg' && empty($bg['media'])) {
+            $bg['type'] = 'css_motion';
         }
-        $data['background']['type'] = okip_one_of($data['background']['type'], $bg_allowed, 'css_glitch');
-        $data['background']['css_variant'] = okip_one_of($data['background']['css_variant'], array('glitch_grid'), 'glitch_grid');
-        $data['background']['css_bg'] = sanitize_hex_color((string) $data['background']['css_bg']) ?: '#020711';
-        $data['background']['css_accent'] = sanitize_hex_color((string) $data['background']['css_accent']) ?: '#00a9ff';
-        $data['background']['css_accent_2'] = sanitize_hex_color((string) $data['background']['css_accent_2']) ?: '#6ee7ff';
-        $data['background']['css_grid_opacity'] = okip_clamp_float($data['background']['css_grid_opacity'], 0, 1);
-        $data['background']['css_scanline_opacity'] = okip_clamp_float($data['background']['css_scanline_opacity'], 0, 1);
-        $data['background']['css_noise_opacity'] = okip_clamp_float($data['background']['css_noise_opacity'], 0, 1);
-        $data['background']['css_glitch_enabled'] = okip_bool($data['background']['css_glitch_enabled']);
-        $data['background']['css_glitch_intensity'] = okip_clamp_float($data['background']['css_glitch_intensity'], 0, 1);
-        $data['background']['css_glitch_speed'] = okip_clamp_float($data['background']['css_glitch_speed'], 0.2, 3);
-        $data['background']['css_glitch_interval'] = okip_clamp_float($data['background']['css_glitch_interval'], 2, 20);
-        $data['background']['css_chroma_offset'] = okip_clamp_float($data['background']['css_chroma_offset'], 0, 32);
+        $data['background'] = array(
+            'type'                 => okip_one_of(isset($bg['type']) ? $bg['type'] : 'css_motion', $bg_allowed, 'css_motion'),
+            'media'                => isset($bg['media']) ? $bg['media'] : '',
+            'intro_media'          => isset($bg['intro_media']) ? $bg['intro_media'] : '',
+            'loop_media'           => isset($bg['loop_media']) ? $bg['loop_media'] : '',
+            'poster'               => isset($bg['poster']) ? $bg['poster'] : '',
+            'fallback_image'       => isset($bg['fallback_image']) ? $bg['fallback_image'] : '',
+            'object_position'      => isset($bg['object_position']) ? $bg['object_position'] : 'center center',
+            'css_variant'          => okip_one_of(isset($bg['css_variant']) ? $bg['css_variant'] : 'liquid_aurora', array('future_grid', 'liquid_aurora', 'signal_field'), 'liquid_aurora'),
+            'css_bg'               => sanitize_hex_color((string) (isset($bg['css_bg']) ? $bg['css_bg'] : '#020711')) ?: '#020711',
+            'css_accent'           => sanitize_hex_color((string) (isset($bg['css_accent']) ? $bg['css_accent'] : '#ff5a14')) ?: '#ff5a14',
+            'css_accent_2'         => sanitize_hex_color((string) (isset($bg['css_accent_2']) ? $bg['css_accent_2'] : '#3c8cff')) ?: '#3c8cff',
+            'css_grid_opacity'     => okip_clamp_float(isset($bg['css_grid_opacity']) ? $bg['css_grid_opacity'] : .18, 0, 1),
+            'css_scanline_opacity' => okip_clamp_float(isset($bg['css_scanline_opacity']) ? $bg['css_scanline_opacity'] : .12, 0, 1),
+            'css_noise_opacity'    => okip_clamp_float(isset($bg['css_noise_opacity']) ? $bg['css_noise_opacity'] : .07, 0, 1),
+            'css_motion_enabled'   => okip_bool(isset($bg['css_motion_enabled']) ? $bg['css_motion_enabled'] : true),
+            'css_motion_intensity' => okip_clamp_float(isset($bg['css_motion_intensity']) ? $bg['css_motion_intensity'] : .34, 0, 1),
+            'css_motion_speed'     => okip_clamp_float(isset($bg['css_motion_speed']) ? $bg['css_motion_speed'] : .82, .2, 3),
+            'css_motion_interval'  => okip_clamp_float(isset($bg['css_motion_interval']) ? $bg['css_motion_interval'] : 8, 2, 20),
+            'css_chroma_offset'    => okip_clamp_float(isset($bg['css_chroma_offset']) ? $bg['css_chroma_offset'] : 5, 0, 32),
+        );
 
         // Intro (video introductorio, una sola vez).
         $data['intro']['enabled']      = okip_bool($data['intro']['enabled']);
@@ -111,20 +120,13 @@ if (! function_exists('okip_normalize_hero_data')) {
         $data['overlay']['enabled'] = okip_bool($data['overlay']['enabled']);
         $data['overlay']['opacity'] = okip_clamp_float($data['overlay']['opacity'], 0, 1);
 
-        // Reveal (tiempos medidos tras el intro).
-        $data['reveal']['reveal_after_intro']      = okip_bool($data['reveal']['reveal_after_intro']);
-        $data['reveal']['image_reveal_delay']      = okip_clamp_int($data['reveal']['image_reveal_delay'], 0, 20000);
-        $data['reveal']['cards_delay_after_intro'] = okip_clamp_int($data['reveal']['cards_delay_after_intro'], 0, 10000);
-        $data['reveal']['text_delay_after_intro']  = okip_clamp_int($data['reveal']['text_delay_after_intro'], 0, 10000);
-        $data['reveal']['pause_or_blur_on_fail']   = okip_bool($data['reveal']['pause_or_blur_on_fail']);
-
         // Transición intro → loop.
         $data['transition']['intro_to_loop_crossfade'] = okip_bool($data['transition']['intro_to_loop_crossfade']);
         $data['transition']['crossfade_duration']      = okip_clamp_int($data['transition']['crossfade_duration'], 0, 5000);
 
-        // Animación.
-        $data['animation']['enabled']   = okip_bool($data['animation']['enabled']);
-        $data['animation']['scroll_3d'] = okip_bool($data['animation']['scroll_3d']);
+        // Animaciones reusables.
+        $data['motion'] = okip_normalize_motion(isset($data['motion']) ? $data['motion'] : array(), array('background', 'text', 'cards'));
+        unset($data['reveal'], $data['animation']);
 
         // Tipografía reusable.
         $data['typography']['title'] = okip_normalize_typography(
@@ -174,25 +176,25 @@ return array(
         'max_width'    => '1000px',
     ),
     'background' => array(
-        'type'            => 'css_glitch', // css_glitch | video | image | svg | gradient
+        'type'            => 'css_motion', // css_motion | video | image | svg | gradient
         'media'           => '',      // compat: media único (si no hay intro/loop, se usa como loop)
         'intro_media'     => '',      // ruta/URL/ID del video introductorio
         'loop_media'      => '',      // ruta/URL/ID del video de bucle
         'poster'          => '',      // imagen de respaldo para los videos
         'fallback_image'  => '',      // imagen estática si los videos no cargan
         'object_position' => 'center center',
-        'css_variant'          => 'glitch_grid',
+        'css_variant'          => 'liquid_aurora',
         'css_bg'               => '#020711',
-        'css_accent'           => '#00a9ff',
-        'css_accent_2'         => '#6ee7ff',
-        'css_grid_opacity'     => 0.24,
-        'css_scanline_opacity' => 0.16,
-        'css_noise_opacity'    => 0.10,
-        'css_glitch_enabled'   => true,
-        'css_glitch_intensity' => 0.42,
-        'css_glitch_speed'     => 1,
-        'css_glitch_interval'  => 7,
-        'css_chroma_offset'    => 8,
+        'css_accent'           => '#ff5a14',
+        'css_accent_2'         => '#3c8cff',
+        'css_grid_opacity'     => 0.18,
+        'css_scanline_opacity' => 0.12,
+        'css_noise_opacity'    => 0.07,
+        'css_motion_enabled'   => true,
+        'css_motion_intensity' => 0.34,
+        'css_motion_speed'     => 0.82,
+        'css_motion_interval'  => 8,
+        'css_chroma_offset'    => 5,
     ),
     'intro' => array(
         'enabled'      => true,
@@ -213,13 +215,6 @@ return array(
         'color'   => '#020711',
         'opacity' => 0.35,  // 0..1 — capa ligera, no reemplaza el fondo
     ),
-    'reveal' => array(
-        'reveal_after_intro'      => true, // revelar tarjetas/texto al terminar el intro
-        'image_reveal_delay'      => 1000, // ms (image/svg/gradient o sin intro/loop)
-        'cards_delay_after_intro' => 300,  // ms tras el fin del intro → tarjetas
-        'text_delay_after_intro'  => 600,  // ms tras el fin del intro → texto
-        'pause_or_blur_on_fail'   => true, // al fallar sin loop/fallback: degradar el fondo
-    ),
     'transition' => array(
         'intro_to_loop_crossfade' => true, // crossfade suave intro → loop (sin parpadeo)
         'crossfade_duration'      => 700,  // ms del crossfade
@@ -231,8 +226,5 @@ return array(
         'title'       => okip_typography_defaults('hero_title'),
         'description' => okip_typography_defaults('hero_description'),
     ),
-    'animation' => array(
-        'enabled'   => true,
-        'scroll_3d' => true, // efecto 3D al hacer scroll (ScrollTrigger)
-    ),
+    'motion' => okip_motion_defaults(array('background', 'text', 'cards')),
 );

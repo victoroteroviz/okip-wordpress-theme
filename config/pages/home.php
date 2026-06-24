@@ -29,21 +29,21 @@ return array(
                 'alignment'    => 'center',
             ),
             'background' => array(
-                // Fondo CSS editable por default: glitch/grid tecnológico sutil.
+                // Fondo CSS editable por default: aurora líquida con acentos OKIP.
                 // El flujo video intro/loop sigue soportado por el bloque si se cambia el type.
-                'type'                 => 'css_glitch',
-                'css_variant'          => 'glitch_grid',
+                'type'                 => 'css_motion',
+                'css_variant'          => 'liquid_aurora',
                 'css_bg'               => '#020711',
-                'css_accent'           => '#00a9ff',
-                'css_accent_2'         => '#6ee7ff',
-                'css_grid_opacity'     => 0.24,
-                'css_scanline_opacity' => 0.16,
-                'css_noise_opacity'    => 0.10,
-                'css_glitch_enabled'   => true,
-                'css_glitch_intensity' => 0.42,
-                'css_glitch_speed'     => 1,
-                'css_glitch_interval'  => 7,
-                'css_chroma_offset'    => 8,
+                'css_accent'           => '#ff5a14',
+                'css_accent_2'         => '#3c8cff',
+                'css_grid_opacity'     => 0.18,
+                'css_scanline_opacity' => 0.12,
+                'css_noise_opacity'    => 0.07,
+                'css_motion_enabled'   => true,
+                'css_motion_intensity' => 0.34,
+                'css_motion_speed'     => 0.82,
+                'css_motion_interval'  => 8,
+                'css_chroma_offset'    => 5,
             ),
             'overlay' => array(
                 'enabled' => true,
@@ -74,16 +74,7 @@ return array(
                     'color'          => '#d9e8f7',
                 ),
             ),
-            'reveal' => array(
-                // image_reveal_delay usa el default de 1000ms del esquema.
-                // Sin media real, ese es el tiempo de espera antes de revelar tarjetas y texto.
-            ),
-            'animation' => array(
-                // El Hero queda sticky en desktop; el Bloque 2 lo cubre por flujo/z-index.
-                // Mantener scroll_3d apagado evita doble transform con GSAP.
-                'enabled'   => true,
-                'scroll_3d' => false,
-            ),
+            'motion' => okip_motion_defaults(array('background', 'text', 'cards')),
             // Las tarjetas se muestran desde el MVP aunque aún no exista media real:
             // sin media → placeholder temporal; al añadir 'media' (ruta/URL/ID válido)
             // el placeholder se sustituye automáticamente por el archivo real.

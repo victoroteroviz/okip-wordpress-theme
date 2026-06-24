@@ -120,24 +120,24 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
 
     $background = isset($raw['background']) && is_array($raw['background']) ? $raw['background'] : array();
     $data['background'] = array(
-        'type'                 => okip_one_of(isset($background['type']) ? $background['type'] : 'css_glitch', array('css_glitch', 'video', 'image', 'svg', 'gradient'), 'css_glitch'),
+        'type'                 => okip_one_of(isset($background['type']) ? $background['type'] : 'css_motion', array('css_motion', 'video', 'image', 'svg', 'gradient'), 'css_motion'),
         'media'                => okip_admin_sanitize_media_ref(isset($background['media']) ? $background['media'] : ''),
         'intro_media'          => okip_admin_sanitize_media_ref(isset($background['intro_media']) ? $background['intro_media'] : ''),
         'loop_media'           => okip_admin_sanitize_media_ref(isset($background['loop_media']) ? $background['loop_media'] : ''),
         'poster'               => okip_admin_sanitize_media_ref(isset($background['poster']) ? $background['poster'] : ''),
         'fallback_image'       => okip_admin_sanitize_media_ref(isset($background['fallback_image']) ? $background['fallback_image'] : ''),
         'object_position'      => isset($background['object_position']) ? sanitize_text_field((string) $background['object_position']) : 'center center',
-        'css_variant'          => okip_one_of(isset($background['css_variant']) ? $background['css_variant'] : 'glitch_grid', array('glitch_grid'), 'glitch_grid'),
+        'css_variant'          => okip_one_of(isset($background['css_variant']) ? $background['css_variant'] : 'liquid_aurora', array('future_grid', 'liquid_aurora', 'signal_field'), 'liquid_aurora'),
         'css_bg'               => sanitize_hex_color(isset($background['css_bg']) ? $background['css_bg'] : '#020711') ?: '#020711',
         'css_accent'           => sanitize_hex_color(isset($background['css_accent']) ? $background['css_accent'] : '#00a9ff') ?: '#00a9ff',
         'css_accent_2'         => sanitize_hex_color(isset($background['css_accent_2']) ? $background['css_accent_2'] : '#6ee7ff') ?: '#6ee7ff',
         'css_grid_opacity'     => okip_clamp_float(isset($background['css_grid_opacity']) ? $background['css_grid_opacity'] : .24, 0, 1),
         'css_scanline_opacity' => okip_clamp_float(isset($background['css_scanline_opacity']) ? $background['css_scanline_opacity'] : .16, 0, 1),
         'css_noise_opacity'    => okip_clamp_float(isset($background['css_noise_opacity']) ? $background['css_noise_opacity'] : .10, 0, 1),
-        'css_glitch_enabled'   => okip_bool(isset($background['css_glitch_enabled']) ? $background['css_glitch_enabled'] : true),
-        'css_glitch_intensity' => okip_clamp_float(isset($background['css_glitch_intensity']) ? $background['css_glitch_intensity'] : .42, 0, 1),
-        'css_glitch_speed'     => okip_clamp_float(isset($background['css_glitch_speed']) ? $background['css_glitch_speed'] : 1, .2, 3),
-        'css_glitch_interval'  => okip_clamp_float(isset($background['css_glitch_interval']) ? $background['css_glitch_interval'] : 7, 2, 20),
+        'css_motion_enabled'   => okip_bool(isset($background['css_motion_enabled']) ? $background['css_motion_enabled'] : true),
+        'css_motion_intensity' => okip_clamp_float(isset($background['css_motion_intensity']) ? $background['css_motion_intensity'] : .42, 0, 1),
+        'css_motion_speed'     => okip_clamp_float(isset($background['css_motion_speed']) ? $background['css_motion_speed'] : 1, .2, 3),
+        'css_motion_interval'  => okip_clamp_float(isset($background['css_motion_interval']) ? $background['css_motion_interval'] : 7, 2, 20),
         'css_chroma_offset'    => okip_clamp_float(isset($background['css_chroma_offset']) ? $background['css_chroma_offset'] : 8, 0, 32),
     );
 
@@ -154,26 +154,13 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
         'description' => okip_normalize_typography(isset($typography['description']) ? $typography['description'] : array(), 'hero_description'),
     );
 
-    $reveal = isset($raw['reveal']) && is_array($raw['reveal']) ? $raw['reveal'] : array();
-    $data['reveal'] = array(
-        'reveal_after_intro'      => okip_bool(isset($reveal['reveal_after_intro']) ? $reveal['reveal_after_intro'] : true),
-        'image_reveal_delay'      => okip_clamp_int(isset($reveal['image_reveal_delay']) ? $reveal['image_reveal_delay'] : 1000, 0, 20000),
-        'cards_delay_after_intro' => okip_clamp_int(isset($reveal['cards_delay_after_intro']) ? $reveal['cards_delay_after_intro'] : 300, 0, 10000),
-        'text_delay_after_intro'  => okip_clamp_int(isset($reveal['text_delay_after_intro']) ? $reveal['text_delay_after_intro'] : 600, 0, 10000),
-        'pause_or_blur_on_fail'   => okip_bool(isset($reveal['pause_or_blur_on_fail']) ? $reveal['pause_or_blur_on_fail'] : true),
-    );
-
     $transition = isset($raw['transition']) && is_array($raw['transition']) ? $raw['transition'] : array();
     $data['transition'] = array(
         'intro_to_loop_crossfade' => okip_bool(isset($transition['intro_to_loop_crossfade']) ? $transition['intro_to_loop_crossfade'] : true),
         'crossfade_duration'      => okip_clamp_int(isset($transition['crossfade_duration']) ? $transition['crossfade_duration'] : 700, 0, 5000),
     );
 
-    $animation = isset($raw['animation']) && is_array($raw['animation']) ? $raw['animation'] : array();
-    $data['animation'] = array(
-        'enabled'   => okip_bool(isset($animation['enabled']) ? $animation['enabled'] : true),
-        'scroll_3d' => okip_bool(isset($animation['scroll_3d']) ? $animation['scroll_3d'] : false),
-    );
+    $data['motion'] = okip_normalize_motion(isset($raw['motion']) ? $raw['motion'] : array(), array('background', 'text', 'cards'));
 
     $raw_cards = isset($raw['cards']) && is_array($raw['cards']) ? $raw['cards'] : array();
     $data['cards'] = array();

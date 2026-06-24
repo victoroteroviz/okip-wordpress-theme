@@ -28,10 +28,9 @@ $background = isset($okip_data['background']) ? $okip_data['background'] : array
 $intro      = isset($okip_data['intro']) ? $okip_data['intro'] : array();
 $loop       = isset($okip_data['loop']) ? $okip_data['loop'] : array();
 $overlay    = isset($okip_data['overlay']) ? $okip_data['overlay'] : array();
-$reveal     = isset($okip_data['reveal']) ? $okip_data['reveal'] : array();
 $transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
 $cards      = isset($okip_data['cards']) && is_array($okip_data['cards']) ? $okip_data['cards'] : array();
-$animation  = isset($okip_data['animation']) ? $okip_data['animation'] : array();
+$motion     = okip_normalize_motion(isset($okip_data['motion']) ? $okip_data['motion'] : array(), array('background', 'text', 'cards'));
 $typography = isset($okip_data['typography']) ? $okip_data['typography'] : array();
 
 $bg_type = isset($background['type']) ? $background['type'] : 'gradient';
@@ -70,9 +69,9 @@ if ($img_on) {
     $single_img_url = $fallback_url; // sin videos pero con fallback → es el fondo
 }
 
-// Render del fondo: css-glitch | video | image | svg | missing (neutro).
-if ($bg_type === 'css_glitch') {
-    $bg_render = 'css-glitch';
+// Render del fondo: css-motion | video | image | svg | missing (neutro).
+if ($bg_type === 'css_motion') {
+    $bg_render = 'css-motion';
 } elseif ($has_video_layer) {
     $bg_render = 'video';
 } elseif ($single_img_url !== '') {
@@ -88,14 +87,7 @@ $overlay_on      = ! empty($overlay['enabled']);
 $overlay_color   = isset($overlay['color']) ? $overlay['color'] : '#020711';
 $overlay_opacity = isset($overlay['opacity']) ? (float) $overlay['opacity'] : 0.35;
 
-$anim_on  = ! empty($animation['enabled']);
-$scroll3d = ! empty($animation['scroll_3d']);
-
-$img_delay   = isset($reveal['image_reveal_delay']) ? (int) $reveal['image_reveal_delay'] : 1500;
-$cards_d     = isset($reveal['cards_delay_after_intro']) ? (int) $reveal['cards_delay_after_intro'] : 300;
-$text_d      = isset($reveal['text_delay_after_intro']) ? (int) $reveal['text_delay_after_intro'] : 600;
-$pause_blur  = ! empty($reveal['pause_or_blur_on_fail']);
-$reveal_after_intro = ! empty($reveal['reveal_after_intro']);
+$motion_on = ! empty($motion['enabled']);
 $intro_fail  = isset($intro['fail_timeout']) ? (int) $intro['fail_timeout'] : 2500;
 
 $crossfade    = ! empty($transition['intro_to_loop_crossfade']);
@@ -114,13 +106,16 @@ $desc_typography = okip_normalize_typography(
     'hero_description'
 );
 
-$css_glitch_speed = isset($background['css_glitch_speed']) ? max(0.2, min(3, (float) $background['css_glitch_speed'])) : 1;
-$css_duration = function ($seconds) use ($css_glitch_speed) {
-    return okip_css_number(((float) $seconds) / $css_glitch_speed) . 's';
+$css_motion_speed = isset($background['css_motion_speed']) ? max(0.2, min(3, (float) $background['css_motion_speed'])) : 1;
+$css_duration = function ($seconds) use ($css_motion_speed) {
+    return okip_css_number(((float) $seconds) / $css_motion_speed) . 's';
 };
-$css_glitch_interval = isset($background['css_glitch_interval']) ? max(2, min(20, (float) $background['css_glitch_interval'])) : 7;
-$css_glitch_enabled = ! empty($background['css_glitch_enabled']);
-$css_glitch_class = $css_glitch_enabled ? ' is-glitch-enabled' : '';
+$css_motion_interval = isset($background['css_motion_interval']) ? max(2, min(20, (float) $background['css_motion_interval'])) : 8;
+$css_motion_enabled = ! empty($background['css_motion_enabled']);
+$css_variant_allowed = array('future_grid', 'liquid_aurora', 'signal_field');
+$css_variant = okip_one_of(isset($background['css_variant']) ? $background['css_variant'] : 'liquid_aurora', $css_variant_allowed, 'liquid_aurora');
+$css_variant_class = ' okip-hero__css-bg--' . sanitize_html_class(str_replace('_', '-', $css_variant));
+$css_motion_class = $css_variant_class . ($css_motion_enabled ? ' is-motion-enabled' : '');
 
 $hero_style = '--okip-hero-xfade:' . esc_attr((string) $effective_crossfade_ms) . 'ms;';
 $hero_style .= okip_typography_css_vars('okip-hero-title', $title_typography);
@@ -132,13 +127,20 @@ $hero_style .= okip_css_vars(array(
     'okip-hero-css-grid-opacity'       => isset($background['css_grid_opacity']) ? okip_css_number($background['css_grid_opacity']) : '0.24',
     'okip-hero-css-scanline-opacity'   => isset($background['css_scanline_opacity']) ? okip_css_number($background['css_scanline_opacity']) : '0.16',
     'okip-hero-css-noise-opacity'      => isset($background['css_noise_opacity']) ? okip_css_number($background['css_noise_opacity']) : '0.1',
-    'okip-hero-css-glitch-intensity'   => isset($background['css_glitch_intensity']) ? okip_css_number($background['css_glitch_intensity']) : '0.42',
-    'okip-hero-css-glitch-alpha'       => $css_glitch_enabled ? '1' : '0',
-    'okip-hero-css-glitch-in-duration' => $css_duration(.74),
-    'okip-hero-css-signal-duration'    => $css_duration(24),
-    'okip-hero-css-noise-duration'     => $css_duration(1.35),
-    'okip-hero-css-chroma-duration'    => okip_css_number($css_glitch_interval / $css_glitch_speed) . 's',
+    'okip-hero-css-motion-intensity'   => isset($background['css_motion_intensity']) ? okip_css_number($background['css_motion_intensity']) : '0.34',
+    'okip-hero-css-motion-alpha'       => $css_motion_enabled ? '1' : '0',
+    'okip-hero-css-signal-duration'    => $css_duration(28),
+    'okip-hero-css-noise-duration'     => $css_duration(1.65),
+    'okip-hero-css-liquid-duration'    => $css_duration(18),
+    'okip-hero-css-field-duration'     => $css_duration(34),
+    'okip-hero-css-chroma-duration'    => okip_css_number($css_motion_interval / $css_motion_speed) . 's',
     'okip-hero-css-chroma-offset'      => isset($background['css_chroma_offset']) ? okip_css_number($background['css_chroma_offset']) . 'px' : '8px',
+));
+
+$motion_json = okip_motion_config_json($motion, array(
+    'background' => '[data-okip-motion-target="background"]',
+    'text'       => '[data-okip-motion-target="text"]',
+    'cards'      => '[data-okip-motion-target="cards"]',
 ));
 
 $overlay_style = sprintf(
@@ -154,31 +156,26 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
-    class="okip-hero<?php echo $anim_on ? ' okip-hero--animated' : ''; ?>"
+    class="okip-hero<?php echo $motion_on ? ' okip-hero--animated' : ''; ?>"
     data-block-instance="<?php echo esc_attr($okip_instance); ?>"
     data-okip-hero
     data-bg-type="<?php echo esc_attr($bg_render); ?>"
-    data-anim="<?php echo $anim_on ? '1' : '0'; ?>"
-    data-scroll3d="<?php echo $scroll3d ? '1' : '0'; ?>"
+    data-motion-enabled="<?php echo $motion_on ? '1' : '0'; ?>"
     data-has-intro="<?php echo $intro_url !== '' ? '1' : '0'; ?>"
     data-has-loop="<?php echo $loop_url !== '' ? '1' : '0'; ?>"
     data-has-fallback="<?php echo $has_fallback_layer ? '1' : '0'; ?>"
-    data-image-delay="<?php echo esc_attr((string) $img_delay); ?>"
-    data-cards-delay="<?php echo esc_attr((string) $cards_d); ?>"
-    data-text-delay="<?php echo esc_attr((string) $text_d); ?>"
     data-intro-fail="<?php echo esc_attr((string) $intro_fail); ?>"
-    data-reveal-after-intro="<?php echo $reveal_after_intro ? '1' : '0'; ?>"
     data-crossfade="<?php echo $crossfade ? '1' : '0'; ?>"
     data-crossfade-ms="<?php echo esc_attr((string) $crossfade_ms); ?>"
-    data-pause-blur="<?php echo $pause_blur ? '1' : '0'; ?>"
     style="<?php echo $hero_style; ?>">
+    <script type="application/json" data-okip-motion-config><?php echo $motion_json; ?></script>
 
     <!-- Capa 1: fondo CSS o media-driven. Intro (una vez) → crossfade → loop (bucle).
          Sin CSS/media: fallback neutro (solo color). -->
     <div class="okip-hero__bg okip-hero__bg--<?php echo esc_attr(sanitize_html_class($bg_render)); ?>" data-okip-hero-bg>
         <?php if ($bg_render === 'video') : ?>
             <?php if ($intro_url !== '') : ?>
-                <video class="okip-hero__media okip-hero__media--intro" data-okip-hero-intro
+                <video class="okip-hero__media okip-hero__media--intro" data-okip-hero-intro data-okip-motion-target="background"
                     muted playsinline preload="auto"
                     style="object-position:<?php echo esc_attr($obj_pos); ?>;"
                     <?php echo $poster ? 'poster="' . esc_url($poster) . '"' : ''; ?>>
@@ -186,7 +183,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 </video>
             <?php endif; ?>
             <?php if ($loop_url !== '') : ?>
-                <video class="okip-hero__media okip-hero__media--loop" data-okip-hero-loop
+                <video class="okip-hero__media okip-hero__media--loop" data-okip-hero-loop data-okip-motion-target="background"
                     <?php echo $loop_attrs; ?> preload="auto"
                     style="object-position:<?php echo esc_attr($obj_pos); ?>;"
                     <?php echo $poster ? 'poster="' . esc_url($poster) . '"' : ''; ?>>
@@ -194,20 +191,20 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 </video>
             <?php endif; ?>
             <?php if ($has_fallback_layer) : ?>
-                <img class="okip-hero__media okip-hero__media--fallback" src="<?php echo esc_url($fallback_url); ?>"
+                <img class="okip-hero__media okip-hero__media--fallback" data-okip-motion-target="background" src="<?php echo esc_url($fallback_url); ?>"
                     alt="" aria-hidden="true" style="object-position:<?php echo esc_attr($obj_pos); ?>;">
             <?php endif; ?>
-        <?php elseif ($bg_render === 'css-glitch') : ?>
-            <div class="okip-hero__css-bg<?php echo esc_attr($css_glitch_class); ?>" aria-hidden="true">
+        <?php elseif ($bg_render === 'css-motion') : ?>
+            <div class="okip-hero__css-bg<?php echo esc_attr($css_motion_class); ?>" data-css-variant="<?php echo esc_attr($css_variant); ?>" data-okip-motion-target="background" aria-hidden="true">
                 <span class="okip-hero__css-grid"></span>
                 <span class="okip-hero__css-signal"></span>
                 <span class="okip-hero__css-noise"></span>
             </div>
         <?php elseif ($bg_render === 'image') : ?>
-            <img class="okip-hero__media" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true"
+            <img class="okip-hero__media" data-okip-motion-target="background" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true"
                 style="object-position:<?php echo esc_attr($obj_pos); ?>;">
         <?php elseif ($bg_render === 'svg') : ?>
-            <img class="okip-hero__media okip-hero__media--svg" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true">
+            <img class="okip-hero__media okip-hero__media--svg" data-okip-motion-target="background" src="<?php echo esc_url($single_img_url); ?>" alt="" aria-hidden="true">
         <?php else : ?>
             <!-- bg-missing: sin media real configurado/encontrado. Fallback neutro por CSS. -->
         <?php endif; ?>
@@ -269,24 +266,29 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                     data-play-mode="<?php echo esc_attr($c_play); ?>"
                     data-reset-on-leave="<?php echo $c_reset ? '1' : '0'; ?>"
                     style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;">
-                    <div class="okip-hero__card-media">
-                        <?php if ($c_has && $c_type === 'video') : ?>
-                            <video class="okip-hero__card-video" muted loop playsinline preload="none"
-                                <?php echo $c_post ? 'poster="' . esc_url($c_post) . '"' : ''; ?>>
-                                <source src="<?php echo esc_url($c_url); ?>" type="video/mp4">
-                            </video>
-                        <?php elseif ($c_has) : ?>
-                            <img src="<?php echo esc_url($c_url); ?>" alt="<?php echo esc_attr($c_alt); ?>">
-                        <?php else : ?>
-                            <!-- Placeholder temporal (sin media real): marca dónde irá la tarjeta. -->
-                            <span class="okip-hero__card-ph" aria-hidden="true">
-                                <span class="okip-hero__card-ph-icon"></span>
-                                <?php if ($c_label !== '') : ?>
-                                    <span class="okip-hero__card-ph-label"><?php echo esc_html($c_label); ?></span>
-                                <?php endif; ?>
-                            </span>
-                        <?php endif; ?>
-                        <?php if ($c_scan) : ?><span class="okip-hero__card-scan" aria-hidden="true"></span><?php endif; ?>
+                    <!-- Wrapper de MOTION (entry/playback/exit): nodo separado del media.
+                         El transform del runtime vive aquí; el hover/glow/scanline en
+                         .okip-hero__card-media (nodos distintos → sin conflicto). -->
+                    <div class="okip-hero__card-motion" data-okip-motion-target="cards">
+                        <div class="okip-hero__card-media">
+                            <?php if ($c_has && $c_type === 'video') : ?>
+                                <video class="okip-hero__card-video" muted loop playsinline preload="none"
+                                    <?php echo $c_post ? 'poster="' . esc_url($c_post) . '"' : ''; ?>>
+                                    <source src="<?php echo esc_url($c_url); ?>" type="video/mp4">
+                                </video>
+                            <?php elseif ($c_has) : ?>
+                                <img src="<?php echo esc_url($c_url); ?>" alt="<?php echo esc_attr($c_alt); ?>">
+                            <?php else : ?>
+                                <!-- Placeholder temporal (sin media real): marca dónde irá la tarjeta. -->
+                                <span class="okip-hero__card-ph" aria-hidden="true">
+                                    <span class="okip-hero__card-ph-icon"></span>
+                                    <?php if ($c_label !== '') : ?>
+                                        <span class="okip-hero__card-ph-label"><?php echo esc_html($c_label); ?></span>
+                                    <?php endif; ?>
+                                </span>
+                            <?php endif; ?>
+                            <?php if ($c_scan) : ?><span class="okip-hero__card-scan" aria-hidden="true"></span><?php endif; ?>
+                        </div>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -299,14 +301,14 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
         style="--okip-hero-maxw:<?php echo esc_attr($max_width); ?>;">
         <h1 class="okip-hero__title">
             <?php if (! empty($content['title_line_1'])) : ?>
-                <span class="okip-hero__title-line"><?php echo esc_html($content['title_line_1']); ?></span>
+                <span class="okip-hero__title-line" data-okip-motion-target="text"><?php echo esc_html($content['title_line_1']); ?></span>
             <?php endif; ?>
             <?php if (! empty($content['title_line_2'])) : ?>
-                <span class="okip-hero__title-line"><?php echo esc_html($content['title_line_2']); ?></span>
+                <span class="okip-hero__title-line" data-okip-motion-target="text"><?php echo esc_html($content['title_line_2']); ?></span>
             <?php endif; ?>
         </h1>
         <?php if (! empty($content['description'])) : ?>
-            <div class="okip-hero__desc"><?php echo wp_kses_post($content['description']); ?></div>
+            <div class="okip-hero__desc" data-okip-motion-target="text"><?php echo wp_kses_post($content['description']); ?></div>
         <?php endif; ?>
     </div>
 

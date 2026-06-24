@@ -70,6 +70,7 @@ function okip_enqueue_assets()
     wp_enqueue_style('okip-base', $css_url . '/base.css', array('okip-tokens'), okip_asset_version($css_dir . '/base.css'));
     wp_enqueue_style('okip-layout', $css_url . '/layout.css', array('okip-base'), okip_asset_version($css_dir . '/layout.css'));
     wp_enqueue_style('okip-components', $css_url . '/components.css', array('okip-layout'), okip_asset_version($css_dir . '/components.css'));
+    wp_enqueue_style('okip-animations', $css_url . '/animations.css', array('okip-components'), okip_asset_version($css_dir . '/animations.css'));
 
     /* ---- GSAP local (condicional) ---- */
     $gsap_deps = array();
@@ -97,7 +98,8 @@ function okip_enqueue_assets()
         'hasScrollTrigger' => okip_has_gsap() && okip_has_scrolltrigger(),
     ));
 
-    wp_enqueue_script('okip-navbar', $js_url . '/navbar.js', array('okip-gsap-init'), okip_asset_version($js_dir . '/navbar.js'), true);
+    wp_enqueue_script('okip-animations', $js_url . '/animations.js', array('okip-gsap-init'), okip_asset_version($js_dir . '/animations.js'), true);
+    wp_enqueue_script('okip-navbar', $js_url . '/navbar.js', array('okip-animations'), okip_asset_version($js_dir . '/navbar.js'), true);
 
     /* ---- Assets por bloque (solo los usados en esta página) ---- */
     okip_enqueue_block_assets(okip_used_block_types($blocks));

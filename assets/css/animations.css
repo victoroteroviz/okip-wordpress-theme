@@ -1,0 +1,84 @@
+/*
+ * OKIP — animaciones compartidas.
+ */
+
+[data-okip-motion-target] {
+    transform-origin: center;
+}
+
+.okip-motion-prepared,
+.okip-motion-playback--float-soft,
+.okip-motion-playback--glow-pulse,
+.okip-motion-playback--slow-drift,
+.okip-motion-playback--pulse-field {
+    will-change: opacity, transform, filter;
+}
+
+.okip-motion-playback--float-soft {
+    animation: okip-motion-float-soft var(--okip-motion-duration, 4.2s) ease-in-out infinite alternate;
+}
+
+.okip-motion-playback--glow-pulse {
+    animation: okip-motion-glow-pulse var(--okip-motion-duration, 4.2s) ease-in-out infinite alternate;
+}
+
+.okip-motion-playback--slow-drift {
+    animation: okip-motion-slow-drift var(--okip-motion-duration, 8s) ease-in-out infinite alternate;
+}
+
+.okip-motion-playback--pulse-field {
+    animation: okip-motion-pulse-field var(--okip-motion-duration, 6s) ease-in-out infinite alternate;
+}
+
+@keyframes okip-motion-float-soft {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    100% {
+        transform: translate3d(0, calc(var(--okip-motion-intensity, .5) * -12px), 0) scale(calc(1 + (var(--okip-motion-intensity, .5) * .025)));
+    }
+}
+
+@keyframes okip-motion-glow-pulse {
+    0% {
+        filter: drop-shadow(0 0 0 rgba(60, 140, 255, 0));
+    }
+    100% {
+        filter: drop-shadow(0 0 calc(var(--okip-motion-intensity, .5) * 24px) rgba(60, 140, 255, .42));
+    }
+}
+
+@keyframes okip-motion-slow-drift {
+    0% {
+        transform: translate3d(calc(var(--okip-motion-intensity, .5) * -10px), 0, 0) scale(1);
+    }
+    100% {
+        transform: translate3d(calc(var(--okip-motion-intensity, .5) * 10px), calc(var(--okip-motion-intensity, .5) * -8px), 0) scale(calc(1 + (var(--okip-motion-intensity, .5) * .018)));
+    }
+}
+
+@keyframes okip-motion-pulse-field {
+    0% {
+        opacity: .86;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(calc(1 + (var(--okip-motion-intensity, .5) * .028)));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-okip-motion-target],
+    .okip-motion-prepared,
+    .okip-motion-playback--float-soft,
+    .okip-motion-playback--glow-pulse,
+    .okip-motion-playback--slow-drift,
+    .okip-motion-playback--pulse-field {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+        transition: none !important;
+    }
+}
