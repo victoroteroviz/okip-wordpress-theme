@@ -1,22 +1,26 @@
 /*
- * Bloque Mission Statement — reveal de texto por scroll.
+ * Bloque Mission Statement — reveal POR PASOS (scroll-snap por gesto).
  *
- * Desktop con GSAP + ScrollTrigger: la sección se PINEA y el reveal de letras se
- * scrubbea sobre un rango de scroll dedicado (scroll_duration_vh) → la animación
- * se reproduce con MÁS recorrido, totalmente ligada al scroll.
- * Sin GSAP (pero desktop): fallback rAF ligado a la posición del bloque (sin pin).
+ * Desktop con GSAP + ScrollTrigger: la sección se PINEA y avanza en 2 pasos
+ * discretos; cada giro de rueda (snap direccional) coloca un estado:
+ *   paso 1 → se anima la FRASE completa (líneas + línea final strong),
+ *   paso 2 → se anima el KICKER ("CREANDO ENTORNOS SEGUROS").
+ * El FONDO (glow azul) ya está presente al llegar — NO se anima (evita confusión
+ * al bajar del bloque anterior). Cada estado se anima por CSS, no por scrub.
+ *
+ * Sin GSAP (desktop): reveal one-shot al entrar (todo visible).
  * Móvil/tablet ≤disable_below o reduce-motion: todo visible (revealStatic).
  */
 (function () {
     'use strict';
+
+    var STEPS = 2; // frase completa · kicker
 
     var reduceMotion = (window.OKIP && typeof window.OKIP.reduceMotion === 'boolean')
         ? window.OKIP.reduceMotion
         : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
     var blocks = document.querySelectorAll('[data-okip-ms]');
-    var scrollBlocks = [];
-    var ticking = false;
 
     if (!blocks.length) {
         return;
@@ -35,11 +39,6 @@
         return window.innerHeight || document.documentElement.clientHeight || 1;
     }
 
-    function dataFloat(block, key, fallback) {
-        var value = parseFloat(block.dataset[key]);
-        return isNaN(value) ? fallback : value;
-    }
-
     function dataInt(block, key, fallback) {
         var value = parseInt(block.dataset[key], 10);
         return isNaN(value) ? fallback : value;
@@ -50,153 +49,77 @@
         return !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
     }
 
-    function timing(block) {
-        var start = clamp(dataFloat(block, 'textRevealStart', 0.08), 0, 0.9);
-        var end = clamp(dataFloat(block, 'textRevealEnd', 0.76), 0.1, 0.98);
-        if (end <= start) {
-            end = Math.min(0.98, start + 0.2);
-        }
-        return {
-            start: start,
-            end: end,
-            span: Math.max(0.01, end - start),
-            charWindow: clamp(dataFloat(block, 'charWindow', 0.34), 0.08, 0.65),
-            kickerStart: clamp(dataFloat(block, 'kickerRevealStart', 0.56), 0, 0.98),
-            kickerDuration: clamp(dataFloat(block, 'kickerRevealDuration', 0.14), 0.06, 0.5)
-        };
+    /* Cachea los grupos de caracteres y fija el stagger (transition-delay):
+       - statement: TODA la frase (líneas normales + línea final strong),
+       - kicker:    "CREANDO ENTORNOS SEGUROS". */
+    function prepareGroups(block) {
+        if (block.__okipMsGroups) { return block.__okipMsGroups; }
+
+        var statement = Array.prototype.slice.call(
+            block.querySelectorAll('.okip-ms__line [data-okip-ms-char]'));
+        var kicker = block.querySelector('.okip-ms__kicker');
+
+        // Sin stagger: la frase entra TODA A LA VEZ (más impacto).
+        statement.forEach(function (c) { c.style.transitionDelay = '0s'; });
+
+        block.__okipMsGroups = { statement: statement, kicker: kicker };
+        return block.__okipMsGroups;
     }
 
-    function cacheNodes(block) {
-        block.__okipMsChars = block.__okipMsChars || Array.prototype.slice.call(block.querySelectorAll('[data-okip-ms-char]'));
-        block.__okipMsKicker = block.__okipMsKicker || block.querySelector('.okip-ms__kicker');
-        return {
-            chars: block.__okipMsChars,
-            kicker: block.__okipMsKicker
-        };
+    function setGroupOn(nodes, on) {
+        nodes.forEach(function (node) { node.classList.toggle('is-on', on); });
     }
 
-    function setChar(node, progress) {
-        var p = clamp(progress, 0, 1);
-        var y = (1 - p) * 24;
-        var blur = (1 - p) * 5;
-
-        node.style.opacity = String(p);
-        node.style.transform = 'translateY(' + y.toFixed(2) + 'px)';
-        node.style.filter = 'blur(' + blur.toFixed(2) + 'px)';
-    }
-
-    function setMissionProgress(block, progress) {
-        block.style.setProperty('--okip-ms-scroll', progress.toFixed(3));
-        block.style.setProperty('--okip-ms-glow-boost', (progress * 0.28).toFixed(3));
-        block.style.setProperty('--okip-ms-glow-shift', (progress * 8).toFixed(2) + '%');
-        block.style.setProperty('--okip-ms-glow-scale', (progress * 0.18).toFixed(3));
-    }
-
-    /* Pinta el reveal completo (letras + kicker + glow) para un progress 0..1.
-       Lo usan tanto el camino GSAP pineado (self.progress) como el fallback rAF. */
-    function renderReveal(block, progress) {
-        var nodes = cacheNodes(block);
-        var chars = nodes.chars;
-        var total = Math.max(chars.length, 1);
-        var t = timing(block);
-        var textProgress = clamp((progress - t.start) / t.span, 0, 1);
-        var spread = Math.max(0, 1 - t.charWindow);
-
-        setMissionProgress(block, progress);
-
-        chars.forEach(function (char, index) {
-            var startAt = total > 1 ? (index / (total - 1)) * spread : 0;
-            var local = clamp((textProgress - startAt) / t.charWindow, 0, 1);
-            setChar(char, local);
-        });
-
-        if (nodes.kicker) {
-            var kickerProgress = clamp((progress - t.kickerStart) / t.kickerDuration, 0, 1);
-            setChar(nodes.kicker, kickerProgress);
-        }
-
-        block.classList.toggle('is-visible', progress >= 0.98);
+    /* Aplica el estado discreto de un paso (0..STEPS). Reversible.
+       El fondo NO se gestiona aquí: está siempre visible. */
+    function renderStep(block, step) {
+        var g = prepareGroups(block);
+        setGroupOn(g.statement, step >= 1);              // paso 1: frase completa
+        if (g.kicker) { g.kicker.classList.toggle('is-on', step >= 2); } // paso 2: kicker
+        block.dataset.msStep = String(step);
     }
 
     function revealStatic(block) {
-        var nodes = cacheNodes(block);
-
-        setMissionProgress(block, 1);
-        nodes.chars.forEach(function (char) {
-            setChar(char, 1);
-        });
-        if (nodes.kicker) {
-            setChar(nodes.kicker, 1);
-        }
-
+        var g = prepareGroups(block);
+        setGroupOn(g.statement, true);
+        if (g.kicker) { g.kicker.classList.add('is-on'); }
         block.classList.add('is-visible', 'is-static');
     }
 
-    /* ---- Fallback rAF (desktop, sin GSAP): progreso por posición del bloque ---- */
-    function updateScrollBlock(block) {
-        var viewport = vh();
-        var rect = block.getBoundingClientRect();
-        var doc = document.documentElement;
-        var scrollY = window.pageYOffset || doc.scrollTop || 0;
-        var maxScroll = Math.max(0, doc.scrollHeight - viewport);
-        var blockTop = rect.top + scrollY;
-        var startVh = dataInt(block, 'scrollStartVh', 108);
-        var rangeVh = dataInt(block, 'scrollDurationVh', 150);
-        var startScroll = blockTop - (viewport * startVh / 100);
-        var endScroll = startScroll + (viewport * rangeVh / 100);
-        var reachableEnd = Math.min(endScroll, maxScroll);
-        var range = Math.max(1, reachableEnd - startScroll);
-        var progress = clamp((scrollY - startScroll) / range, 0, 1);
-
-        renderReveal(block, progress);
-    }
-
-    function updateAll() {
-        ticking = false;
-        scrollBlocks.forEach(updateScrollBlock);
-    }
-
-    function requestUpdate() {
-        if (ticking) {
-            return;
-        }
-        ticking = true;
-        window.requestAnimationFrame(updateAll);
-    }
-
-    function initScrollLetters(block) {
-        cacheNodes(block);
-        scrollBlocks.push(block);
-        updateScrollBlock(block);
-    }
-
-    /* ---- Camino GSAP: pin + scrub del reveal sobre rango dedicado ---- */
-    function initPinnedReveal(block) {
+    /* ---- Camino GSAP: pin + snap direccional, 1 gesto = 1 paso ---- */
+    function initSteppedReveal(block) {
         var ST = window.ScrollTrigger;
         var msId = block.id || block.dataset.blockInstance || 'ms';
-        var revealVh = dataInt(block, 'scrollDurationVh', 200);
+        var totalVh = dataInt(block, 'scrollDurationVh', 180);
 
-        cacheNodes(block);
-        renderReveal(block, 0);
+        block.classList.add('okip-ms--stepped');
+        prepareGroups(block);
+        renderStep(block, 0);
 
-        block.__okipMsReveal = ST.create({
-            id: msId + '-reveal',
+        block.__okipMsST = ST.create({
+            id: msId + '-steps',
             trigger: block,
             start: 'top top',
             end: function () {
-                return '+=' + Math.round(vh() * (revealVh / 100));
+                return '+=' + Math.round(vh() * (totalVh / 100));
             },
             pin: true,
             pinSpacing: true,
-            scrub: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
             refreshPriority: -11,
+            snap: {
+                snapTo: [0, 1 / 2, 1],
+                duration: { min: 0.12, max: 0.3 },
+                delay: 0.01,
+                ease: 'power2.inOut',
+                directional: true
+            },
             onUpdate: function (self) {
-                renderReveal(block, self.progress);
+                renderStep(block, Math.round(self.progress * STEPS));
             },
             onRefresh: function (self) {
-                renderReveal(block, self.progress);
+                renderStep(block, Math.round(self.progress * STEPS));
             }
         });
 
@@ -209,15 +132,10 @@
         window.addEventListener('resize', function () {
             window.clearTimeout(rt);
             rt = window.setTimeout(function () {
-                if (isSmallViewport(block) && block.__okipMsReveal) {
-                    block.__okipMsReveal.kill();
-                    block.__okipMsReveal = null;
-                    if (window.gsap) {
-                        var nodes = cacheNodes(block);
-                        window.gsap.set([].concat(nodes.chars, nodes.kicker ? [nodes.kicker] : []), {
-                            clearProps: 'opacity,transform,filter'
-                        });
-                    }
+                if (isSmallViewport(block) && block.__okipMsST) {
+                    block.__okipMsST.kill();
+                    block.__okipMsST = null;
+                    block.classList.remove('okip-ms--stepped');
                     revealStatic(block);
                 }
             }, 200);
@@ -256,24 +174,13 @@
             return;
         }
 
-        // GSAP disponible → pin + scrub (más scroll para reproducir la animación).
-        if (block.dataset.textAnim === 'scroll-letters' && stReady()) {
-            initPinnedReveal(block);
+        // GSAP + modo scroll-letters → reveal por pasos (pin + snap por gesto).
+        if (stReady() && block.dataset.textAnim === 'scroll-letters') {
+            initSteppedReveal(block);
             return;
         }
 
-        // Fallback rAF (sin GSAP) ligado a la posición del bloque.
-        if (block.dataset.textAnim === 'scroll-letters' && block.dataset.useVanilla === '1') {
-            initScrollLetters(block);
-            return;
-        }
-
+        // Otros modos / sin GSAP: reveal one-shot al entrar.
         initOneShotReveal(block);
     });
-
-    if (scrollBlocks.length) {
-        window.addEventListener('scroll', requestUpdate, { passive: true });
-        window.addEventListener('resize', requestUpdate);
-        requestUpdate();
-    }
 })();

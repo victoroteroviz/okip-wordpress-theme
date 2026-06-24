@@ -53,6 +53,15 @@
     padding-block: clamp(3rem, 9vh, 6rem);
 }
 
+/* Desktop animado: padding inferior extra para que, al fijar la sección en
+   'bottom bottom' durante el HOLD, el último producto quede enmarcado (no pegado
+   al borde inferior). En móvil/estático no aplica. */
+@media (min-width: 1025px) {
+    .okip-js .okip-ps--animated:not(.is-static) .okip-ps__inner {
+        padding-bottom: clamp(8rem, 24vh, 16rem);
+    }
+}
+
 .okip-ps__section-label {
     margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
     font-size: .78rem;

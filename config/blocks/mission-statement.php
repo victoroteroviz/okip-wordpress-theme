@@ -125,11 +125,11 @@ return array(
         'enabled'              => true,
         'use_vanilla_fallback' => true,
         'disable_below'        => 1024,
-        'scroll_start_vh'      => 108,   // solo fallback rAF (sin GSAP); el pin usa 'top top'
-        // Con GSAP la sección se PINEA y el reveal se scrubbea sobre este recorrido:
-        // 220vh = más scroll dedicado para que la animación de letras se reproduzca
-        // despacio y completamente ligada al scroll antes de soltar hacia News.
-        'scroll_duration_vh'   => 220,
+        'scroll_start_vh'      => 108,   // (sin uso en pasos; se conserva para el esquema)
+        // Con GSAP la sección se PINEA y avanza en 2 pasos por snap (1 gesto = 1 paso:
+        // frase completa · kicker). El fondo NO se anima. Este valor es la DISTANCIA
+        // TOTAL del pin de los 2 pasos (≈60vh por paso). Subirlo da más recorrido.
+        'scroll_duration_vh'   => 120,
         'text'                 => 'scroll-letters',
         'text_reveal_start'    => .04,
         // Las letras (y el kicker) deben llegar a 100% bastante ANTES de que News

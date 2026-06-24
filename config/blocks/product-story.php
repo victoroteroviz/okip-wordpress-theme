@@ -80,7 +80,7 @@ if (! function_exists('okip_normalize_product_story_data')) {
         // Transición de entrega al bloque siguiente.
         $t = isset($data['transition']) && is_array($data['transition']) ? $data['transition'] : array();
         $t['handoff_pin']     = okip_bool(isset($t['handoff_pin']) ? $t['handoff_pin'] : true);
-        $t['duration_vh']     = okip_clamp_int(isset($t['duration_vh']) ? $t['duration_vh'] : 55, 20, 200);
+        $t['duration_vh']     = okip_clamp_int(isset($t['duration_vh']) ? $t['duration_vh'] : 40, 20, 200);
         $t['disable_below']   = okip_clamp_int(isset($t['disable_below']) ? $t['disable_below'] : 1024, 0, 9999);
         $data['transition']   = $t;
 
@@ -165,10 +165,10 @@ return array(
     ),
     'transition' => array(
         'handoff_pin'   => true, // HOLD: fija la sección con el último producto centrado
-        // Distancia del HOLD (pinSpacing:true): el último producto queda fijo y
-        // limpio ~55vh antes de liberarse; luego Mission sube por scroll natural y
-        // lo cubre (z-index mayor). No hay solape forzado → sin tapar el producto.
-        'duration_vh'   => 55,
+        // Distancia del HOLD (pinSpacing:true): la sección queda fija LLENANDO el
+        // viewport (pin en 'bottom bottom') ~40vh; luego Mission sube por scroll
+        // natural y la cubre (z-index mayor). Sin solape forzado ni hueco de fondo.
+        'duration_vh'   => 40,
         'disable_below' => 1024,
     ),
 );

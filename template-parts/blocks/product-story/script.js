@@ -177,26 +177,25 @@
         }
 
         function buildHandoffPin() {
-            var lastRow = rows[rows.length - 1];
-            if (!lastRow) { return; }
-
             var handoffId = psId + '-mission-handoff';
             triggerIds.push(handoffId);
 
-            // HOLD (no overlap): cuando el ÚLTIMO producto queda centrado, fijamos
-            // la sección (pinSpacing:true) durante `handoffDurationVh` para que se
-            // vea limpio y completo un momento ANTES de que Mission suba a cubrir.
-            // Con pinSpacing:true el siguiente bloque NO se solapa durante el hold;
-            // al liberarse, Mission entra por scroll natural (z-index mayor) y cubre.
+            // HOLD (no overlap): fijamos la sección cuando su BORDE INFERIOR llega al
+            // fondo del viewport ('bottom bottom'). Como la sección es más alta que el
+            // viewport, al fijarse lo LLENA por completo (sin hueco que destape los
+            // bloques fijos de atrás —parallax-monitor/hero—). El padding inferior
+            // (CSS, solo desktop animado) sube el último producto para enmarcarlo.
+            // pinSpacing:true → el siguiente bloque NO se solapa durante el hold; al
+            // liberarse, Mission entra por scroll natural (z-index mayor) y cubre.
             ST.create({
                 id: handoffId,
-                trigger: lastRow,
-                start: 'center center',
+                trigger: section,
+                start: 'bottom bottom',
                 end: function () {
                     var viewport = window.innerHeight || document.documentElement.clientHeight || 1;
                     return '+=' + Math.round(viewport * (handoffDurationVh / 100));
                 },
-                pin: section,
+                pin: true,
                 pinSpacing: true,
                 anticipatePin: 1,
                 invalidateOnRefresh: true,
@@ -236,13 +235,14 @@
                 invalidateOnRefresh: true
             };
 
-            /* La ÚLTIMA fila debe terminar su reveal ANTES del HOLD pin (que fija
-               la sección cuando la fila queda centrada, 'center center'). Cerramos
-               su reveal un poco antes del centro ('center 60%') para que llegue al
-               hold 100% completa y se asiente, sin congelarse a medias. */
+            /* La ÚLTIMA fila debe terminar su reveal ANTES del HOLD pin (que fija la
+               sección en 'bottom bottom'). Anclamos su fin al fondo de la sección con
+               un pequeño adelanto (+=8%) para que llegue al hold 100% completa y se
+               asiente, sin congelarse a medias. */
             var isLastRow = i === rows.length - 1;
             if (isLastRow && handoffPin && !isHandoffSmall) {
-                stVars.end = 'center 60%';
+                stVars.endTrigger = section;
+                stVars.end        = 'bottom bottom+=8%';
             }
 
             var tl = gsap.timeline({ scrollTrigger: stVars });

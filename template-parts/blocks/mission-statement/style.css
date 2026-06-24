@@ -213,6 +213,31 @@
     clip-path: inset(0);
 }
 
+/* ============================================================
+   REVEAL POR PASOS (GSAP, .okip-ms--stepped): estados discretos animados por CSS.
+   paso 1 → FRASE completa (líneas + strong) · paso 2 → KICKER.
+   El FONDO no se anima (siempre visible). El stagger va inline desde el JS.
+   ============================================================ */
+
+/* Caracteres/kicker ocultos; se revelan al activar .is-on por paso.
+   Transición corta + desplazamiento/blur leves → rápido y fluido. */
+.okip-js .okip-ms--stepped .okip-ms__char,
+.okip-js .okip-ms--stepped .okip-ms__kicker {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(3px);
+    transition:
+        opacity .34s var(--okip-ease),
+        transform .34s var(--okip-ease),
+        filter .34s var(--okip-ease);
+}
+.okip-js .okip-ms--stepped .okip-ms__char.is-on,
+.okip-js .okip-ms--stepped .okip-ms__kicker.is-on {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+}
+
 @keyframes okip-ms-glow {
     0% {
         opacity: calc(.5 + var(--okip-ms-glow-boost, 0));
@@ -292,6 +317,14 @@
         opacity: 1;
         transform: none;
         clip-path: none;
+        transition: none;
+    }
+
+    .okip-js .okip-ms--stepped .okip-ms__char,
+    .okip-js .okip-ms--stepped .okip-ms__kicker {
+        opacity: 1;
+        transform: none;
+        filter: none;
         transition: none;
     }
 }
