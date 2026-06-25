@@ -145,7 +145,7 @@ return array(
     'computer' => array(
         'type'                => 'video', // video | image | svg | placeholder
         'render_mode'         => 'scene', // scene = video de escena libre; screen = media dentro del marco
-        'media'               => 'assets/video/parallax-monitor/default-monitor.mp4',
+        'media'               => 'assets/video/parallax-monitor/default-monitor.webm',
         'poster'              => '',
         'alt'                 => 'Panel de monitoreo operativo en tiempo real',
         'black_key_enabled'   => false, // key visual opcional; OFF por defecto: el video ya es escena opaca sobre fondo oscuro

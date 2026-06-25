@@ -102,6 +102,20 @@ $range_str = function ($r) {
     return $a . ',' . $b;
 };
 
+// MIME del <source> derivado de la extensión del media (soporta webm/mp4/ogg/mov).
+$okip_video_mime = function ($url) {
+    $ext = strtolower(pathinfo((string) parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+    $map = array(
+        'webm' => 'video/webm',
+        'ogv'  => 'video/ogg',
+        'ogg'  => 'video/ogg',
+        'm4v'  => 'video/mp4',
+        'mp4'  => 'video/mp4',
+        'mov'  => 'video/quicktime',
+    );
+    return isset($map[$ext]) ? $map[$ext] : 'video/mp4';
+};
+
 // --- CTA ---
 $cta_on = ! empty($cta['enabled']) && ! empty($cta['label']) && ! empty($cta['url']);
 
@@ -167,7 +181,7 @@ $monitor_classes .= $glow_on ? ' okip-pm__monitor--glow' : '';
             <?php if ($bg_render === 'video') : ?>
                 <video class="okip-pm__bg-media" muted autoplay loop playsinline preload="auto"
                     <?php echo $bg_poster ? 'poster="' . esc_url($bg_poster) . '"' : ''; ?>>
-                    <source src="<?php echo esc_url($bg_url); ?>" type="video/mp4">
+                    <source src="<?php echo esc_url($bg_url); ?>" type="<?php echo esc_attr($okip_video_mime($bg_url)); ?>">
                 </video>
             <?php elseif ($bg_render === 'image' || $bg_render === 'svg') : ?>
                 <img class="okip-pm__bg-media" src="<?php echo esc_url($bg_url); ?>" alt="" aria-hidden="true">
@@ -203,7 +217,7 @@ $monitor_classes .= $glow_on ? ' okip-pm__monitor--glow' : '';
                     <?php if ($cmp_type === 'video') : ?>
                         <video class="okip-pm__scene-media" muted loop playsinline preload="metadata" data-okip-pm-computer-video aria-label="<?php echo esc_attr($cmp_alt); ?>"
                             <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
-                            <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
+                            <source src="<?php echo esc_url($cmp_url); ?>" type="<?php echo esc_attr($okip_video_mime($cmp_url)); ?>">
                         </video>
                     <?php else : ?>
                         <img class="okip-pm__scene-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
@@ -214,7 +228,7 @@ $monitor_classes .= $glow_on ? ' okip-pm__monitor--glow' : '';
                     <?php if ($cmp_has && $cmp_type === 'video') : ?>
                         <video class="okip-pm__screen-media" muted loop playsinline preload="metadata" data-okip-pm-computer-video data-okip-pm-screen-video
                             <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
-                            <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
+                            <source src="<?php echo esc_url($cmp_url); ?>" type="<?php echo esc_attr($okip_video_mime($cmp_url)); ?>">
                         </video>
                     <?php elseif ($cmp_has) : ?>
                         <img class="okip-pm__screen-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
