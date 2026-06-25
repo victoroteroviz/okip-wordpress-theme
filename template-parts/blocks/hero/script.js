@@ -226,10 +226,15 @@
 
         cards.forEach(function (card) {
             var video = card.querySelector('video');
-            if (!video) { return; }
-
+            var gif = card.querySelector('.okip-hero__card-gif');
             var playMode = card.getAttribute('data-play-mode') || 'hover';
             var resetOnLeave = card.getAttribute('data-reset-on-leave') === '1';
+
+            if (gif) {
+                setupGifCard(card, gif, playMode, finePointer);
+            }
+
+            if (!video) { return; }
 
             var play = function () {
                 var p = video.play();
@@ -254,6 +259,60 @@
                     if (video.paused) { play(); } else { pause(); }
                 });
             }
+        });
+    }
+
+    function setupGifCard(card, gif, playMode, finePointer) {
+        var src = card.getAttribute('data-gif-src') || gif.getAttribute('data-gif-src') || '';
+        var token = 0;
+        if (!src) { return; }
+
+        function setPressed(value) {
+            if (card.hasAttribute('aria-pressed')) {
+                card.setAttribute('aria-pressed', value ? 'true' : 'false');
+            }
+        }
+
+        function stop() {
+            token += 1;
+            card.classList.remove('is-gif-playing');
+            setPressed(false);
+            gif.removeAttribute('src');
+        }
+
+        function play() {
+            token += 1;
+            var current = token;
+            card.classList.add('is-gif-playing');
+            setPressed(true);
+            gif.removeAttribute('src');
+            window.requestAnimationFrame(function () {
+                if (current === token) {
+                    gif.setAttribute('src', src);
+                }
+            });
+        }
+
+        function toggle() {
+            if (card.classList.contains('is-gif-playing')) {
+                stop();
+            } else {
+                play();
+            }
+        }
+
+        if (playMode === 'hover' && finePointer && !reduceMotion) {
+            card.addEventListener('mouseenter', play);
+            card.addEventListener('mouseleave', stop);
+            card.addEventListener('click', toggle);
+        } else {
+            card.addEventListener('click', toggle);
+        }
+
+        card.addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') { return; }
+            event.preventDefault();
+            toggle();
         });
     }
 

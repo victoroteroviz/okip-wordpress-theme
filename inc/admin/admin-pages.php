@@ -446,6 +446,7 @@ function okip_admin_render_hero_card($card_base, array $card, $legend)
             <?php
             okip_admin_select_field(__('Tipo', 'okip'), $card_base . '[type]', $card['type'], array(
                 'image' => __('Imagen', 'okip'),
+                'gif'   => __('GIF', 'okip'),
                 'video' => __('Video', 'okip'),
                 'svg'   => __('SVG', 'okip'),
             ));

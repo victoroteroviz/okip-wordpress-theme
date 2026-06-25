@@ -470,6 +470,11 @@
     pointer-events: auto;
 }
 
+.okip-hero__card--gif {
+    width: clamp(170px, var(--okip-card-w, 24vw), 460px);
+    cursor: pointer;
+}
+
 .okip-hero__card-media {
     position: relative;
     aspect-ratio: 3 / 4;
@@ -480,12 +485,89 @@
     box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
 }
 
+.okip-hero__card--gif .okip-hero__card-media {
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(8, 20, 34, .18), rgba(10, 40, 52, .08)),
+        rgba(255, 255, 255, .035);
+    border-color: rgba(93, 226, 238, .28);
+    backdrop-filter: blur(3px);
+}
+
 .okip-hero__card-media img,
 .okip-hero__card-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+.okip-hero__card-gif {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .18s ease;
+}
+
+.okip-hero__card.is-gif-playing .okip-hero__card-gif {
+    opacity: 1;
+}
+
+.okip-hero__card-gif-cue {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background:
+        linear-gradient(120deg, rgba(93, 226, 238, .06), transparent 42%, rgba(255, 255, 255, .045)),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, .045) 0 1px, transparent 1px 14px),
+        rgba(2, 7, 17, .16);
+    transition: opacity .18s ease, visibility .18s ease;
+}
+
+.okip-hero__card-gif-cue::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgba(93, 226, 238, .56);
+    border-radius: 6px;
+    box-shadow:
+        inset 0 0 18px rgba(93, 226, 238, .1),
+        0 0 18px rgba(93, 226, 238, .12);
+}
+
+.okip-hero__card-gif-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .62);
+    background: rgba(2, 7, 17, .42);
+    color: #ffffff;
+    font-size: .92rem;
+    line-height: 1;
+    font-weight: 700;
+    box-shadow: 0 0 16px rgba(93, 226, 238, .32);
+}
+
+.okip-hero__card.is-gif-playing .okip-hero__card-gif-cue {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.okip-hero__card--gif:focus-visible {
+    outline: none;
+}
+
+.okip-hero__card--gif:focus-visible .okip-hero__card-media {
+    box-shadow:
+        0 0 0 2px rgba(255, 255, 255, .78),
+        0 0 0 5px rgba(93, 226, 238, .45),
+        0 20px 50px rgba(0, 0, 0, .5);
 }
 
 /* Placeholder temporal de tarjeta (cuando aún no hay media real).
@@ -624,6 +706,9 @@
         transform: none;
         width: clamp(100px, 38vw, 160px);
     }
+    .okip-hero__card--gif {
+        width: clamp(156px, 82vw, 300px);
+    }
 }
 
 /* ---- Accesibilidad: reduce motion ---- */
@@ -647,6 +732,10 @@
         animation: none !important;
     }
     .okip-hero.is-bg-failed .okip-hero__media {
+        transition: none;
+    }
+    .okip-hero__card-gif,
+    .okip-hero__card-gif-cue {
         transition: none;
     }
 }

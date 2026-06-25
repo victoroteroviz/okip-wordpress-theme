@@ -232,7 +232,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
             continue;
         }
         $c_type = isset($card['type']) ? $card['type'] : '';
-        if (! in_array($c_type, array('video', 'image', 'svg'), true)) {
+        if (! in_array($c_type, array('video', 'image', 'svg', 'gif'), true)) {
             continue;
         }
         $card['__has_media'] = okip_media_exists(isset($card['media']) ? $card['media'] : '');
@@ -244,8 +244,9 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     }
     ?>
     <?php if (! empty($okip_valid_cards)) : ?>
-        <div class="okip-hero__cards" data-okip-hero-cards aria-hidden="true">
+        <div class="okip-hero__cards" data-okip-hero-cards>
             <?php foreach ($okip_valid_cards as $card) :
+                $c_id    = isset($card['id']) ? $card['id'] : '';
                 $c_has   = ! empty($card['__has_media']);
                 $c_type  = $card['type'];
                 $c_url   = $c_has ? okip_media_url($card['media']) : '';
@@ -259,18 +260,26 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 $c_label = isset($card['placeholder_label']) ? $card['placeholder_label'] : '';
                 $c_play  = isset($card['play_mode']) ? $card['play_mode'] : 'hover';
                 $c_reset = ! empty($card['reset_on_leave']);
+                $c_is_gif = ($c_type === 'gif');
+                $c_is_gif_interactive = ($c_is_gif && $c_has && $c_url !== '');
+                $c_aria_label = $c_alt !== ''
+                    ? sprintf(__('Reproducir animación: %s', 'okip'), $c_alt)
+                    : __('Reproducir animación', 'okip');
 
                 $card_classes = 'okip-hero__card';
                 $card_classes .= $c_glow ? ' okip-hero__card--glow' : '';
                 $card_classes .= $c_scan ? ' okip-hero__card--scanline' : '';
+                $card_classes .= $c_is_gif ? ' okip-hero__card--gif' : '';
                 $card_classes .= $c_has ? '' : ' okip-hero__card--placeholder';
             ?>
                 <div class="<?php echo esc_attr($card_classes); ?>"
                     data-okip-hero-card
+                    data-card-id="<?php echo esc_attr($c_id); ?>"
                     data-card-type="<?php echo esc_attr($c_type); ?>"
                     data-has-media="<?php echo $c_has ? '1' : '0'; ?>"
                     data-play-mode="<?php echo esc_attr($c_play); ?>"
                     data-reset-on-leave="<?php echo $c_reset ? '1' : '0'; ?>"
+                    <?php echo $c_is_gif_interactive ? 'data-gif-src="' . esc_url($c_url) . '" role="button" tabindex="0" aria-label="' . esc_attr($c_aria_label) . '" aria-pressed="false"' : ''; ?>
                     style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;--okip-card-w:<?php echo esc_attr((string) $c_w); ?>vw;">
                     <!-- Wrapper de MOTION (entry/playback/exit): nodo separado del media.
                          El transform del runtime vive aquí; el hover/glow/scanline en
@@ -282,6 +291,11 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                                     <?php echo $c_post ? 'poster="' . esc_url($c_post) . '"' : ''; ?>>
                                     <source src="<?php echo esc_url($c_url); ?>" type="video/mp4">
                                 </video>
+                            <?php elseif ($c_is_gif_interactive) : ?>
+                                <img class="okip-hero__card-gif" data-gif-src="<?php echo esc_url($c_url); ?>" alt="" aria-hidden="true" decoding="async">
+                                <span class="okip-hero__card-gif-cue" aria-hidden="true">
+                                    <span class="okip-hero__card-gif-badge">!</span>
+                                </span>
                             <?php elseif ($c_has) : ?>
                                 <img src="<?php echo esc_url($c_url); ?>" alt="<?php echo esc_attr($c_alt); ?>">
                             <?php else : ?>

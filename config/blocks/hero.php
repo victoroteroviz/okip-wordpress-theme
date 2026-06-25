@@ -16,7 +16,7 @@
  *
  * Whitelists:
  *   background.type  : css_motion | video | image | svg | gradient
- *   card.type        : video | image | svg
+ *   card.type        : video | image | svg | gif
  *
  * Regla del fondo: video por defecto con asset del tema. El fondo CSS editable
  * y media image/svg siguen disponibles como alternativas limpias. El overlay es
@@ -43,7 +43,7 @@ if (! function_exists('okip_hero_card_defaults')) {
         return array(
             'id'                  => '',
             'active'              => true,
-            'type'                => 'image', // video | image | svg
+            'type'                => 'image', // video | image | svg | gif
             'media'               => '',
             'poster'              => '',
             'alt'                 => '',
@@ -72,7 +72,7 @@ if (! function_exists('okip_normalize_hero_data')) {
     {
         $align_allowed = array('left', 'center', 'right');
         $bg_allowed    = array('css_motion', 'video', 'image', 'svg', 'gradient');
-        $card_allowed  = array('video', 'image', 'svg');
+        $card_allowed  = array('video', 'image', 'svg', 'gif');
         $play_allowed  = array('hover', 'tap', 'manual');
 
         // Contenido.
@@ -228,7 +228,48 @@ return array(
         'content_entry_delay'     => 900,  // ms desde que inicia el Hero hasta texto/tarjetas
     ),
     'cards' => array(
-        // Lista de tarjetas multimedia flotantes (ver okip_hero_card_defaults()).
+        array(
+            'id'                  => 'hero-carro',
+            'type'                => 'gif',
+            'media'               => 'assets/gif/hero/carro.gif',
+            'alt'                 => 'Animación de reportes vehiculares',
+            'x'                   => 19,
+            'y'                   => 24,
+            'width_pct'           => 23,
+            'glow'                => true,
+            'scanline'            => false,
+            'placeholder_enabled' => true,
+            'play_mode'           => 'hover',
+            'reset_on_leave'      => true,
+        ),
+        array(
+            'id'                  => 'hero-reconocimiento',
+            'type'                => 'gif',
+            'media'               => 'assets/gif/hero/Reconocimiento.gif',
+            'alt'                 => 'Animación de reconocimiento de persona',
+            'x'                   => 22,
+            'y'                   => 74,
+            'width_pct'           => 24,
+            'glow'                => true,
+            'scanline'            => false,
+            'placeholder_enabled' => true,
+            'play_mode'           => 'hover',
+            'reset_on_leave'      => true,
+        ),
+        array(
+            'id'                  => 'hero-mapa',
+            'type'                => 'gif',
+            'media'               => 'assets/gif/hero/Mapa 1.gif',
+            'alt'                 => 'Animación de mapa operativo',
+            'x'                   => 78,
+            'y'                   => 72,
+            'width_pct'           => 25,
+            'glow'                => true,
+            'scanline'            => false,
+            'placeholder_enabled' => true,
+            'play_mode'           => 'hover',
+            'reset_on_leave'      => true,
+        ),
     ),
     'typography' => array(
         'title'       => okip_typography_defaults('hero_title'),
