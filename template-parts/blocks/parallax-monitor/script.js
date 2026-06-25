@@ -7,18 +7,19 @@
  *  - PARALLAX = transform inline SOLO en nodos EXTERIORES de capa
  *      (.okip-pm__bg / .okip-pm__monitor / .okip-pm__text).
  *  - REVEAL  = opacidad/translate por CLASE latcheada en nodos INTERIORES
- *      (.okip-pm__computer-reveal / .okip-pm__text-reveal) + opacidad del fondo.
+ *      (.okip-pm__computer-reveal / .okip-pm__text-reveal).
  *      Nunca reveal y parallax en el mismo nodo.
  *
  * Con GSAP + ScrollTrigger:
  *   1) HERO STICKY: el Hero queda fijo por CSS y B2 lo cubre por flujo/z-index.
- *   2) DEPTH ENTRY: un timeline maestro usa data-enter para revelar por capas:
- *      fondo → monitor → texto. Todas terminan en y:0 antes de que B3 cubra B2.
+ *   2) COVER ENTRY: una capa fija de fondo cubre el Hero con progreso determinista.
+ *   3) DEPTH ENTRY: un timeline maestro usa data-enter para revelar monitor → texto.
+ *      Todas las capas reales terminan en y:0 antes de que B3 cubra B2.
  *   4) HOLD-PIN: el Bloque 2 se pinea sin espacio reservado; B3 sube encima
  *      como panel claro mientras la escena de B2 queda fija.
  *
  * Sin GSAP: fallback vanilla rAF (depth entry) + IO one-shot (reveal). Sin pin.
- * Móvil/tablet también animan; solo reduce-motion / sin driver entra en is-static.
+ * Móvil/tablet, reduce-motion o sin driver entran en is-static.
  * Respeta prefers-reduced-motion. No duplica listeners.
  */
 (function () {
@@ -34,6 +35,24 @@
     }
 
     function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+    function setPmSyncReady(ready) {
+        document.documentElement.classList.toggle('is-pm-sync-ready', !!ready);
+    }
+    // is-pm-covering: hook CSS RESERVADO (cover en su rampa, aún no opaco). Hoy sin
+    // consumidor; expuesto a propósito para enganches CSS futuros. La visibilidad del
+    // navbar usa is-pm-covered (opaco), no esta.
+    function setPmCovering(covering) {
+        document.documentElement.classList.toggle('is-pm-covering', !!covering);
+    }
+    function setPmCovered(covered) {
+        var de = document.documentElement;
+        covered = !!covered;
+        if (de.classList.contains('is-pm-covered') === covered) { return; }
+        de.classList.toggle('is-pm-covered', covered);
+        document.dispatchEvent(new CustomEvent('okip:pm-cover', {
+            detail: { covered: covered }
+        }));
+    }
 
     var REVEAL_CLASS = {
         background: 'is-bg-revealed',
@@ -55,7 +74,9 @@
         var DRIFT        = parseFloat(d.driftMax)       || 140;
         var bgPinVh      = parseFloat(d.bgPinVh)        || 100;
         var entryScrollVh = clamp(parseFloat(d.entryScrollVh) || 155, 100, 300);
-        var coverDelayVh  = clamp(parseFloat(d.coverDelayVh) || 35, 0, 200);
+        var coverDelayVh  = clamp(parseFloat(d.coverDelayVh) || 50, 0, 200);
+        var coverStartVh  = clamp(parseFloat(d.coverStartVh) || 8, 1, 50);
+        var coverRamp     = clamp(parseFloat(d.coverRamp) || 0.45, 0.05, 1);
 
         // ID de instancia para nombrar ScrollTriggers y evitar colisiones entre bloques.
         var pmId = section.id || section.dataset.blockInstance || 'pm';
@@ -64,7 +85,7 @@
 
         // Breakpoint del overlap/pin complejo: en móvil/tablet (≤1024px) NO se usa pin
         // ni se empuja al Bloque 3; flujo vertical normal y entrada estática.
-        var OVERLAP_BP = 1024;
+        var OVERLAP_BP = parseInt(d.overlapBp, 10) || 1024;
         function isSmallViewport() {
             return !!(window.matchMedia && window.matchMedia('(max-width:' + OVERLAP_BP + 'px)').matches);
         }
@@ -110,6 +131,25 @@
             if (cmpAutoplay) { playComputer(); }
         }
 
+        // Sync del navbar SIN GSAP (estático/vanilla): emite el MISMO estado
+        // compartido (is-pm-sync-ready + is-pm-covered/okip:pm-cover) que la ruta
+        // GSAP, calculado por posición del bloque. Así el navbar sigue una única
+        // señal y nunca recae en su propio getBoundingClientRect (evita la franja).
+        function initCoverSyncFallback() {
+            setPmSyncReady(true);
+            var ticking = false;
+            function evalCovered() {
+                ticking = false;
+                setPmCovered(section.getBoundingClientRect().top <= 1);
+            }
+            function onScroll() {
+                if (!ticking) { ticking = true; window.requestAnimationFrame(evalCovered); }
+            }
+            evalCovered();
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', onScroll, { passive: true });
+        }
+
         function vh() { return window.innerHeight || document.documentElement.clientHeight; }
         function entryScrollDistance() {
             return vh() * (entryScrollVh / 100);
@@ -129,6 +169,10 @@
             start = clamp(start, 0, 1);
             end = clamp(end, start, 1);
             return { start: start, end: end, duration: Math.max(end - start, 0.001) };
+        }
+        function layerProgress(progress, enter) {
+            if (!enter) { return progress; }
+            return clamp((progress - enter.start) / enter.duration, 0, 1);
         }
         function layer(name) {
             for (var i = 0; i < layers.length; i++) {
@@ -150,6 +194,7 @@
         if (!canAnimate) {
             section.classList.add('is-static');
             revealAll();
+            initCoverSyncFallback();
             return;
         }
 
@@ -163,6 +208,7 @@
             section.classList.remove('is-transitioning');
             section.classList.add('is-static');
             revealAll(); // sin driver: al menos mostrar contenido.
+            initCoverSyncFallback();
         }
 
         /* ============================================================
@@ -217,7 +263,88 @@
 
             syncFollowingBlockDelay();
 
-            // 2) DEPTH ENTRY: un solo timeline gobierna fondo → monitor → texto.
+            var cover = section.querySelector('[data-okip-pm-cover]');
+            var coverSTs = [];
+            // COVER_RAMP: fracción de la ventana del cover (start..top) en la que la
+            // opacidad llega a 1. ATAR con cuidado al depth-entry: el cover DEBE quedar
+            // opaco ANTES de que `computer`/`text` empiecen a revelarse, o aparecerían
+            // sobre un Hero a medio cubrir. Con los defaults (cover_ramp 0.45 ·
+            // computer_enter_range 0.28 sobre entry_scroll_vh 155) el cover cierra
+            // (~0.45·~100vh) justo antes del reveal del monitor (~0.28·155vh). Si subes
+            // cover_ramp o bajas computer_enter_range[0], revisa que se mantenga el orden.
+            var COVER_RAMP = coverRamp;
+
+            function coverStartDistance() {
+                return Math.round(vh() * (coverStartVh / 100));
+            }
+            function setCoverHidden() {
+                if (!cover) { return; }
+                gsap.killTweensOf(cover);
+                gsap.set(cover, { yPercent: 100, opacity: 0, visibility: 'hidden' });
+                cover.classList.remove('is-active');
+            }
+            function setCoverProgress(progress) {
+                if (!cover) { return; }
+                var opacity = clamp(progress / COVER_RAMP, 0, 1);
+                if (opacity <= 0) {
+                    setCoverHidden();
+                    setPmCovering(false);
+                    setPmCovered(false);
+                    return;
+                }
+                cover.classList.add('is-active');
+                gsap.killTweensOf(cover);
+                gsap.set(cover, { yPercent: 0, opacity: opacity, visibility: 'visible' });
+                setPmCovering(opacity < 1);
+                setPmCovered(opacity >= 1);
+            }
+            function setCoverBefore() {
+                setCoverHidden();
+                setPmCovering(false);
+                setPmCovered(false);
+            }
+            function setCoverAfter() {
+                setCoverHidden();
+                setPmCovering(false);
+                setPmCovered(true);
+            }
+            function killCoverStage() {
+                coverSTs.forEach(function (st) { st.kill(); });
+                coverSTs = [];
+                setCoverBefore();
+                setPmSyncReady(false);
+            }
+            function initCoverStage() {
+                if (!cover) { return; }
+                gsap.set(cover, { yPercent: 100, opacity: 0, visibility: 'hidden' });
+                setPmSyncReady(true);
+                coverSTs.push(ST.create({
+                    id: pmId + '-cover-stage',
+                    trigger: section,
+                    start: function () { return 'top bottom-=' + coverStartDistance(); },
+                    end: 'top top',
+                    invalidateOnRefresh: true,
+                    onEnter: function (self) { setCoverProgress(self.progress); },
+                    onUpdate: function (self) { setCoverProgress(self.progress); },
+                    onLeave: setCoverAfter,
+                    onEnterBack: function (self) { setCoverProgress(self.progress); },
+                    onLeaveBack: setCoverBefore,
+                    onRefresh: function (self) {
+                        if (!self.isActive && self.progress <= 0) {
+                            setCoverBefore();
+                        } else if (!self.isActive && self.progress >= 1) {
+                            setCoverAfter();
+                        } else {
+                            setCoverProgress(self.progress);
+                        }
+                    }
+                }));
+            }
+
+            initCoverStage();
+
+            // 2) DEPTH ENTRY: el cover ya tapó el Hero; el scrub gobierna
+            //    únicamente monitor → texto.
             //    Se extiende más allá del primer viewport; B3 espera esta distancia
             //    mas un colchon antes de empezar a cubrir la escena.
             if (parallaxOn) {
@@ -227,6 +354,11 @@
                 var bgInner = section.querySelector('.okip-pm__bg-inner');
                 var computerReveal = section.querySelector('.okip-pm__computer-reveal');
                 var textItems = Array.prototype.slice.call(section.querySelectorAll('.okip-pm__text-reveal > *'));
+
+                if (bg) {
+                    gsap.set(bg.el, { y: 0 });
+                    if (bgInner) { gsap.set(bgInner, { opacity: 1 }); }
+                }
 
                 var entryTl = gsap.timeline({
                     scrollTrigger: {
@@ -239,13 +371,6 @@
                         onLeave: forceLayersRest
                     }
                 });
-
-                if (bg) {
-                    entryTl.fromTo(bg.el, { y: bg.speed * DRIFT }, { y: 0, ease: 'none', duration: bg.enter.duration }, bg.enter.start);
-                    if (bgInner) {
-                        entryTl.fromTo(bgInner, { opacity: 0 }, { opacity: 1, ease: 'none', duration: bg.enter.duration }, bg.enter.start);
-                    }
-                }
 
                 if (cmp) {
                     entryTl.fromTo(cmp.el, { y: cmp.speed * DRIFT }, { y: 0, ease: 'none', duration: cmp.enter.duration }, cmp.enter.start);
@@ -306,6 +431,7 @@
                 rt = window.setTimeout(function () {
                     if (isSmallViewport()) {
                         if (bgPinST) { bgPinST.kill(); bgPinST = null; }
+                        killCoverStage();
                         clearFollowingBlockDelay();
                         forceLayersRest();
                         ST.refresh();
@@ -331,7 +457,8 @@
                 for (var i = 0; i < layers.length; i++) {
                     var L = layers[i];
                     if (L.speed) {
-                        L.el.style.transform = 'translate3d(0,' + ((1 - p) * L.speed * DRIFT).toFixed(2) + 'px,0)';
+                        var lp = layerProgress(p, L.enter);
+                        L.el.style.transform = 'translate3d(0,' + ((1 - lp) * L.speed * DRIFT).toFixed(2) + 'px,0)';
                     }
                 }
                 // El Hero queda estático (sticky CSS); no se anima desde aquí.
@@ -382,6 +509,7 @@
 
             applyFrame();
             window.addEventListener('resize', applyFrame, { passive: true });
+            initCoverSyncFallback();
         }
     }
 

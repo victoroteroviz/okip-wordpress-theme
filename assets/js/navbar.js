@@ -44,12 +44,23 @@
             navbar.classList.add('is-hidden');
             navbar.classList.remove('okip-navbar--start-hidden');
 
-            // Umbral principal: el Bloque 2 debe llegar al top del viewport.
-            // Esto evita que el navbar aparezca mientras B2 solo cubre parcialmente
-            // al Hero. Si no hay Bloque 2, se usa el cálculo estable por Hero.
-            var startProg = pm ? parseFloat(pm.getAttribute('data-overlap-start')) : 0.85;
-            if (isNaN(startProg)) { startProg = 0.85; }
+            // Con Bloque 2 + GSAP, Parallax Monitor emite el estado compartido
+            // `is-pm-covered` / `okip:pm-cover`; el navbar lo sigue para no
+            // decidir en un frame distinto al cover. Sin ese sync, cae al fallback.
+            // Fallback (solo páginas con Hero pero SIN Bloque 2): progreso por scroll.
+            var startProg = 0.85;
             var REVEAL_AT = 0.15; // progreso de transición para mostrar el navbar
+            var docEl = document.documentElement;
+
+            function setByPmCovered(covered) {
+                if (covered) { show(); } else { hide(); }
+            }
+
+            if (pm) {
+                document.addEventListener('okip:pm-cover', function (e) {
+                    setByPmCovered(!!(e.detail && e.detail.covered));
+                });
+            }
 
             function docTop(el) {
                 var top = 0;
@@ -68,7 +79,13 @@
                 navTicking = false;
 
                 if (pm) {
-                    if (pm.getBoundingClientRect().top <= 1) { show(); } else { hide(); }
+                    if (docEl.classList.contains('is-pm-sync-ready')) {
+                        setByPmCovered(docEl.classList.contains('is-pm-covered'));
+                    } else if (pm.getBoundingClientRect().top <= 1) {
+                        show();
+                    } else {
+                        hide();
+                    }
                     return;
                 }
 

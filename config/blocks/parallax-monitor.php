@@ -70,9 +70,7 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
         $cmp_allowed = array('video', 'image', 'svg', 'placeholder');
 
         // Layout / escena.
-        $data['layout']['overlap_previous'] = okip_bool($data['layout']['overlap_previous']);
-        $data['layout']['overlap_start']    = okip_clamp_float($data['layout']['overlap_start'], 0, 1);
-        $data['layout']['z_index']          = okip_clamp_int($data['layout']['z_index'], 0, 50);
+        $data['layout']['z_index'] = okip_clamp_int($data['layout']['z_index'], 0, 50);
 
         // Fondo.
         $data['background']['type']     = okip_one_of($data['background']['type'], $bg_allowed, 'image');
@@ -101,22 +99,20 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
         $a['use_gsap']                   = okip_bool($a['use_gsap']);
         $a['use_vanilla_fallback']       = okip_bool($a['use_vanilla_fallback']);
         $a['parallax_enabled']           = okip_bool($a['parallax_enabled']);
-        $a['overlap_transition_enabled'] = okip_bool($a['overlap_transition_enabled']);
-        $a['text_reveal']                = okip_bool($a['text_reveal']);
-        $a['pin_enabled']                = okip_bool($a['pin_enabled']);
         $a['background_pin']             = okip_bool(isset($a['background_pin']) ? $a['background_pin'] : true);
         $a['background_pin_vh']          = okip_clamp_int(isset($a['background_pin_vh']) ? $a['background_pin_vh'] : 100, 0, 300);
         $a['entry_scroll_vh']            = okip_clamp_int(isset($a['entry_scroll_vh']) ? $a['entry_scroll_vh'] : 155, 100, 300);
-        $a['cover_delay_vh']             = okip_clamp_int(isset($a['cover_delay_vh']) ? $a['cover_delay_vh'] : 35, 0, 200);
-        $a['start_progress']             = okip_clamp_float($a['start_progress'], 0, 1);
+        $a['cover_delay_vh']             = okip_clamp_int(isset($a['cover_delay_vh']) ? $a['cover_delay_vh'] : 50, 0, 200);
+        $a['cover_start_vh']             = okip_clamp_int(isset($a['cover_start_vh']) ? $a['cover_start_vh'] : 8, 1, 50);
+        $a['cover_ramp']                 = okip_clamp_float(isset($a['cover_ramp']) ? $a['cover_ramp'] : 0.45, 0.05, 1);
+        $a['overlap_breakpoint']         = okip_clamp_int(isset($a['overlap_breakpoint']) ? $a['overlap_breakpoint'] : 1024, 0, 4096);
         $a['background_speed']           = okip_clamp_float($a['background_speed'], 0, 2);
         $a['computer_speed']             = okip_clamp_float($a['computer_speed'], 0, 2);
         $a['text_speed']                 = okip_clamp_float($a['text_speed'], 0, 2);
-        $a['background_enter_range']     = okip_pm_normalize_range($a['background_enter_range'], 0.00, 0.35);
+        $a['background_enter_range']     = okip_pm_normalize_range($a['background_enter_range'], 0.00, 0.08);
         $a['computer_enter_range']       = okip_pm_normalize_range($a['computer_enter_range'], 0.28, 0.64);
         $a['text_enter_range']           = okip_pm_normalize_range($a['text_enter_range'], 0.70, 1.00);
         $a['parallax_drift_px']          = okip_clamp_int(isset($a['parallax_drift_px']) ? $a['parallax_drift_px'] : 180, 0, 500);
-        $a['disable_parallax_below']     = okip_clamp_int(isset($a['disable_parallax_below']) ? $a['disable_parallax_below'] : 0, 0, 9999);
         $data['animation'] = $a;
 
         return $data;
@@ -134,9 +130,6 @@ return array(
     'layout' => array(
         'min_height'       => '100svh', // escena full-screen
         'content_width'    => '1200px',
-        'overlap_previous' => true,     // entrar sobre el bloque anterior (Hero)
-        'overlap_start'    => 0.85,     // % del Hero donde empieza la transición
-        'overlap_amount'   => '8vh',    // "lip" sutil del panel sobre el Hero (constante)
         'z_index'          => 2,        // por encima del Hero durante la transición
     ),
     'background' => array(
@@ -174,24 +167,22 @@ return array(
         'use_gsap'                   => true,  // usar GSAP+ScrollTrigger si existen
         'use_vanilla_fallback'       => true,  // si no hay GSAP, parallax con rAF
         'parallax_enabled'           => true,
-        'overlap_transition_enabled' => true,
-        'text_reveal'                => true,
-        'pin_enabled'                => false, // sin pin por ahora (solo con GSAP futuro)
-        'start_progress'             => 0.85,  // alias de layout.overlap_start (transición)
-        'disable_parallax_below'     => 0,     // 0 = no desactivar por ancho
+        'overlap_breakpoint'         => 1024,  // ≤ este ancho (px): sin pin/cover/overlap → flujo estático
         // Hold pin: con GSAP el Bloque 2 queda fijo mientras B3 lo cubre.
         'background_pin'             => true,
         'background_pin_vh'          => 100,   // fallback del hold pin; JS prefiere altura real del bloque
         'entry_scroll_vh'            => 155,   // duracion total del depth-entry: 100vh + 55vh extra
         'cover_delay_vh'             => 50,    // hold estático (≈medio viewport) tras terminar B2, antes de que B3 cubra
+        'cover_start_vh'             => 8,     // vh antes del top del viewport donde el cover empieza a aparecer
+        'cover_ramp'                 => 0.45,  // fracción de la ventana del cover hasta opacidad total (determinista)
         // Magnitud base y velocidades de entrada por capa (px = speed × parallax_drift_px).
         // Las capas empiezan desplazadas y terminan en y:0 antes del handoff visual a B3.
         'parallax_drift_px'          => 180,   // px base; escala clara para la profundidad
-        'background_speed'           => 0.45,  // fondo: movimiento leve pero perceptible
+        'background_speed'           => 0.45,  // fondo: movimiento leve, pero completa su entrada casi de inmediato
         'computer_speed'             => 0.78,  // monitor: profundidad media visible
         'text_speed'                 => 0.95,  // texto: capa frontal, movimiento mayor
         // Rangos de entrada coreografiada (en progreso 0..1 de la transición).
-        'background_enter_range'     => array(0.00, 0.35),
+        'background_enter_range'     => array(0.00, 0.08),
         'computer_enter_range'       => array(0.28, 0.64),
         'text_enter_range'           => array(0.70, 1.00),
     ),

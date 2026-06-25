@@ -35,10 +35,6 @@ $animation  = isset($okip_data['animation']) ? $okip_data['animation'] : array()
 // --- Layout / escena ---
 $min_height    = isset($layout['min_height']) ? $layout['min_height'] : '100svh';
 $content_width = isset($layout['content_width']) ? $layout['content_width'] : '1200px';
-$overlap_on    = ! empty($layout['overlap_previous']);
-$overlap_start = isset($layout['overlap_start']) ? (float) $layout['overlap_start'] : 0.85;
-$overlap_amt   = isset($layout['overlap_amount']) ? $layout['overlap_amount'] : '18vh';
-$overlap_vh    = (float) preg_replace('/[^0-9.\-]/', '', (string) $overlap_amt); // valor numérico en vh para el JS
 $z_index       = isset($layout['z_index']) ? (int) $layout['z_index'] : 2;
 
 // --- Fondo (media-driven) ---
@@ -75,21 +71,19 @@ $anim_on      = ! empty($animation['enabled']);
 $use_gsap     = ! empty($animation['use_gsap']);
 $use_vanilla  = ! empty($animation['use_vanilla_fallback']);
 $parallax_on  = ! empty($animation['parallax_enabled']);
-$overlap_anim = ! empty($animation['overlap_transition_enabled']);
-$pin_on       = ! empty($animation['pin_enabled']);
 $bg_pin_on    = ! empty($animation['background_pin']);
 $bg_pin_vh    = isset($animation['background_pin_vh']) ? (int) $animation['background_pin_vh'] : 100;
 $entry_vh     = isset($animation['entry_scroll_vh']) ? (int) $animation['entry_scroll_vh'] : 155;
-$cover_delay  = isset($animation['cover_delay_vh']) ? (int) $animation['cover_delay_vh'] : 35;
-$text_reveal  = ! empty($animation['text_reveal']);
-$start_prog   = isset($animation['start_progress']) ? (float) $animation['start_progress'] : $overlap_start;
+$cover_delay  = isset($animation['cover_delay_vh']) ? (int) $animation['cover_delay_vh'] : 50;
+$cover_start  = isset($animation['cover_start_vh']) ? (int) $animation['cover_start_vh'] : 8;
+$cover_ramp   = isset($animation['cover_ramp']) ? (float) $animation['cover_ramp'] : 0.45;
 $bg_speed      = isset($animation['background_speed']) ? (float) $animation['background_speed'] : 0.45;
 $cmp_speed     = isset($animation['computer_speed']) ? (float) $animation['computer_speed'] : 0.78;
 $txt_speed     = isset($animation['text_speed']) ? (float) $animation['text_speed'] : 0.95;
 $anim_drift_px = isset($animation['parallax_drift_px']) ? (int) $animation['parallax_drift_px'] : 180;
-$disable_below = isset($animation['disable_parallax_below']) ? (int) $animation['disable_parallax_below'] : 0;
+$overlap_bp    = isset($animation['overlap_breakpoint']) ? (int) $animation['overlap_breakpoint'] : 1024;
 
-$bg_range  = isset($animation['background_enter_range']) ? $animation['background_enter_range'] : array(0.00, 0.35);
+$bg_range  = isset($animation['background_enter_range']) ? $animation['background_enter_range'] : array(0.00, 0.08);
 $cmp_range = isset($animation['computer_enter_range']) ? $animation['computer_enter_range'] : array(0.28, 0.64);
 $txt_range = isset($animation['text_enter_range']) ? $animation['text_enter_range'] : array(0.70, 1.00);
 $range_str = function ($r) {
@@ -97,9 +91,6 @@ $range_str = function ($r) {
     $b = isset($r[1]) ? (float) $r[1] : 1;
     return $a . ',' . $b;
 };
-
-// La transición de overlap está activa solo si: overlap_previous + su flag + animación.
-$transition_on = ($overlap_on && $overlap_anim && $anim_on);
 
 // --- CTA ---
 $cta_on = ! empty($cta['enabled']) && ! empty($cta['label']) && ! empty($cta['url']);
@@ -111,18 +102,16 @@ $subtitle = isset($content['subtitle']) ? $content['subtitle'] : '';
 
 // Variables CSS de layout/escena (seguras, solo de presentación).
 $section_style = sprintf(
-    '--okip-pm-minh:%s;--okip-pm-cw:%s;--okip-pm-z:%d;--okip-pm-overlap:%s;--okip-pm-glow:%s;--okip-pm-bg-color:%s;',
+    '--okip-pm-minh:%s;--okip-pm-cw:%s;--okip-pm-z:%d;--okip-pm-glow:%s;--okip-pm-bg-color:%s;',
     esc_attr($min_height),
     esc_attr($content_width),
     (int) $z_index,
-    esc_attr($overlap_amt),
     esc_attr((string) max(0, min(1, $glow_intensity))),
     esc_attr($bg_color)
 );
 
 $section_classes = 'okip-pm';
 $section_classes .= $anim_on ? ' okip-pm--animated' : '';
-$section_classes .= $transition_on ? ' okip-pm--transition' : '';
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
@@ -130,25 +119,27 @@ $section_classes .= $transition_on ? ' okip-pm--transition' : '';
     data-block-instance="<?php echo esc_attr($okip_instance); ?>"
     data-okip-pm
     data-anim="<?php echo $anim_on ? '1' : '0'; ?>"
-    data-transition="<?php echo $transition_on ? '1' : '0'; ?>"
     data-parallax="<?php echo $parallax_on ? '1' : '0'; ?>"
     data-use-gsap="<?php echo $use_gsap ? '1' : '0'; ?>"
     data-use-vanilla="<?php echo $use_vanilla ? '1' : '0'; ?>"
-    data-text-reveal="<?php echo $text_reveal ? '1' : '0'; ?>"
-    data-pin="<?php echo $pin_on ? '1' : '0'; ?>"
-    data-overlap-start="<?php echo esc_attr((string) $start_prog); ?>"
-    data-overlap-vh="<?php echo esc_attr((string) $overlap_vh); ?>"
     data-drift-max="<?php echo esc_attr((string) $anim_drift_px); ?>"
     data-bg-pin="<?php echo $bg_pin_on ? '1' : '0'; ?>"
     data-bg-pin-vh="<?php echo esc_attr((string) $bg_pin_vh); ?>"
     data-entry-scroll-vh="<?php echo esc_attr((string) $entry_vh); ?>"
     data-cover-delay-vh="<?php echo esc_attr((string) $cover_delay); ?>"
-    data-disable-below="<?php echo esc_attr((string) $disable_below); ?>"
+    data-cover-start-vh="<?php echo esc_attr((string) $cover_start); ?>"
+    data-cover-ramp="<?php echo esc_attr((string) $cover_ramp); ?>"
+    data-overlap-bp="<?php echo esc_attr((string) $overlap_bp); ?>"
     style="<?php echo $section_style; ?>">
 
-    <!-- Capa 1: fondo. EXTERIOR = parallax (transform + headroom).
-         INTERIOR (.okip-pm__bg-inner) = reveal (opacidad) y media/gradiente.
-         Nunca reveal y parallax en el mismo nodo. -->
+    <!-- Cover rápido B1→B2: capa fija de fondo que tapa al Hero con un gesto corto.
+         No contiene contenido y vive por debajo de las capas reales de B2; computer/text
+         conservan su scrub normal. -->
+    <div class="okip-pm__cover" data-okip-pm-cover aria-hidden="true"></div>
+
+    <!-- Capa 1: fondo real de la escena.
+         En GSAP queda asentado; el cover rápido vive en .okip-pm__cover.
+         En fallback vanilla aún puede usar data-speed/data-enter. -->
     <div class="okip-pm__bg"
         data-okip-pm-layer="background"
         data-speed="<?php echo esc_attr((string) $bg_speed); ?>"

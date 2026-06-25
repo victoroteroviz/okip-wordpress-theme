@@ -288,12 +288,26 @@ Hero (≈80% de su scroll).
 - **Título con resaltado:** `highlighted_text` envuelto en `.okip-pm__highlight` = **negrita
   blanca** (NO color naranja; ref `bloque 2.png`), escapado. `subtitle` = kicker uppercase
   letterspaced bajo el título.
+- **Cover Hero→B2 DETERMINISTA:** `.okip-pm__cover` (capa `fixed`) NO usa tween por
+  tiempo; su opacidad se deriva de `self.progress` del ScrollTrigger del cover en
+  `setCoverProgress()` (`gsap.set`, instantáneo) → nunca queda "a medias" en scroll
+  rápido. `cover_start_vh` = vh antes del top donde empieza; `cover_ramp` (0..1) =
+  fracción de la ventana hasta opacidad total (**ATAR** con `computer_enter_range` para
+  que el cover cierre ANTES del reveal del monitor; ver comentario en script.js).
+- **Navbar sincronizado:** B2 expone el estado en `<html>`: `is-pm-sync-ready`,
+  `is-pm-covering` (rampa, hook CSS reservado), `is-pm-covered` (opaco) + evento
+  `okip:pm-cover`. `navbar.js` sigue ESE estado (no `getBoundingClientRect`) → sin
+  franja. El estado también se emite en modo estático/vanilla (`initCoverSyncFallback`).
 - Config: `config/blocks/parallax-monitor.php`. Grupos: `content` (`eyebrow`, `title`,
-  `highlighted_text`, `subtitle`, `description`), `layout` (`overlap_amount≈8vh`…),
-  `background`, `computer`, `cta`, `overlay`, `glow`, `animation` (`use_gsap`,
-  `use_vanilla_fallback`, `parallax_enabled`, `background_pin`, `background_pin_vh=90`,
-  `parallax_drift_px=100`, `{background,computer,text}_speed` = **0.30 / 0.85 / 0.08**,
-  `disable_parallax_below=1024`, `text_reveal`).
+  `highlighted_text`, `subtitle`, `description`), `layout` (`min_height`, `content_width`,
+  `z_index`), `background`, `computer`, `cta`, `overlay`, `glow`, `animation` (`use_gsap`,
+  `use_vanilla_fallback`, `parallax_enabled`, `overlap_breakpoint=1024` ≤ → estático sin
+  pin/cover, `background_pin`, `background_pin_vh=100`, `entry_scroll_vh=155`,
+  `cover_delay_vh=50`, `cover_start_vh=8`, `cover_ramp=0.45`, `parallax_drift_px=180`,
+  `{background,computer,text}_speed` = **0.45 / 0.78 / 0.95**, `{background,computer,text}_enter_range`).
+  **Knobs eliminados** (estaban muertos): `overlap_previous`, `overlap_start`,
+  `overlap_amount`, `overlap_transition_enabled`, `pin_enabled`, `text_reveal`,
+  `start_progress`, `disable_parallax_below` (→ `overlap_breakpoint`).
 - Contenido actual: title "Facilitando la **toma de decisiones** en tiempo real" (highlight
   "toma de decisiones"), subtitle "MONITOREO, GESTIÓN E INTELIGENCIA OPERATIVA", **sin CTA**
   (la referencia no lo muestra), sin eyebrow ni descripción.
