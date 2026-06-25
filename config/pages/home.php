@@ -31,7 +31,8 @@ return array(
             'background' => array(
                 // Fondo video por default. El CSS editable sigue disponible cambiando el type.
                 'type'                 => 'video',
-                'loop_media'           => 'assets/video/hero/video.mp4',
+                'intro_media'          => 'assets/video/hero/intro-video.mp4',
+                'loop_media'           => 'assets/video/hero/loop-video.mp4',
                 'css_variant'          => 'liquid_aurora',
                 'css_bg'               => '#020711',
                 'css_accent'           => '#ff5a14',

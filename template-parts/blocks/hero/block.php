@@ -259,12 +259,10 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                 $c_scan  = ! empty($card['scanline']);
                 $c_label = isset($card['placeholder_label']) ? $card['placeholder_label'] : '';
                 $c_play  = isset($card['play_mode']) ? $card['play_mode'] : 'hover';
+                $c_duration = isset($card['play_duration_ms']) ? (int) $card['play_duration_ms'] : 0;
                 $c_reset = ! empty($card['reset_on_leave']);
                 $c_is_gif = ($c_type === 'gif');
                 $c_is_gif_interactive = ($c_is_gif && $c_has && $c_url !== '');
-                $c_aria_label = $c_alt !== ''
-                    ? sprintf(__('Reproducir animación: %s', 'okip'), $c_alt)
-                    : __('Reproducir animación', 'okip');
 
                 $card_classes = 'okip-hero__card';
                 $card_classes .= $c_glow ? ' okip-hero__card--glow' : '';
@@ -278,8 +276,9 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                     data-card-type="<?php echo esc_attr($c_type); ?>"
                     data-has-media="<?php echo $c_has ? '1' : '0'; ?>"
                     data-play-mode="<?php echo esc_attr($c_play); ?>"
+                    data-play-duration-ms="<?php echo esc_attr((string) max(0, $c_duration)); ?>"
                     data-reset-on-leave="<?php echo $c_reset ? '1' : '0'; ?>"
-                    <?php echo $c_is_gif_interactive ? 'data-gif-src="' . esc_url($c_url) . '" role="button" tabindex="0" aria-label="' . esc_attr($c_aria_label) . '" aria-pressed="false"' : ''; ?>
+                    <?php echo $c_is_gif_interactive ? 'data-gif-src="' . esc_url($c_url) . '"' : ''; ?>
                     style="--okip-card-x:<?php echo esc_attr((string) $c_x); ?>%;--okip-card-y:<?php echo esc_attr((string) $c_y); ?>%;--okip-card-w:<?php echo esc_attr((string) $c_w); ?>vw;">
                     <!-- Wrapper de MOTION (entry/playback/exit): nodo separado del media.
                          El transform del runtime vive aquí; el hover/glow/scanline en
@@ -293,9 +292,6 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
                                 </video>
                             <?php elseif ($c_is_gif_interactive) : ?>
                                 <img class="okip-hero__card-gif" data-gif-src="<?php echo esc_url($c_url); ?>" alt="" aria-hidden="true" decoding="async">
-                                <span class="okip-hero__card-gif-cue" aria-hidden="true">
-                                    <span class="okip-hero__card-gif-badge">!</span>
-                                </span>
                             <?php elseif ($c_has) : ?>
                                 <img src="<?php echo esc_url($c_url); ?>" alt="<?php echo esc_attr($c_alt); ?>">
                             <?php else : ?>

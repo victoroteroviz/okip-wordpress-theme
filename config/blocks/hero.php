@@ -32,6 +32,29 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+if (! function_exists('okip_hero_gif_duration_ms')) {
+    /**
+     * Duración conocida de los GIF por default; permite reproducir un ciclo.
+     *
+     * @param string $media Ruta/URL del GIF.
+     * @return int
+     */
+    function okip_hero_gif_duration_ms($media)
+    {
+        $media = strtolower((string) $media);
+        if (strpos($media, 'carro.gif') !== false) {
+            return 3320;
+        }
+        if (strpos($media, 'mapa%201.gif') !== false || strpos($media, 'mapa 1.gif') !== false) {
+            return 3560;
+        }
+        if (strpos($media, 'reconocimiento.gif') !== false) {
+            return 30080;
+        }
+        return 4000;
+    }
+}
+
 if (! function_exists('okip_hero_card_defaults')) {
     /**
      * Defaults de una sola tarjeta del Hero.
@@ -55,8 +78,9 @@ if (! function_exists('okip_hero_card_defaults')) {
             'placeholder_label'   => '',      // texto del placeholder temporal
             'placeholder_enabled' => true,    // mostrar placeholder si no hay media real
             // Reproducción: NUNCA autoplay al cargar/entrar. Solo por interacción.
-            'play_mode'      => 'hover', // hover | tap | manual
-            'reset_on_leave' => false,   // al salir del hover NO reinicia/pausa (continúa)
+            'play_mode'        => 'hover', // hover | tap | manual | disabled
+            'play_duration_ms' => 0,       // GIF: duración de un ciclo; 0 = inferir por asset.
+            'reset_on_leave'   => false,   // videos: al salir del hover puede reiniciar/pausar.
         );
     }
 }
@@ -73,7 +97,7 @@ if (! function_exists('okip_normalize_hero_data')) {
         $align_allowed = array('left', 'center', 'right');
         $bg_allowed    = array('css_motion', 'video', 'image', 'svg', 'gradient');
         $card_allowed  = array('video', 'image', 'svg', 'gif');
-        $play_allowed  = array('hover', 'tap', 'manual');
+        $play_allowed  = array('hover', 'tap', 'manual', 'disabled');
 
         // Contenido.
         $data['content']['alignment'] = okip_one_of($data['content']['alignment'], $align_allowed, 'center');
@@ -86,8 +110,8 @@ if (! function_exists('okip_normalize_hero_data')) {
         $data['background'] = array(
             'type'                 => okip_one_of(isset($bg['type']) ? $bg['type'] : 'video', $bg_allowed, 'video'),
             'media'                => isset($bg['media']) ? $bg['media'] : '',
-            'intro_media'          => isset($bg['intro_media']) ? $bg['intro_media'] : '',
-            'loop_media'           => isset($bg['loop_media']) ? $bg['loop_media'] : 'assets/video/hero/video.mp4',
+            'intro_media'          => isset($bg['intro_media']) ? $bg['intro_media'] : 'assets/video/hero/intro-video.mp4',
+            'loop_media'           => isset($bg['loop_media']) ? $bg['loop_media'] : 'assets/video/hero/loop-video.mp4',
             'poster'               => isset($bg['poster']) ? $bg['poster'] : '',
             'fallback_image'       => isset($bg['fallback_image']) ? $bg['fallback_image'] : '',
             'object_position'      => isset($bg['object_position']) ? $bg['object_position'] : 'center center',
@@ -163,7 +187,11 @@ if (! function_exists('okip_normalize_hero_data')) {
             $card['scanline']            = okip_bool($card['scanline']);
             $card['placeholder_enabled'] = okip_bool($card['placeholder_enabled']);
             $card['placeholder_label']   = is_string($card['placeholder_label']) ? $card['placeholder_label'] : '';
-            $card['play_mode']      = okip_one_of($card['play_mode'], $play_allowed, 'hover');
+            $card['play_mode']        = okip_one_of($card['play_mode'], $play_allowed, 'hover');
+            $card['play_duration_ms'] = okip_clamp_int(isset($card['play_duration_ms']) ? $card['play_duration_ms'] : 0, 0, 120000);
+            if ($card['type'] === 'gif' && $card['play_duration_ms'] <= 0) {
+                $card['play_duration_ms'] = okip_hero_gif_duration_ms(isset($card['media']) ? $card['media'] : '');
+            }
             $card['reset_on_leave'] = okip_bool($card['reset_on_leave']);
 
             $result[] = $card;
@@ -185,8 +213,8 @@ return array(
     'background' => array(
         'type'            => 'video', // css_motion | video | image | svg | gradient
         'media'           => '',      // compat: media único (si no hay intro/loop, se usa como loop)
-        'intro_media'     => '',      // ruta/URL/ID del video introductorio
-        'loop_media'      => 'assets/video/hero/video.mp4', // ruta/URL/ID del video de bucle
+        'intro_media'     => 'assets/video/hero/intro-video.mp4', // ruta/URL/ID del video introductorio
+        'loop_media'      => 'assets/video/hero/loop-video.mp4',  // ruta/URL/ID del video de bucle
         'poster'          => '',      // imagen de respaldo para los videos
         'fallback_image'  => '',      // imagen estática si los videos no cargan
         'object_position' => 'center center',
@@ -236,10 +264,11 @@ return array(
             'x'                   => 19,
             'y'                   => 24,
             'width_pct'           => 23,
-            'glow'                => true,
+            'glow'                => false,
             'scanline'            => false,
-            'placeholder_enabled' => true,
+            'placeholder_enabled' => false,
             'play_mode'           => 'hover',
+            'play_duration_ms'    => 3320,
             'reset_on_leave'      => true,
         ),
         array(
@@ -250,10 +279,11 @@ return array(
             'x'                   => 22,
             'y'                   => 74,
             'width_pct'           => 24,
-            'glow'                => true,
+            'glow'                => false,
             'scanline'            => false,
-            'placeholder_enabled' => true,
+            'placeholder_enabled' => false,
             'play_mode'           => 'hover',
+            'play_duration_ms'    => 30080,
             'reset_on_leave'      => true,
         ),
         array(
@@ -264,10 +294,11 @@ return array(
             'x'                   => 78,
             'y'                   => 72,
             'width_pct'           => 25,
-            'glow'                => true,
+            'glow'                => false,
             'scanline'            => false,
-            'placeholder_enabled' => true,
+            'placeholder_enabled' => false,
             'play_mode'           => 'hover',
+            'play_duration_ms'    => 3560,
             'reset_on_leave'      => true,
         ),
     ),

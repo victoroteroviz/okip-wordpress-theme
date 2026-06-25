@@ -419,6 +419,7 @@ function okip_admin_render_hero_card($card_base, array $card, $legend)
         $card = okip_merge_defaults($card, okip_hero_card_defaults());
     }
     $is_video = ($card['type'] === 'video');
+    $is_gif   = ($card['type'] === 'gif');
     ?>
     <fieldset class="okip-admin-card okip-admin-panel okip-admin-panel--nested" data-okip-card>
         <div class="okip-admin-card__head">
@@ -455,6 +456,25 @@ function okip_admin_render_hero_card($card_base, array $card, $legend)
         </div>
         <div class="okip-admin-grid okip-admin-grid--two" data-okip-when-card-type="video"<?php echo $is_video ? '' : ' hidden'; ?>>
             <?php okip_admin_media_field(__('Poster', 'okip'), $card_base . '[poster]', $card['poster'], __('Imagen mientras el video carga (solo tarjetas de video).', 'okip')); ?>
+        </div>
+        <?php okip_admin_section_close(); ?>
+
+        <?php okip_admin_section_open(__('Reproducción', 'okip'), __('Controla cómo se activan los medios animados de esta tarjeta.', 'okip')); ?>
+        <div class="okip-admin-grid okip-admin-grid--two">
+            <?php
+            okip_admin_select_field(__('Modo', 'okip'), $card_base . '[play_mode]', $card['play_mode'], array(
+                'hover'    => __('Hover', 'okip'),
+                'disabled' => __('Desactivado', 'okip'),
+            ), __('En GIF, hover reproduce un ciclo completo y bloquea nuevos disparos hasta terminar.', 'okip'));
+            ?>
+        </div>
+        <div class="okip-admin-grid okip-admin-grid--two" data-okip-when-card-type="gif"<?php echo $is_gif ? '' : ' hidden'; ?>>
+            <?php
+            okip_admin_number_field(__('Duración GIF (ms)', 'okip'), $card_base . '[play_duration_ms]', $card['play_duration_ms'], __('Duración de un ciclo. 0 intenta usar la duración conocida del asset.', 'okip'), array('min' => 0, 'max' => 120000, 'step' => '10'));
+            ?>
+        </div>
+        <div class="okip-admin-grid okip-admin-grid--two" data-okip-when-card-type="video"<?php echo $is_video ? '' : ' hidden'; ?>>
+            <?php okip_admin_checkbox_field(__('Reiniciar video al salir', 'okip'), $card_base . '[reset_on_leave]', $card['reset_on_leave']); ?>
         </div>
         <?php okip_admin_section_close(); ?>
 

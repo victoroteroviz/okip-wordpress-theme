@@ -213,7 +213,8 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
             'scanline'            => okip_bool(isset($card['scanline']) ? $card['scanline'] : false),
             'placeholder_label'   => isset($card['placeholder_label']) ? sanitize_text_field((string) $card['placeholder_label']) : '',
             'placeholder_enabled' => okip_bool(isset($card['placeholder_enabled']) ? $card['placeholder_enabled'] : false),
-            'play_mode'           => okip_one_of(isset($card['play_mode']) ? $card['play_mode'] : 'hover', array('hover', 'tap', 'manual'), 'hover'),
+            'play_mode'           => okip_one_of(isset($card['play_mode']) ? $card['play_mode'] : 'hover', array('hover', 'tap', 'manual', 'disabled'), 'hover'),
+            'play_duration_ms'    => okip_clamp_int(isset($card['play_duration_ms']) ? $card['play_duration_ms'] : 0, 0, 120000),
             'reset_on_leave'      => okip_bool(isset($card['reset_on_leave']) ? $card['reset_on_leave'] : false),
         );
     }
