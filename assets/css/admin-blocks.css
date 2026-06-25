@@ -70,6 +70,40 @@
     background: #f8fafc;
 }
 
+/* El atributo [hidden] del navegador lo sobreescribe cualquier display explícito
+   (p.ej. .okip-admin-grid → display:grid). Forzamos el ocultado en todo el panel. */
+.okip-admin [hidden] {
+    display: none !important;
+}
+
+/* ---- Secciones agrupadas dentro de cada pestaña ---- */
+.okip-admin-section {
+    margin: 0 0 18px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid #eaecf0;
+}
+
+.okip-admin-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.okip-admin-section__title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #101828;
+}
+
+.okip-admin-section__desc {
+    margin: 4px 0 0;
+    color: #667085;
+    font-size: 12px;
+}
+
 .okip-admin-grid {
     display: grid;
     gap: 14px;
@@ -200,6 +234,40 @@
 
 .okip-admin-tab-panel.is-active {
     display: block;
+}
+
+/* ---- Animación: targets colapsables + acento por fase ---- */
+.okip-admin-motion-group {
+    background: #fff;
+}
+
+.okip-admin-motion-group > summary {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.okip-admin-motion-group[open] > summary {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eaecf0;
+}
+
+/* Acento de color según fase (entrada / reproducción / salida) */
+.okip-admin-motion-stage {
+    border-left: 3px solid #cbd5e1;
+}
+
+.okip-admin-motion-stage--entry {
+    border-left-color: #2271b1;
+}
+
+.okip-admin-motion-stage--playback {
+    border-left-color: #8a63d2;
+}
+
+.okip-admin-motion-stage--exit {
+    border-left-color: #b32d2e;
 }
 
 /* ---- Tarjetas dinámicas + maqueta de posición ---- */

@@ -161,6 +161,44 @@
         });
     }
 
+    // ---- Visibilidad condicional (tipo de fondo / tipo de tarjeta) ----
+    // Los contenedores con data-okip-when-bg / data-okip-when-card-type listan los
+    // valores (separados por espacio) en los que deben mostrarse. Los inputs ocultos
+    // siguen enviándose en el POST: por eso cada `name` aparece una sola vez en el DOM.
+    function toggleWhen(scope, selector, attr, value) {
+        scope.querySelectorAll(selector).forEach(function (el) {
+            var allowed = (el.getAttribute(attr) || '').split(/\s+/);
+            el.hidden = allowed.indexOf(value) === -1;
+        });
+    }
+
+    function applyCardType(card) {
+        var typeSel = card.querySelector('select[name$="][type]"]');
+        if (typeSel) { toggleWhen(card, '[data-okip-when-card-type]', 'data-okip-when-card-type', typeSel.value); }
+    }
+
+    function initConditionalFields() {
+        document.querySelectorAll('[data-okip-tabs]').forEach(function (root) {
+            var bgSelect = root.querySelector('select[name$="[background][type]"]');
+            if (bgSelect) {
+                var applyBg = function () {
+                    toggleWhen(root, '[data-okip-when-bg]', 'data-okip-when-bg', bgSelect.value);
+                };
+                bgSelect.addEventListener('change', applyBg);
+                applyBg();
+            }
+
+            root.querySelectorAll('[data-okip-card]').forEach(applyCardType);
+            root.addEventListener('change', function (e) {
+                var sel = e.target;
+                if (sel && sel.matches && sel.matches('select[name$="][type]"]')) {
+                    var card = sel.closest('[data-okip-card]');
+                    if (card) { applyCardType(card); }
+                }
+            });
+        });
+    }
+
     // ---- Tarjetas dinámicas del Hero (add/duplicar/eliminar + maqueta drag/snap) ----
     var CARD_SNAP = [0, 25, 50, 75, 100];
     var CARD_SNAP_THRESHOLD = 2.5;
@@ -232,6 +270,7 @@
             if (idField) { idField.value = uniqueId('card-' + cards().length); }
             var lg = node.querySelector('[data-okip-card-legend]');
             if (lg && idField) { lg.textContent = idField.value; }
+            applyCardType(node);
             updateCount();
             buildStage();
         }
@@ -255,6 +294,7 @@
             if (idField) { idField.value = uniqueId((idField.value || 'card') + '-copy'); }
             var lg = clone.querySelector('[data-okip-card-legend]');
             if (lg && idField) { lg.textContent = idField.value; }
+            applyCardType(clone);
             updateCount();
             buildStage();
         }
@@ -384,6 +424,7 @@
             initFonts();
             initMediaFields();
             initBlockTabs();
+            initConditionalFields();
             initHeroCards();
         });
     } else {

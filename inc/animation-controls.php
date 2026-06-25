@@ -317,7 +317,7 @@ function okip_motion_config_json(array $motion, array $selectors)
 function okip_admin_motion_stage_fields($label, $base_name, array $stage, $target, $phase)
 {
     $stage = okip_normalize_motion_stage($stage, $target, $phase);
-    echo '<fieldset class="okip-admin-panel okip-admin-panel--nested">';
+    echo '<fieldset class="okip-admin-panel okip-admin-panel--nested okip-admin-motion-stage okip-admin-motion-stage--' . esc_attr($phase) . '">';
     echo '<legend>' . esc_html($label) . '</legend>';
     echo '<div class="okip-admin-grid okip-admin-grid--two">';
     okip_admin_checkbox_field(__('Activa', 'okip'), $base_name . '[enabled]', $stage['enabled']);
@@ -352,14 +352,14 @@ function okip_admin_motion_stage_fields($label, $base_name, array $stage, $targe
     echo '</fieldset>';
 }
 
-function okip_admin_motion_target_group($legend, $base_name, array $target_motion, $target, $with_playback = false)
+function okip_admin_motion_target_group($legend, $base_name, array $target_motion, $target, $with_playback = false, $open = false)
 {
-    echo '<fieldset class="okip-admin-panel okip-admin-panel--nested">';
-    echo '<legend>' . esc_html($legend) . '</legend>';
+    echo '<details class="okip-admin-panel okip-admin-panel--nested okip-admin-motion-group"' . ($open ? ' open' : '') . '>';
+    echo '<summary>' . esc_html($legend) . '</summary>';
     okip_admin_motion_stage_fields(__('Entrada', 'okip'), $base_name . '[entry]', isset($target_motion['entry']) ? $target_motion['entry'] : array(), $target, 'entry');
     if ($with_playback) {
         okip_admin_motion_stage_fields(__('Reproducción', 'okip'), $base_name . '[playback]', isset($target_motion['playback']) ? $target_motion['playback'] : array(), $target, 'playback');
     }
     okip_admin_motion_stage_fields(__('Salida', 'okip'), $base_name . '[exit]', isset($target_motion['exit']) ? $target_motion['exit'] : array(), $target, 'exit');
-    echo '</fieldset>';
+    echo '</details>';
 }

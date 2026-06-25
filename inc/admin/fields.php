@@ -34,6 +34,60 @@ function okip_admin_attrs(array $attrs)
 }
 
 /**
+ * Abre una sección titulada del panel (agrupa campos relacionados con un
+ * encabezado claro y una descripción corta). Cierra con okip_admin_section_close().
+ *
+ * @param string              $title
+ * @param string              $description
+ * @param array<string,mixed> $attrs Atributos extra del contenedor (p.ej. data-*).
+ * @return void
+ */
+function okip_admin_section_open($title, $description = '', array $attrs = array())
+{
+    echo '<div class="okip-admin-section"' . okip_admin_attrs($attrs) . '>';
+    if ($title !== '') {
+        echo '<h4 class="okip-admin-section__title">' . esc_html($title) . '</h4>';
+    }
+    if ($description !== '') {
+        echo '<p class="okip-admin-section__desc">' . esc_html($description) . '</p>';
+    }
+}
+
+/**
+ * Cierra una sección abierta con okip_admin_section_open().
+ *
+ * @return void
+ */
+function okip_admin_section_close()
+{
+    echo '</div>';
+}
+
+/**
+ * Abre un bloque colapsable (<details>) para opciones secundarias o técnicas.
+ * Cierra con okip_admin_details_close().
+ *
+ * @param string              $summary
+ * @param array<string,mixed> $attrs
+ * @return void
+ */
+function okip_admin_details_open($summary, array $attrs = array())
+{
+    echo '<details class="okip-admin-panel okip-admin-panel--nested"' . okip_admin_attrs($attrs) . '>';
+    echo '<summary>' . esc_html($summary) . '</summary>';
+}
+
+/**
+ * Cierra un <details> abierto con okip_admin_details_open().
+ *
+ * @return void
+ */
+function okip_admin_details_close()
+{
+    echo '</details>';
+}
+
+/**
  * Campo base.
  *
  * @param string $label

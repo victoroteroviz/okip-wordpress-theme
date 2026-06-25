@@ -166,6 +166,28 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
         'content_entry_delay'     => okip_clamp_int(isset($transition['content_entry_delay']) ? $transition['content_entry_delay'] : $tr_def['content_entry_delay'], 0, 60000),
     );
 
+    // Intro / Loop: toggles técnicos de reproducción (pestaña Avanzado). Solo se
+    // editan los flags; las rutas de media viven en el grupo background.
+    $intro = isset($raw['intro']) && is_array($raw['intro']) ? $raw['intro'] : array();
+    $in_def = $current['intro'];
+    $data['intro'] = array(
+        'enabled'      => okip_bool(isset($intro['enabled']) ? $intro['enabled'] : $in_def['enabled']),
+        'media'        => isset($in_def['media']) ? $in_def['media'] : '',
+        'fail_timeout' => okip_clamp_int(isset($intro['fail_timeout']) ? $intro['fail_timeout'] : $in_def['fail_timeout'], 0, 20000),
+        'play_once'    => okip_bool(isset($intro['play_once']) ? $intro['play_once'] : $in_def['play_once']),
+    );
+
+    $loop = isset($raw['loop']) && is_array($raw['loop']) ? $raw['loop'] : array();
+    $lp_def = $current['loop'];
+    $data['loop'] = array(
+        'enabled'     => okip_bool(isset($loop['enabled']) ? $loop['enabled'] : $lp_def['enabled']),
+        'media'       => isset($lp_def['media']) ? $lp_def['media'] : '',
+        'muted'       => okip_bool(isset($loop['muted']) ? $loop['muted'] : $lp_def['muted']),
+        'playsinline' => okip_bool(isset($loop['playsinline']) ? $loop['playsinline'] : $lp_def['playsinline']),
+        'autoplay'    => okip_bool(isset($loop['autoplay']) ? $loop['autoplay'] : $lp_def['autoplay']),
+        'loop'        => okip_bool(isset($loop['loop']) ? $loop['loop'] : $lp_def['loop']),
+    );
+
     $data['motion'] = okip_normalize_motion(isset($raw['motion']) ? $raw['motion'] : array(), array('background', 'text', 'cards'));
 
     $raw_cards = isset($raw['cards']) && is_array($raw['cards']) ? $raw['cards'] : array();
