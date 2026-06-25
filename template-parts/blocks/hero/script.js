@@ -16,15 +16,21 @@
         return delay + dur + stagger * Math.max(0, count - 1);
     }
 
+    function readMs(value, fallback) {
+        var parsed = parseInt(value, 10);
+        return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
+    }
+
     function initHero(hero) {
         if (hero.__okipHeroInit) { return; }
         hero.__okipHeroInit = true;
 
         var d = hero.dataset;
         var motionOn = d.motionEnabled === '1';
-        var introFail = parseInt(d.introFail, 10) || 2500;
+        var introFail = readMs(d.introFail, 2500);
         var crossfade = d.crossfade === '1';
-        var crossfadeMs = crossfade ? (parseInt(d.crossfadeMs, 10) || 700) : 0;
+        var crossfadeMs = crossfade ? readMs(d.crossfadeMs, 700) : 0;
+        var contentEntryDelay = readMs(d.contentEntryDelay, 900);
         var hasFallback = d.hasFallback === '1';
 
         var intro = hero.querySelector('[data-okip-hero-intro]');
@@ -40,6 +46,7 @@
         var timers = [];
         var done = false;
         var loopStarted = false;
+        var contentEntryScheduled = false;
         var motionTargets = ['background', 'cards', 'text'];
 
         function safePlay(v) {
@@ -88,6 +95,12 @@
             timers.push(setTimeout(stopEntering, wait + 60));
         }
 
+        function scheduleContentEntry() {
+            if (done || contentEntryScheduled) { return; }
+            contentEntryScheduled = true;
+            timers.push(setTimeout(finishMotion, contentEntryDelay));
+        }
+
         function startLoop() {
             if (loopStarted) { return; }
             loopStarted = true;
@@ -117,7 +130,7 @@
         function introFailPath() {
             if (loopStarted && done) { return; }
             startLoop();
-            finishMotion();
+            scheduleContentEntry();
         }
 
         function beginIntro() {
@@ -128,7 +141,6 @@
 
             intro.addEventListener('ended', function () {
                 startLoop();
-                finishMotion();
             }, { once: true });
             intro.addEventListener('error', introFailPath, { once: true });
 
@@ -154,18 +166,19 @@
             finishMotion();
         } else if (intro) {
             beginIntro();
+            scheduleContentEntry();
         } else if (loop) {
             loopStarted = true;
             safePlay(loop);
             requestAnimationFrame(function () {
                 hero.classList.add('is-loop-visible');
-                finishMotion();
+                scheduleContentEntry();
             });
         } else {
             if (hasFallback) {
                 hero.classList.add('is-fallback-shown');
             }
-            requestAnimationFrame(finishMotion);
+            requestAnimationFrame(scheduleContentEntry);
         }
 
         setupCards(hero);

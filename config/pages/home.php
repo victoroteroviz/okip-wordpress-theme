@@ -29,9 +29,9 @@ return array(
                 'alignment'    => 'center',
             ),
             'background' => array(
-                // Fondo CSS editable por default: aurora líquida con acentos OKIP.
-                // El flujo video intro/loop sigue soportado por el bloque si se cambia el type.
-                'type'                 => 'css_motion',
+                // Fondo video por default. El CSS editable sigue disponible cambiando el type.
+                'type'                 => 'video',
+                'loop_media'           => 'assets/video/hero/video.mp4',
                 'css_variant'          => 'liquid_aurora',
                 'css_bg'               => '#020711',
                 'css_accent'           => '#ff5a14',
@@ -49,6 +49,9 @@ return array(
                 'enabled' => true,
                 'color'   => '#020711',
                 'opacity' => 0.18,
+            ),
+            'transition' => array(
+                'content_entry_delay' => 900,
             ),
             'typography' => array(
                 'title' => array(

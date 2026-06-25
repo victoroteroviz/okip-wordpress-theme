@@ -9,8 +9,8 @@
  * Escena de entrada (dos videos):
  *   1. `intro`  → video introductorio que se reproduce UNA vez al cargar.
  *   2. `loop`   → video en bucle que toma el relevo (crossfade, sin parpadeo).
- * Mientras corre el intro las tarjetas y el texto permanecen ocultos; al terminar
- * el intro se hace crossfade al loop, luego se revelan tarjetas y después texto.
+ * El intro y el loop coordinan solo el fondo; tarjetas y texto entran por un
+ * temporizador configurable, sin depender de que el video termine.
  * El loop queda vivo en bucle. La escena NO se reinicia al volver al Hero
  * (replay_on_enter = false): el intro solo se repite recargando la página.
  *
@@ -18,9 +18,9 @@
  *   background.type  : css_motion | video | image | svg | gradient
  *   card.type        : video | image | svg
  *
- * Regla del fondo: `css_motion` es el fondo editable por defecto. Media
- * (video/image/svg) sigue disponible como alternativa limpia. El overlay es una
- * capa separada y opcional, no un reemplazo del fondo.
+ * Regla del fondo: video por defecto con asset del tema. El fondo CSS editable
+ * y media image/svg siguen disponibles como alternativas limpias. El overlay es
+ * una capa separada y opcional, no un reemplazo del fondo.
  *
  * Las funciones se declaran ANTES del return (con function_exists) porque el
  * archivo se incluye para obtener su array de defaults.
@@ -78,16 +78,16 @@ if (! function_exists('okip_normalize_hero_data')) {
         // Contenido.
         $data['content']['alignment'] = okip_one_of($data['content']['alignment'], $align_allowed, 'center');
 
-        // Fondo (CSS editable por default, media intro/loop como alternativa).
+        // Fondo (video por default, CSS editable como alternativa).
         $bg = isset($data['background']) && is_array($data['background']) ? $data['background'] : array();
         if (isset($bg['type']) && $bg['type'] === 'svg' && empty($bg['media'])) {
-            $bg['type'] = 'css_motion';
+            $bg['type'] = 'video';
         }
         $data['background'] = array(
-            'type'                 => okip_one_of(isset($bg['type']) ? $bg['type'] : 'css_motion', $bg_allowed, 'css_motion'),
+            'type'                 => okip_one_of(isset($bg['type']) ? $bg['type'] : 'video', $bg_allowed, 'video'),
             'media'                => isset($bg['media']) ? $bg['media'] : '',
             'intro_media'          => isset($bg['intro_media']) ? $bg['intro_media'] : '',
-            'loop_media'           => isset($bg['loop_media']) ? $bg['loop_media'] : '',
+            'loop_media'           => isset($bg['loop_media']) ? $bg['loop_media'] : 'assets/video/hero/video.mp4',
             'poster'               => isset($bg['poster']) ? $bg['poster'] : '',
             'fallback_image'       => isset($bg['fallback_image']) ? $bg['fallback_image'] : '',
             'object_position'      => isset($bg['object_position']) ? $bg['object_position'] : 'center center',
@@ -124,6 +124,11 @@ if (! function_exists('okip_normalize_hero_data')) {
         // Transición intro → loop.
         $data['transition']['intro_to_loop_crossfade'] = okip_bool($data['transition']['intro_to_loop_crossfade']);
         $data['transition']['crossfade_duration']      = okip_clamp_int($data['transition']['crossfade_duration'], 0, 5000);
+        $data['transition']['content_entry_delay']     = okip_clamp_int(
+            isset($data['transition']['content_entry_delay']) ? $data['transition']['content_entry_delay'] : 900,
+            0,
+            60000
+        );
 
         // Animaciones reusables.
         $data['motion'] = okip_normalize_motion(isset($data['motion']) ? $data['motion'] : array(), array('background', 'text', 'cards'));
@@ -178,10 +183,10 @@ return array(
         'max_width'    => '1000px',
     ),
     'background' => array(
-        'type'            => 'css_motion', // css_motion | video | image | svg | gradient
+        'type'            => 'video', // css_motion | video | image | svg | gradient
         'media'           => '',      // compat: media único (si no hay intro/loop, se usa como loop)
         'intro_media'     => '',      // ruta/URL/ID del video introductorio
-        'loop_media'      => '',      // ruta/URL/ID del video de bucle
+        'loop_media'      => 'assets/video/hero/video.mp4', // ruta/URL/ID del video de bucle
         'poster'          => '',      // imagen de respaldo para los videos
         'fallback_image'  => '',      // imagen estática si los videos no cargan
         'object_position' => 'center center',
@@ -220,6 +225,7 @@ return array(
     'transition' => array(
         'intro_to_loop_crossfade' => true, // crossfade suave intro → loop (sin parpadeo)
         'crossfade_duration'      => 700,  // ms del crossfade
+        'content_entry_delay'     => 900,  // ms desde que inicia el Hero hasta texto/tarjetas
     ),
     'cards' => array(
         // Lista de tarjetas multimedia flotantes (ver okip_hero_card_defaults()).

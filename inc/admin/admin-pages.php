@@ -296,6 +296,7 @@ function okip_render_admin_hero_editor($instance_id, array $data)
                 okip_admin_number_field(__('Opacidad overlay', 'okip'), $base . '[overlay][opacity]', $overlay['opacity'], '', array('min' => 0, 'max' => 1, 'step' => '.01'));
                 okip_admin_checkbox_field(__('Crossfade intro/loop', 'okip'), $base . '[transition][intro_to_loop_crossfade]', $transition['intro_to_loop_crossfade']);
                 okip_admin_number_field(__('Duración crossfade', 'okip'), $base . '[transition][crossfade_duration]', $transition['crossfade_duration'], '', array('min' => 0, 'max' => 5000, 'step' => '50'));
+                okip_admin_number_field(__('Espera entrada contenido', 'okip'), $base . '[transition][content_entry_delay]', $transition['content_entry_delay'], __('Milisegundos desde que inicia el Hero hasta disparar texto y tarjetas.', 'okip'), array('min' => 0, 'max' => 60000, 'step' => '50'));
                 ?>
             </div>
         </div>

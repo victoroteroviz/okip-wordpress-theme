@@ -123,12 +123,12 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
     // divergentes). Si un campo no llega en el POST, se conserva el valor vigente.
     $bg_def = $current['background'];
     $data['background'] = array(
-        'type'                 => okip_one_of(isset($background['type']) ? $background['type'] : $bg_def['type'], array('css_motion', 'video', 'image', 'svg', 'gradient'), 'css_motion'),
-        'media'                => okip_admin_sanitize_media_ref(isset($background['media']) ? $background['media'] : ''),
-        'intro_media'          => okip_admin_sanitize_media_ref(isset($background['intro_media']) ? $background['intro_media'] : ''),
-        'loop_media'           => okip_admin_sanitize_media_ref(isset($background['loop_media']) ? $background['loop_media'] : ''),
-        'poster'               => okip_admin_sanitize_media_ref(isset($background['poster']) ? $background['poster'] : ''),
-        'fallback_image'       => okip_admin_sanitize_media_ref(isset($background['fallback_image']) ? $background['fallback_image'] : ''),
+        'type'                 => okip_one_of(isset($background['type']) ? $background['type'] : $bg_def['type'], array('css_motion', 'video', 'image', 'svg', 'gradient'), $bg_def['type']),
+        'media'                => okip_admin_sanitize_media_ref(isset($background['media']) ? $background['media'] : $bg_def['media']),
+        'intro_media'          => okip_admin_sanitize_media_ref(isset($background['intro_media']) ? $background['intro_media'] : $bg_def['intro_media']),
+        'loop_media'           => okip_admin_sanitize_media_ref(isset($background['loop_media']) ? $background['loop_media'] : $bg_def['loop_media']),
+        'poster'               => okip_admin_sanitize_media_ref(isset($background['poster']) ? $background['poster'] : $bg_def['poster']),
+        'fallback_image'       => okip_admin_sanitize_media_ref(isset($background['fallback_image']) ? $background['fallback_image'] : $bg_def['fallback_image']),
         'object_position'      => isset($background['object_position']) ? sanitize_text_field((string) $background['object_position']) : $bg_def['object_position'],
         'css_variant'          => okip_one_of(isset($background['css_variant']) ? $background['css_variant'] : $bg_def['css_variant'], array('future_grid', 'liquid_aurora', 'signal_field'), 'liquid_aurora'),
         'css_bg'               => sanitize_hex_color(isset($background['css_bg']) ? $background['css_bg'] : $bg_def['css_bg']) ?: $bg_def['css_bg'],
@@ -163,6 +163,7 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
     $data['transition'] = array(
         'intro_to_loop_crossfade' => okip_bool(isset($transition['intro_to_loop_crossfade']) ? $transition['intro_to_loop_crossfade'] : $tr_def['intro_to_loop_crossfade']),
         'crossfade_duration'      => okip_clamp_int(isset($transition['crossfade_duration']) ? $transition['crossfade_duration'] : $tr_def['crossfade_duration'], 0, 5000),
+        'content_entry_delay'     => okip_clamp_int(isset($transition['content_entry_delay']) ? $transition['content_entry_delay'] : $tr_def['content_entry_delay'], 0, 60000),
     );
 
     $data['motion'] = okip_normalize_motion(isset($raw['motion']) ? $raw['motion'] : array(), array('background', 'text', 'cards'));

@@ -93,6 +93,7 @@ $intro_fail  = isset($intro['fail_timeout']) ? (int) $intro['fail_timeout'] : 25
 $crossfade    = ! empty($transition['intro_to_loop_crossfade']);
 $crossfade_ms = isset($transition['crossfade_duration']) ? (int) $transition['crossfade_duration'] : 700;
 $effective_crossfade_ms = $crossfade ? $crossfade_ms : 0;
+$content_entry_delay = isset($transition['content_entry_delay']) ? (int) $transition['content_entry_delay'] : 900;
 
 // Fallback de fondo disponible para el crossfade de FALLO (solo en modo video).
 $has_fallback_layer = $has_video_layer && $fallback_url !== '';
@@ -167,6 +168,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     data-intro-fail="<?php echo esc_attr((string) $intro_fail); ?>"
     data-crossfade="<?php echo $crossfade ? '1' : '0'; ?>"
     data-crossfade-ms="<?php echo esc_attr((string) $crossfade_ms); ?>"
+    data-content-entry-delay="<?php echo esc_attr((string) max(0, $content_entry_delay)); ?>"
     style="<?php echo $hero_style; ?>">
     <script type="application/json" data-okip-motion-config><?php echo $motion_json; ?></script>
 

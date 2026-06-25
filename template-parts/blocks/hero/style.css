@@ -2,9 +2,9 @@
  * Bloque Hero — estilos.
  * Carga condicional: solo si la página usa el bloque `hero`.
  *
- * Regla del fondo: `css_motion` es el fondo editable por defecto; media
- * (video/image/svg) sigue disponible como alternativa limpia. El fallback neutro
- * aparece con tipo `gradient` sin media o `.is-bg-failed`.
+ * Regla del fondo: video por defecto; `css_motion` sigue disponible como fondo
+ * editable alternativo. El fallback neutro aparece con tipo `gradient` sin media
+ * o `.is-bg-failed`.
  */
 
 .okip-hero {
