@@ -110,7 +110,7 @@
         });
 
         var monitor     = section.querySelector('[data-okip-pm-layer="computer"]');
-        var cmpVideo    = section.querySelector('[data-okip-pm-screen-video]');
+        var cmpVideo    = section.querySelector('[data-okip-pm-computer-video], [data-okip-pm-screen-video]');
         var cmpAutoplay = monitor && monitor.getAttribute('data-autoplay-on-enter') === '1';
         var cmpStarted  = false;
 
@@ -355,10 +355,7 @@
                 var computerReveal = section.querySelector('.okip-pm__computer-reveal');
                 var textItems = Array.prototype.slice.call(section.querySelectorAll('.okip-pm__text-reveal > *'));
 
-                if (bg) {
-                    gsap.set(bg.el, { y: 0 });
-                    if (bgInner) { gsap.set(bgInner, { opacity: 1 }); }
-                }
+                if (bgInner) { gsap.set(bgInner, { opacity: 1 }); }
 
                 var entryTl = gsap.timeline({
                     scrollTrigger: {
@@ -372,32 +369,39 @@
                     }
                 });
 
-                if (cmp) {
-                    entryTl.fromTo(cmp.el, { y: cmp.speed * DRIFT }, { y: 0, ease: 'none', duration: cmp.enter.duration }, cmp.enter.start);
-                    if (computerReveal) {
-                        entryTl.fromTo(
-                            computerReveal,
-                            { opacity: 0, y: 46, scale: 0.955 },
-                            { opacity: 1, y: 0, scale: 1, ease: 'none', duration: cmp.enter.duration },
-                            cmp.enter.start
-                        );
+                // PARALLAX (profundidad): las 3 capas EXTERIORES driftean a distinta
+                // velocidad durante TODA la entrada (fondo lento → texto rápido) y
+                // terminan en y:0. Es el transform inline del nodo exterior; el reveal
+                // (opacidad/escala) vive en los nodos interiores → nunca el mismo nodo.
+                [bg, cmp, txt].forEach(function (L) {
+                    if (L && L.speed) {
+                        entryTl.fromTo(L.el, { y: L.speed * DRIFT }, { y: 0, ease: 'none', duration: 1 }, 0);
                     }
+                });
+
+                // REVEAL (opacidad/escala) escalonado por enter ranges, en los INTERIORES.
+                if (cmp && computerReveal) {
+                    entryTl.fromTo(
+                        computerReveal,
+                        { opacity: 0, y: 46, scale: 0.955 },
+                        { opacity: 1, y: 0, scale: 1, ease: 'none', duration: cmp.enter.duration },
+                        cmp.enter.start
+                    );
+                }
+                if (cmp) {
                     entryTl.call(function () {
                         section.classList.add('is-glow-revealed');
                         if (cmpAutoplay) { playComputer(); }
                     }, null, cmp.enter.start);
                 }
 
-                if (txt) {
-                    entryTl.fromTo(txt.el, { y: txt.speed * DRIFT }, { y: 0, ease: 'none', duration: txt.enter.duration }, txt.enter.start);
-                    if (textItems.length) {
-                        entryTl.fromTo(
-                            textItems,
-                            { opacity: 0, y: 34 },
-                            { opacity: 1, y: 0, ease: 'none', duration: txt.enter.duration },
-                            txt.enter.start
-                        );
-                    }
+                if (txt && textItems.length) {
+                    entryTl.fromTo(
+                        textItems,
+                        { opacity: 0, y: 34 },
+                        { opacity: 1, y: 0, ease: 'none', duration: txt.enter.duration },
+                        txt.enter.start
+                    );
                 }
             } else {
                 revealAll();

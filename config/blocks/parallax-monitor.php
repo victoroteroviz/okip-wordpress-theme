@@ -78,6 +78,8 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
 
         // Computadora (capa media del monitor).
         $data['computer']['type']                = okip_one_of($data['computer']['type'], $cmp_allowed, 'placeholder');
+        $data['computer']['render_mode']         = okip_one_of(isset($data['computer']['render_mode']) ? $data['computer']['render_mode'] : 'screen', array('screen', 'scene'), 'screen');
+        $data['computer']['black_key_enabled']   = okip_bool(isset($data['computer']['black_key_enabled']) ? $data['computer']['black_key_enabled'] : false);
         $data['computer']['autoplay_on_enter']   = okip_bool($data['computer']['autoplay_on_enter']);
         $data['computer']['placeholder_enabled'] = okip_bool($data['computer']['placeholder_enabled']);
         $data['computer']['frame_enabled']       = okip_bool($data['computer']['frame_enabled']);
@@ -129,7 +131,7 @@ return array(
     ),
     'layout' => array(
         'min_height'       => '100svh', // escena full-screen
-        'content_width'    => '1200px',
+        'content_width'    => '1320px',
         'z_index'          => 2,        // por encima del Hero durante la transición
     ),
     'background' => array(
@@ -141,10 +143,12 @@ return array(
         'gradient' => true,      // gradient atmosférico cuando no hay media
     ),
     'computer' => array(
-        'type'                => 'placeholder', // video | image | svg | placeholder
-        'media'               => '',
+        'type'                => 'video', // video | image | svg | placeholder
+        'render_mode'         => 'scene', // scene = video de escena libre; screen = media dentro del marco
+        'media'               => 'assets/video/parallax-monitor/default-monitor.mp4',
         'poster'              => '',
-        'alt'                 => '',
+        'alt'                 => 'Panel de monitoreo operativo en tiempo real',
+        'black_key_enabled'   => false, // key visual opcional; OFF por defecto: el video ya es escena opaca sobre fondo oscuro
         'autoplay_on_enter'   => true,  // el video/SVG de la escena SÍ puede arrancar al entrar
         'frame_enabled'       => true,  // marco geométrico mínimo del monitor
         'placeholder_enabled' => true,  // placeholder geométrico si no hay media real

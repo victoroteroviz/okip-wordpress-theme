@@ -118,8 +118,19 @@
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 55%);
             mask-image: linear-gradient(180deg, transparent 0%, #000 55%);
 }
+/* En modo escena el video ya aporta su propio piso/reflejo y glow: apagamos los
+   decorativos del CSS para no duplicar ni enturbiar la iluminación. */
+.okip-pm--computer-scene .okip-pm__floor {
+    display: none;
+}
+.okip-pm--computer-scene .okip-pm__monitor--glow::before {
+    display: none;
+}
 
-/* ---- Estructura ---- */
+/* ---- Estructura: contenedor de la capa de TEXTO (z3) ----
+   Ya NO es un grid. El monitor es una capa de sección aparte (absoluta), así que el
+   inner solo limita el ancho de contenido y deja el texto a la izquierda, superpuesto
+   a la escena. pointer-events:none aquí (+ auto en el texto): la escena no bloquea. */
 .okip-pm__inner {
     position: relative;
     z-index: 3;
@@ -127,17 +138,16 @@
     max-width: var(--okip-pm-cw, 1200px);
     margin-inline: auto;
     padding-inline: var(--okip-container-pad, 1.5rem);
-    display: grid;
-    grid-template-columns: 1fr 1.15fr; /* texto izq · monitor (protagonista) der */
-    align-items: center;
-    gap: clamp(2rem, 5vw, 4.5rem);
+    pointer-events: none;
 }
 
-/* ---- Capa 3: texto (z3, queda por encima) ---- */
+/* ---- Capa 3: texto (z3, capa frontal, a la izquierda) ---- */
 .okip-pm__text {
     position: relative;
     z-index: 3;
-    max-width: 40rem;
+    width: min(50rem, 52%);   /* mitad izquierda: deja la derecha para el monitor */
+    max-width: 50rem;
+    pointer-events: auto;
     will-change: transform, opacity;
 }
 .okip-pm__eyebrow {
@@ -149,10 +159,10 @@
 }
 .okip-pm__title {
     margin: 0;
-    font-size: clamp(2.2rem, 5vw, 4rem);
-    line-height: 1.08;
+    font-size: clamp(2.45rem, 4.2vw, 4rem);
+    line-height: 1.12;
     font-weight: 300; /* base ligero; el resaltado va en negrita (no color) */
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
     color: #fff;
 }
 /* Resaltado de la referencia: NEGRITA BLANCA (no naranja). */
@@ -161,12 +171,12 @@
     font-weight: 700;
 }
 .okip-pm__subtitle {
-    margin: 1.5rem 0 0;
-    font-size: clamp(.72rem, 1vw, .82rem);
-    letter-spacing: .26em;
+    margin: 1.35rem 0 0;
+    font-size: clamp(.72rem, .85vw, .8rem);
+    letter-spacing: 0;
     text-transform: uppercase;
     font-weight: 500;
-    color: var(--okip-color-text-muted, #aeb9cb);
+    color: rgba(220, 226, 236, .72);
 }
 .okip-pm__desc {
     margin-top: 1.5rem;
@@ -178,14 +188,67 @@
     margin-top: 2rem;
 }
 
-/* ---- Capa 2: computadora/monitor (z2) ---- */
+/* ---- Capa 2: video/monitor (z2) — capa de ESCENA a nivel de sección ----
+   Es una capa ABSOLUTA que cubre toda la sección (no una celda de grid), bajo el
+   texto (z3) y sobre el fondo (z1). El EXTERIOR (.okip-pm__monitor) recibe el parallax
+   (transform inline); el INTERIOR (.okip-pm__computer-reveal) recibe el reveal. */
 .okip-pm__monitor {
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: 2;
-    justify-self: end;
-    width: 100%;
-    max-width: 760px; /* protagonista */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-inline: var(--okip-container-pad, 1.5rem);
+    pointer-events: none;            /* decorativo: la interacción la recibe el texto */
     will-change: transform, opacity;
+}
+.okip-pm__computer-reveal {
+    will-change: opacity, transform;
+}
+/* Monitor enmarcado (sin video de escena): pantalla a la derecha, tamaño acotado. */
+.okip-pm__monitor:not(.okip-pm__monitor--scene) .okip-pm__computer-reveal {
+    width: min(48vw, 620px);
+}
+
+/* Modo escena: el video YA es la escena completa (monitor + piso + glow) sobre negro.
+   Llena toda la sección (full-bleed) y se funde con el fondo; el monitor aterriza a la
+   derecha por la propia composición del video, el texto (z3) cubre la zona oscura izq. */
+.okip-pm__monitor--scene {
+    display: block;
+    padding-inline: 0;
+}
+.okip-pm__monitor--scene .okip-pm__computer-reveal {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+.okip-pm__scene {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+}
+.okip-pm__scene-media {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;            /* monitor completo (cuerpo + base + piso), sin recorte */
+    object-position: center;
+    display: block;
+    background: transparent;
+}
+/* black-key (opt-in): el video YA es una escena opaca sobre negro que casa con el
+   fondo de la sección. NO usamos mix-blend-mode (lavaría el cuerpo del monitor y el
+   mapa, dejando solo lo brillante). Solo un feather muy suave en los bordes para
+   fundir el rectángulo del video con la escena, sin tocar el centro (el monitor). */
+.okip-pm__monitor--black-key .okip-pm__scene-media {
+    -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, #000 0 82%, transparent 100%);
+            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, #000 0 82%, transparent 100%);
+    -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
 }
 .okip-pm__screen {
     position: relative;
@@ -384,20 +447,23 @@
 @media (max-width: 1024px) {  /* --okip-bp-tablet */
     .okip-pm {
         min-height: var(--okip-pm-minh, 100svh);
+        align-items: flex-start;     /* texto arriba; la escena llena la sección detrás */
         /* padding-top >= navbar (68px) + respiro sin romper el pin full-screen */
         padding-block-start: calc(var(--okip-navbar-h, 68px) + clamp(1rem, 3vh, 2rem));
         padding-block-end: clamp(1.5rem, 5vh, 2.5rem);
     }
-    .okip-pm__inner {
-        grid-template-columns: 1fr;
-        gap: clamp(1.25rem, 4vh, 2.25rem);
-    }
     .okip-pm__text {
+        width: min(40rem, calc(100vw - var(--okip-container-pad, 1.5rem) - var(--okip-container-pad, 1.5rem)));
         max-width: 40rem;
     }
-    .okip-pm__monitor {
-        justify-self: center;
-        max-width: min(100%, 560px);
+    /* Monitor enmarcado: centrado y abajo en móvil (la escena de video sigue full-section). */
+    .okip-pm__monitor:not(.okip-pm__monitor--scene) {
+        justify-content: center;
+        align-items: flex-end;
+        padding-block-end: clamp(1.5rem, 6vh, 3rem);
+    }
+    .okip-pm__monitor:not(.okip-pm__monitor--scene) .okip-pm__computer-reveal {
+        width: min(86vw, 520px);
     }
     .okip-pm__bg-media {
         top: 0;
@@ -413,8 +479,8 @@
         margin-top: 1rem;
         font-size: .68rem;
     }
-    .okip-pm__monitor {
-        max-width: min(100%, 420px);
+    .okip-pm__monitor:not(.okip-pm__monitor--scene) .okip-pm__computer-reveal {
+        width: min(90vw, 400px);
     }
 }
 

@@ -4,10 +4,15 @@
  * Bloque Parallax Monitor (Bloque 2).
  *
  * Escena oscura full-screen que cubre al Hero sticky por flujo/z-index al salir
- * del primer viewport. Tres capas reales con z-index y ritmos distintos:
- *   1) background (z1, data-okip-pm-layer="background") — entra primero/rápido
- *   2) computer   (z2, data-okip-pm-layer="computer")   — entra con retardo
- *   3) text       (z3, data-okip-pm-layer="text")        — entra al final, arriba
+ * del primer viewport. TRES capas reales superpuestas a nivel de sección, cada
+ * una con su profundidad de parallax (nodo EXTERIOR) y su reveal (nodo INTERIOR):
+ *   1) background (z1, data-okip-pm-layer="background") — fondo, parallax lento
+ *   2) computer   (z2, data-okip-pm-layer="computer")   — video/webm full-bleed, medio
+ *   3) text       (z3, data-okip-pm-layer="text")        — texto izquierda, rápido
+ *
+ * Las capas NO viven en un grid (se solaparían mal): son hermanas absolutas de la
+ * sección y se apilan por z-index. El texto va en .okip-pm__inner (ancho de
+ * contenido + padding) por encima de la escena.
  *
  * Toda la lógica de reveal/parallax/pin vive en script.js (GSAP+ScrollTrigger si
  * disponibles, con fallback vanilla rAF). El template solo expone config como data-* y vars
@@ -54,6 +59,11 @@ $cmp_has    = in_array($cmp_type, array('video', 'image', 'svg'), true)
 $cmp_url    = $cmp_has ? okip_media_url($computer['media']) : '';
 $cmp_poster = isset($computer['poster']) && okip_media_exists($computer['poster']) ? okip_media_url($computer['poster']) : '';
 $cmp_alt    = isset($computer['alt']) ? $computer['alt'] : '';
+$cmp_render_mode = isset($computer['render_mode']) && in_array($computer['render_mode'], array('screen', 'scene'), true)
+    ? $computer['render_mode']
+    : 'screen';
+$cmp_black_key = ! empty($computer['black_key_enabled']);
+$cmp_scene     = $cmp_has && $cmp_render_mode === 'scene';
 $cmp_auto   = ! empty($computer['autoplay_on_enter']);
 $frame_on   = ! empty($computer['frame_enabled']);
 $ph_on      = ! empty($computer['placeholder_enabled']);
@@ -112,6 +122,15 @@ $section_style = sprintf(
 
 $section_classes = 'okip-pm';
 $section_classes .= $anim_on ? ' okip-pm--animated' : '';
+$section_classes .= $cmp_scene ? ' okip-pm--computer-scene' : '';
+
+// Markup del monitor (capa 2) — se construye aparte porque ahora es una capa de
+// sección (hermana del fondo), no una celda del grid del texto.
+$monitor_classes = 'okip-pm__monitor';
+$monitor_classes .= $cmp_scene ? ' okip-pm__monitor--scene' : '';
+$monitor_classes .= (! $cmp_scene && $frame_on) ? ' okip-pm__monitor--frame' : '';
+$monitor_classes .= ($cmp_scene && $cmp_black_key) ? ' okip-pm__monitor--black-key' : '';
+$monitor_classes .= $glow_on ? ' okip-pm__monitor--glow' : '';
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
@@ -137,9 +156,9 @@ $section_classes .= $anim_on ? ' okip-pm--animated' : '';
          conservan su scrub normal. -->
     <div class="okip-pm__cover" data-okip-pm-cover aria-hidden="true"></div>
 
-    <!-- Capa 1: fondo real de la escena.
-         En GSAP queda asentado; el cover rápido vive en .okip-pm__cover.
-         En fallback vanilla aún puede usar data-speed/data-enter. -->
+    <!-- Capa 1: fondo real de la escena (z1).
+         EXTERIOR (.okip-pm__bg) = PARALLAX (transform por JS) · INTERIOR
+         (.okip-pm__bg-inner) = REVEAL (opacidad) + media/gradiente. -->
     <div class="okip-pm__bg"
         data-okip-pm-layer="background"
         data-speed="<?php echo esc_attr((string) $bg_speed); ?>"
@@ -158,21 +177,78 @@ $section_classes .= $anim_on ? ' okip-pm--animated' : '';
         </div>
     </div>
 
-    <!-- Capa 2 (overlay opcional, sobre el fondo) -->
+    <!-- Overlay opcional (sobre el fondo) -->
     <?php if ($overlay_on) : ?>
         <div class="okip-pm__overlay" aria-hidden="true"
             style="opacity:<?php echo esc_attr((string) max(0, min(1, $overlay_opacity))); ?>;"></div>
     <?php endif; ?>
 
     <!-- Piso / reflejo de escena: luz azul ambiental en la base, bajo el monitor.
-         Iluminación de escena (no fondo decorativo falso); estable, sin parallax. -->
+         Iluminación de escena (no fondo decorativo falso); estable, sin parallax.
+         En modo escena se oculta por CSS (el video ya trae su propio piso). -->
     <div class="okip-pm__floor" aria-hidden="true"></div>
 
-    <div class="okip-pm__inner">
+    <!-- Capa 2: video/monitor (z2) — capa de ESCENA a nivel de sección, full-bleed.
+         EXTERIOR (.okip-pm__monitor) = PARALLAX · INTERIOR (.okip-pm__computer-reveal)
+         = REVEAL. El glow vive en el nodo exterior, no en el interior. -->
+    <div class="<?php echo esc_attr($monitor_classes); ?>"
+        data-okip-pm-layer="computer"
+        data-render-mode="<?php echo esc_attr($cmp_scene ? 'scene' : 'screen'); ?>"
+        data-speed="<?php echo esc_attr((string) $cmp_speed); ?>"
+        data-enter="<?php echo esc_attr($range_str($cmp_range)); ?>"
+        data-autoplay-on-enter="<?php echo $cmp_auto ? '1' : '0'; ?>">
+        <div class="okip-pm__computer-reveal">
+            <?php if ($cmp_scene) : ?>
+                <div class="okip-pm__scene">
+                    <?php if ($cmp_type === 'video') : ?>
+                        <video class="okip-pm__scene-media" muted loop playsinline preload="metadata" data-okip-pm-computer-video aria-label="<?php echo esc_attr($cmp_alt); ?>"
+                            <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
+                            <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
+                        </video>
+                    <?php else : ?>
+                        <img class="okip-pm__scene-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
+                    <?php endif; ?>
+                </div>
+            <?php else : ?>
+                <div class="okip-pm__screen">
+                    <?php if ($cmp_has && $cmp_type === 'video') : ?>
+                        <video class="okip-pm__screen-media" muted loop playsinline preload="metadata" data-okip-pm-computer-video data-okip-pm-screen-video
+                            <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
+                            <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
+                        </video>
+                    <?php elseif ($cmp_has) : ?>
+                        <img class="okip-pm__screen-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
+                    <?php elseif ($ph_on) : ?>
+                        <!-- Placeholder esquemático tipo dashboard (sin media real):
+                             barra superior + panel principal ("mapa") + tarjetas laterales.
+                             Es claramente un wireframe, no un mockup fotográfico falso. -->
+                        <span class="okip-pm__screen-ph" aria-hidden="true">
+                            <span class="okip-pm__screen-ph-bar">
+                                <span class="okip-pm__screen-ph-dot"></span>
+                                <span class="okip-pm__screen-ph-dot"></span>
+                                <span class="okip-pm__screen-ph-dot"></span>
+                            </span>
+                            <span class="okip-pm__screen-ph-body">
+                                <span class="okip-pm__screen-ph-map"></span>
+                                <span class="okip-pm__screen-ph-side">
+                                    <span class="okip-pm__screen-ph-card"></span>
+                                    <span class="okip-pm__screen-ph-card"></span>
+                                    <span class="okip-pm__screen-ph-card"></span>
+                                </span>
+                            </span>
+                        </span>
+                    <?php else : ?>
+                        <!-- Sin media de pantalla: queda el marco/pantalla neutra (CSS). -->
+                    <?php endif; ?>
+                </div>
+                <span class="okip-pm__stand" aria-hidden="true"></span>
+            <?php endif; ?>
+        </div>
+    </div>
 
-        <!-- Capa 3: texto (z3, entra al final, queda arriba).
-             Wrapper exterior = PARALLAX (transform por JS) · interior = REVEAL
-             (opacidad/translate por CLASE latcheada). Nunca el mismo nodo. -->
+    <!-- Capa 3: texto (z3) — capa frontal, alineada a la izquierda, sobre la escena.
+         EXTERIOR (.okip-pm__text) = PARALLAX · INTERIOR (.okip-pm__text-reveal) = REVEAL. -->
+    <div class="okip-pm__inner">
         <div class="okip-pm__text"
             data-okip-pm-layer="text"
             data-speed="<?php echo esc_attr((string) $txt_speed); ?>"
@@ -213,50 +289,6 @@ $section_classes .= $anim_on ? ' okip-pm--animated' : '';
                 <?php endif; ?>
             </div>
         </div>
-
-        <!-- Capa 2: computadora/monitor (z2, entra tras el fondo). Glow detrás. -->
-        <div class="okip-pm__monitor<?php echo $frame_on ? ' okip-pm__monitor--frame' : ''; ?><?php echo $glow_on ? ' okip-pm__monitor--glow' : ''; ?>"
-            data-okip-pm-layer="computer"
-            data-speed="<?php echo esc_attr((string) $cmp_speed); ?>"
-            data-enter="<?php echo esc_attr($range_str($cmp_range)); ?>"
-            data-autoplay-on-enter="<?php echo $cmp_auto ? '1' : '0'; ?>">
-            <!-- Wrapper interior = REVEAL (clase latcheada). El glow vive en el
-                 nodo exterior (parallax), no aquí. -->
-            <div class="okip-pm__computer-reveal">
-                <div class="okip-pm__screen">
-                    <?php if ($cmp_has && $cmp_type === 'video') : ?>
-                        <video class="okip-pm__screen-media" muted loop playsinline preload="metadata" data-okip-pm-screen-video
-                            <?php echo $cmp_poster ? 'poster="' . esc_url($cmp_poster) . '"' : ''; ?>>
-                            <source src="<?php echo esc_url($cmp_url); ?>" type="video/mp4">
-                        </video>
-                    <?php elseif ($cmp_has) : ?>
-                        <img class="okip-pm__screen-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
-                    <?php elseif ($ph_on) : ?>
-                        <!-- Placeholder esquemático tipo dashboard (sin media real):
-                             barra superior + panel principal ("mapa") + tarjetas laterales.
-                             Es claramente un wireframe, no un mockup fotográfico falso. -->
-                        <span class="okip-pm__screen-ph" aria-hidden="true">
-                            <span class="okip-pm__screen-ph-bar">
-                                <span class="okip-pm__screen-ph-dot"></span>
-                                <span class="okip-pm__screen-ph-dot"></span>
-                                <span class="okip-pm__screen-ph-dot"></span>
-                            </span>
-                            <span class="okip-pm__screen-ph-body">
-                                <span class="okip-pm__screen-ph-map"></span>
-                                <span class="okip-pm__screen-ph-side">
-                                    <span class="okip-pm__screen-ph-card"></span>
-                                    <span class="okip-pm__screen-ph-card"></span>
-                                    <span class="okip-pm__screen-ph-card"></span>
-                                </span>
-                            </span>
-                        </span>
-                    <?php else : ?>
-                        <!-- Sin media de pantalla: queda el marco/pantalla neutra (CSS). -->
-                    <?php endif; ?>
-                </div>
-                <span class="okip-pm__stand" aria-hidden="true"></span>
-            </div>
-        </div>
-
     </div>
+
 </section>
