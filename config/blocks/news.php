@@ -150,7 +150,7 @@ return array(
         ),
     ),
     'layout' => array(
-        'background'     => '#f4f4f2',
+        'background'     => '#ffffff',
         'padding_top'    => '3rem',
         'padding_bottom' => '3.35rem',
         'card_width'     => 'clamp(300px, 28vw, 520px)',
