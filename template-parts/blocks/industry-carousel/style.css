@@ -19,24 +19,24 @@
     position: relative;
     min-height: var(--okip-ic-minh, 100svh);
     z-index: var(--okip-ic-z, 3);
-    background: #f7f8fa;   /* fondo claro, contraste con Bloque 2 */
-    color: #0d1520;
+    background: #ffffff;
+    color: #05070a;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: clamp(3.5rem, 6vw, 5.5rem) clamp(3.5rem, 6vw, 5.5rem) 0 0;
+    border-radius: clamp(4.75rem, 8vw, 7.25rem) clamp(4.75rem, 8vw, 7.25rem) 0 0;
     /* El root pineado no recorta: el clipping vive en la cinta para no pelear
        con ScrollTrigger pin. */
     overflow: visible;
     isolation: isolate;
 }
 
-/* ScrollTrigger envuelve el bloque pineado en un .pin-spacer transparente.
-   Si el siguiente bloque asoma durante el handoff, esa transparencia puede
-   dejar una línea de composición. El spacer del carrusel debe compartir fondo. */
+/* ScrollTrigger envuelve el bloque pineado en un .pin-spacer.
+   El spacer queda transparente para conservar visibles las esquinas redondeadas
+   contra el bloque oscuro anterior. */
 .pin-spacer:has(> .okip-ic) {
-    background: #f7f8fa;
+    background: transparent;
 }
 
 /* El retardo de cobertura B2→B3 (esperar a que el depth-entry de B2 termine + el hold
@@ -49,10 +49,10 @@
     position: relative;
     z-index: 2;
     width: 100%;
-    max-width: 900px;
+    max-width: 940px;
     margin-inline: auto;
     padding-inline: var(--okip-container-pad, 1.5rem);
-    padding-block: clamp(3.5rem, 9vh, 6rem) 0;
+    padding-block: clamp(4.75rem, 12vh, 8.25rem) 0;
     text-align: center;
     flex-shrink: 0;
 }
@@ -60,35 +60,36 @@
 .okip-ic__eyebrow {
     margin: 0 0 .75rem;
     font-size: .78rem;
-    letter-spacing: .22em;
+    letter-spacing: 0;
     text-transform: uppercase;
     color: #7a8899;
 }
 
-/* Título principal uppercase bold (ref: "ECOSISTEMAS DE SEGURIDAD") */
+/* Título principal uppercase (ref: "ECOSISTEMAS DE SEGURIDAD") */
 .okip-ic__heading-main {
     margin: 0;
-    font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+    font-size: clamp(2rem, 3vw, 3rem);
     line-height: 1.1;
-    font-weight: 700;
-    letter-spacing: .06em;
+    font-weight: 500;
+    letter-spacing: 0;
     text-transform: uppercase;
-    color: #0d1520;
+    color: #05070a;
 }
 
 /* Subtítulo en peso normal (ref: "físicos y virtuales a la medida") */
 .okip-ic__heading-sub {
-    margin: .4rem 0 0;
-    font-size: clamp(1rem, 2vw, 1.35rem);
-    font-weight: 400;
-    color: #5a6475;
+    margin: .2rem 0 0;
+    font-size: clamp(1.45rem, 2.8vw, 2.55rem);
+    line-height: 1.08;
+    font-weight: 300;
+    color: #111111;
     letter-spacing: 0;
 }
 
 /* ---- Texto naranja: línea propia centrada grande ---- */
 .okip-ic__orange-line {
     position: relative;
-    margin: clamp(.8rem, 2vh, 1.25rem) 0 0;
+    margin: clamp(.9rem, 2.2vh, 1.35rem) 0 0;
     /* el contenedor toma la altura del texto más largo para evitar layout shift */
     display: block;
     min-height: 1.15em;
@@ -106,9 +107,10 @@
 /* Texto naranja individual */
 .okip-ic__orange-text {
     display: block;
-    font-size: clamp(1.8rem, 4vw, 3.2rem);
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-size: clamp(2.5rem, 4.6vw, 4.4rem);
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: 0;
     color: var(--okip-color-accent, #ff5a14);
     opacity: 0;
     transform: translateY(6px);
@@ -136,22 +138,27 @@
 /* CTA */
 .okip-ic__cta {
     display: inline-block;
-    margin-top: clamp(.9rem, 2.5vh, 1.5rem);
-    padding: .5rem 1.4rem;
-    font-size: .82rem;
-    font-weight: 600;
-    letter-spacing: .12em;
+    margin-top: clamp(1.05rem, 2.4vh, 1.55rem);
+    min-width: 196px;
+    padding: .58rem 1.75rem .62rem;
+    font-size: 1rem;
+    line-height: 1.1;
+    font-weight: 400;
+    letter-spacing: 0;
     text-transform: uppercase;
     text-decoration: none;
-    color: #0d1520;
-    border: 1.5px solid #0d1520;
-    border-radius: 2px;
-    transition: background .2s ease, color .2s ease;
+    color: #6d6f73;
+    background: #ffffff;
+    border: 1px solid rgba(18, 24, 32, .08);
+    border-radius: 9px;
+    box-shadow: 0 5px 10px rgba(4, 8, 15, .18);
+    transition: transform .2s ease, box-shadow .2s ease, color .2s ease;
 }
 .okip-ic__cta:hover,
 .okip-ic__cta:focus-visible {
-    background: #0d1520;
-    color: #fff;
+    color: #05070a;
+    transform: translateY(-1px);
+    box-shadow: 0 7px 16px rgba(4, 8, 15, .22);
     outline: none;
 }
 
@@ -160,7 +167,7 @@
     position: relative;
     z-index: 1;
     width: 100%;
-    margin-top: clamp(2rem, 5vh, 3.5rem);
+    margin-top: clamp(3.75rem, 9vh, 6rem);
     /* en desktop el track se mueve con transform (JS); el overflow se recorta aquí */
     overflow: clip;
     flex-shrink: 0;
@@ -170,10 +177,10 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: clamp(.75rem, 1.5vw, 1.25rem);
+    gap: clamp(1rem, 2vw, 1.8rem);
     list-style: none;
     margin: 0;
-    padding: clamp(1rem, 3vh, 2rem) var(--okip-container-pad, 1.5rem);
+    padding: clamp(1rem, 3vh, 2rem) var(--okip-container-pad, 1.5rem) clamp(1.25rem, 3vh, 2.25rem);
     width: max-content;
     will-change: transform;
 }
@@ -181,13 +188,13 @@
 /* ---- Ítem individual (solo media, sin cuerpo de texto) ---- */
 .okip-ic__item {
     flex: 0 0 auto;
-    width: clamp(220px, 28vw, 380px);
-    aspect-ratio: 4 / 3;
+    width: clamp(250px, 25vw, 360px);
+    aspect-ratio: 16 / 9;
     border-radius: 8px;
     overflow: hidden;
     /* Inactivo: escala de grises + pequeño */
-    filter: grayscale(0.85) brightness(0.92);
-    transform: scale(0.9);
+    filter: grayscale(1) brightness(0.86);
+    transform: scale(0.92);
     transition: filter .4s ease, transform .4s var(--okip-ease, cubic-bezier(.4,0,.2,1)),
                 box-shadow .4s ease;
     cursor: default;
@@ -197,8 +204,8 @@
 /* Activo: a color, escala mayor, sombra */
 .okip-ic__item.is-active {
     filter: grayscale(0) brightness(1);
-    transform: scale(1.07);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, .22), 0 4px 16px rgba(0, 0, 0, .12);
+    transform: scale(1.02);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, .22);
     z-index: 1;
 }
 

@@ -6,8 +6,8 @@
  * Ref visual: `bloque 4.png`. Continúa SIN transición tras el Bloque 3
  * (mismo fondo claro). Tres filas de producto, cada una:
  *   - Recuadro visual a la izquierda:
- *       · logo-title   → caja negra con logo/placeholder arriba + título blanco.
- *       · media-caption→ media (o placeholder) con barra de caption inferior.
+ *       · estado base  → caja negra con logo + título blanco.
+ *       · hover/focus  → imagen de producto (o placeholder) + caption.
  *   - Etiqueta gris (pill) debajo del recuadro (RIA / COVIA / GIA).
  *   - Tarjeta gris clara a la derecha: heading + descripción monoespaciados.
  *
@@ -106,37 +106,31 @@ if (empty($items)) {
             $media_type  = isset($item['media_type'])     ? $item['media_type']     : 'placeholder';
             $media       = isset($item['media'])          ? $item['media']          : '';
             $alt         = isset($item['alt'])            ? $item['alt']            : $title_left;
+            $hover_media = isset($item['hover_media'])    ? $item['hover_media']    : '';
+            $hover_alt   = isset($item['hover_alt']) && $item['hover_alt'] !== '' ? $item['hover_alt'] : $title_left;
+            $hover_placeholder = ! empty($item['hover_placeholder']);
 
-            $has_media = $media_type !== 'placeholder' && ! empty($media) && okip_media_exists($media);
-            $media_url = $has_media ? okip_media_url($media) : '';
+            $has_media       = $media_type !== 'placeholder' && ! empty($media) && okip_media_exists($media);
+            $media_url       = $has_media ? okip_media_url($media) : '';
+            $hover_has_media = ! empty($hover_media) && okip_media_exists($hover_media);
+            $hover_url       = $hover_has_media ? okip_media_url($hover_media) : '';
+            $has_hover       = $hover_has_media || $hover_placeholder;
+            $product_key     = sanitize_html_class(sanitize_key($label !== '' ? $label : ('item-' . $idx)));
+            $row_classes     = 'okip-ps__row okip-ps__row--' . sanitize_html_class($variant) . ' okip-ps__row--product-' . $product_key;
+            $visual_classes  = 'okip-ps__visual okip-ps__visual--logo-title';
+            $visual_classes .= $has_hover ? ' okip-ps__visual--has-hover' : '';
             ?>
             <article
-                class="okip-ps__row okip-ps__row--<?php echo esc_attr($variant); ?>"
+                class="<?php echo esc_attr($row_classes); ?>"
                 data-okip-ps-row
                 data-index="<?php echo esc_attr((string) $idx); ?>"
+                data-product="<?php echo esc_attr($product_key); ?>"
                 data-variant="<?php echo esc_attr($variant); ?>">
 
                 <!-- Columna izquierda: recuadro visual + etiqueta -->
                 <div class="okip-ps__left">
-                    <div class="okip-ps__visual okip-ps__visual--<?php echo esc_attr($variant); ?>">
-                        <?php if ($variant === 'media-caption') : ?>
-                            <?php if ($has_media && $media_type === 'video') : ?>
-                                <video class="okip-ps__media" muted loop playsinline preload="none"
-                                    aria-label="<?php echo esc_attr($alt); ?>">
-                                    <source src="<?php echo esc_url($media_url); ?>" type="video/mp4">
-                                </video>
-                            <?php elseif ($has_media) : /* image, gif, svg */ ?>
-                                <img class="okip-ps__media"
-                                    src="<?php echo esc_url($media_url); ?>"
-                                    alt="<?php echo esc_attr($alt); ?>"
-                                    loading="<?php echo $media_type === 'gif' ? 'eager' : 'lazy'; ?>">
-                            <?php else : ?>
-                                <span class="okip-ps__media-ph" aria-hidden="true"></span>
-                            <?php endif; ?>
-                            <?php if ($title_left !== '') : ?>
-                                <span class="okip-ps__caption"><?php echo esc_html($title_left); ?></span>
-                            <?php endif; ?>
-                        <?php else : /* logo-title */ ?>
+                    <div class="<?php echo esc_attr($visual_classes); ?>"<?php echo $has_hover ? ' tabindex="0"' : ''; ?>>
+                        <div class="okip-ps__visual-base">
                             <span class="okip-ps__logo" aria-hidden="true">
                                 <?php if ($has_media && $media_type === 'video') : ?>
                                     <video class="okip-ps__logo-video" muted loop playsinline preload="none">
@@ -163,6 +157,26 @@ if (empty($items)) {
                             <?php if ($title_left !== '') : ?>
                                 <h3 class="okip-ps__title"><?php echo esc_html($title_left); ?></h3>
                             <?php endif; ?>
+                        </div>
+
+                        <?php if ($has_hover) : ?>
+                            <div class="okip-ps__hover">
+                                <span class="okip-ps__hover-frame">
+                                    <?php if ($hover_has_media) : ?>
+                                        <img class="okip-ps__hover-media"
+                                            src="<?php echo esc_url($hover_url); ?>"
+                                            alt="<?php echo esc_attr($hover_alt); ?>"
+                                            loading="lazy">
+                                    <?php else : ?>
+                                        <span class="okip-ps__hover-ph" aria-hidden="true">
+                                            <span class="okip-ps__hover-ph-label"><?php echo esc_html($label); ?></span>
+                                        </span>
+                                    <?php endif; ?>
+                                </span>
+                                <?php if ($title_left !== '') : ?>
+                                    <span class="okip-ps__hover-caption"><?php echo esc_html($title_left); ?></span>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
 

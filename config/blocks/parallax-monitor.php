@@ -67,7 +67,7 @@ if (! function_exists('okip_normalize_parallax_monitor_data')) {
     function okip_normalize_parallax_monitor_data($data)
     {
         $bg_allowed  = array('image', 'video', 'svg');
-        $cmp_allowed = array('video', 'image', 'svg', 'placeholder');
+        $cmp_allowed = array('video', 'image', 'svg', 'gif', 'placeholder');
 
         // Layout / escena.
         $data['layout']['z_index'] = okip_clamp_int($data['layout']['z_index'], 0, 50);
@@ -136,16 +136,16 @@ return array(
     ),
     'background' => array(
         'type'     => 'image', // image | video | svg
-        'media'    => '',
+        'media'    => 'assets/img/paradax-monitor/default-background.png', // glow azul real (carpeta "paradax-monitor")
         'poster'   => '',
         'alt'      => '',
         'color'    => '#050a16', // color base cuando no hay media
         'gradient' => true,      // gradient atmosférico cuando no hay media
     ),
     'computer' => array(
-        'type'                => 'video', // video | image | svg | placeholder
-        'render_mode'         => 'scene', // scene = video de escena libre; screen = media dentro del marco
-        'media'               => 'assets/video/parallax-monitor/default-monitor.mp4', // webm con alfa (yuva420p + alpha_mode=1)
+        'type'                => 'gif', // video | image | svg | gif | placeholder
+        'render_mode'         => 'scene', // scene = media de escena libre; screen = media dentro del marco
+        'media'               => 'assets/gif/parallax-monitor/Monitor.gif', // GIF transparente del monitor (autoplay nativo del <img>)
         'poster'              => '',
         'alt'                 => 'Panel de monitoreo operativo en tiempo real',
         'black_key_enabled'   => false, // key visual opcional; OFF por defecto: el video ya es escena opaca sobre fondo oscuro

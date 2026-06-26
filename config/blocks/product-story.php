@@ -6,7 +6,7 @@
  * Sección de fondo CLARO que continúa SIN transición tras el Bloque 3
  * (industry-carousel). Layout ref `bloque 4.png`: composición editorial con tres
  * filas de producto. Cada fila:
- *   - Recuadro visual a la izquierda (negro logo+título | media con caption).
+ *   - Recuadro visual a la izquierda (negro logo+título + hover con imagen).
  *   - Etiqueta gris (pill) debajo del recuadro (RIA / COVIA / GIA).
  *   - Tarjeta gris clara a la derecha: heading + descripción en monoespaciado.
  *
@@ -43,8 +43,11 @@ if (! function_exists('okip_ps_item_defaults')) {
             'heading'        => '',           // título monoespaciado de la tarjeta derecha
             'description'    => '',           // descripción de la tarjeta derecha
             'media_type'     => 'placeholder', // image|video|svg|placeholder
-            'media'          => '',           // ruta a assets/ o URL o ID de attachment
+            'media'          => '',           // logo: ruta a assets/ o URL o ID de attachment
             'alt'            => '',
+            'hover_media'    => '',           // imagen que aparece al hover/focus
+            'hover_alt'      => '',
+            'hover_placeholder' => false,      // fallback temporal cuando no existe hover_media
             'visual_variant' => 'logo-title', // logo-title | media-caption
         );
     }
@@ -99,6 +102,9 @@ if (! function_exists('okip_normalize_product_story_data')) {
                 $merged['description']    = sanitize_text_field((string) $merged['description']);
                 $merged['alt']            = sanitize_text_field((string) $merged['alt']);
                 $merged['media']          = sanitize_text_field((string) $merged['media']);
+                $merged['hover_media']    = sanitize_text_field((string) $merged['hover_media']);
+                $merged['hover_alt']      = sanitize_text_field((string) $merged['hover_alt']);
+                $merged['hover_placeholder'] = okip_bool($merged['hover_placeholder']);
                 $merged['media_type']     = okip_one_of($merged['media_type'], array('image', 'gif', 'video', 'svg', 'placeholder'), 'placeholder');
                 $merged['visual_variant'] = okip_one_of($merged['visual_variant'], array('logo-title', 'media-caption'), 'logo-title');
                 $out[] = $merged;
@@ -118,7 +124,7 @@ return array(
     ),
     'layout' => array(
         'min_height'    => 'auto',   // el bloque fluye natural, sin altura forzada
-        'content_width' => '1100px', // ancho máximo del contenedor editorial
+        'content_width' => '650px',  // ancho compacto de la referencia editorial
         'z_index'       => 4,        // sobre el Bloque 3 en la cascada de la home
     ),
     'items' => array(
@@ -127,9 +133,12 @@ return array(
             'title_left'     => 'Registro de accesos',
             'heading'        => 'Control - Automatización - Datos',
             'description'    => 'Transforma cada ingreso en información trazable, consultable y útil para fortalecer la seguridad y operación del espacio.',
-            'media_type'     => 'placeholder',
-            'media'          => '',
-            'alt'            => '',
+            'media_type'     => 'image',
+            'media'          => 'assets/img/product-history/logo-ria.png',
+            'alt'            => 'RIA',
+            'hover_media'    => 'assets/img/product-history/ria-hover.png',
+            'hover_alt'      => 'Panel de registro de accesos RIA',
+            'hover_placeholder' => false,
             'visual_variant' => 'logo-title',
         ),
         array(
@@ -137,19 +146,25 @@ return array(
             'title_left'     => 'Monitoreo Inteligente',
             'heading'        => 'Centraliza - Visualiza - Coordina',
             'description'    => 'Información operativa en tiempo real que fortalece la seguridad y toma de decisiones integrando IA + análisis de datos.',
-            'media_type'     => 'placeholder',
-            'media'          => '',
-            'alt'            => '',
-            'visual_variant' => 'media-caption',
+            'media_type'     => 'image',
+            'media'          => 'assets/img/product-history/logo-covia.png',
+            'alt'            => 'COVIA',
+            'hover_media'    => 'assets/img/product-history/covia-hover.png',
+            'hover_alt'      => 'Panel de monitoreo COVIA',
+            'hover_placeholder' => true,
+            'visual_variant' => 'logo-title',
         ),
         array(
             'label'          => 'GIA',
             'title_left'     => 'Mensajería segura',
             'heading'        => 'Canal - Encriptación - Resguardo',
             'description'    => 'Protección y cifrado de datos para fortalecer la confidencialidad de las comunicaciones y resguardar información sensible.',
-            'media_type'     => 'placeholder',
-            'media'          => '',
-            'alt'            => '',
+            'media_type'     => 'image',
+            'media'          => 'assets/img/product-history/logo-gia.png',
+            'alt'            => 'GIA',
+            'hover_media'    => 'assets/img/product-history/gia-hover.png',
+            'hover_alt'      => 'Aplicación de mensajería segura GIA',
+            'hover_placeholder' => false,
             'visual_variant' => 'logo-title',
         ),
     ),

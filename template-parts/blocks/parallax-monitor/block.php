@@ -54,7 +54,7 @@ $bg_color    = isset($background['color']) ? $background['color'] : '#050a16';
 
 // --- Computadora (capa media del monitor) ---
 $cmp_type   = isset($computer['type']) ? $computer['type'] : 'placeholder';
-$cmp_has    = in_array($cmp_type, array('video', 'image', 'svg'), true)
+$cmp_has    = in_array($cmp_type, array('video', 'image', 'svg', 'gif'), true)
     && okip_media_exists(isset($computer['media']) ? $computer['media'] : '');
 $cmp_url    = $cmp_has ? okip_media_url($computer['media']) : '';
 $cmp_poster = isset($computer['poster']) && okip_media_exists($computer['poster']) ? okip_media_url($computer['poster']) : '';
@@ -220,7 +220,7 @@ $monitor_classes .= $glow_on ? ' okip-pm__monitor--glow' : '';
                             <source src="<?php echo esc_url($cmp_url); ?>" type="<?php echo esc_attr($okip_video_mime($cmp_url)); ?>">
                         </video>
                     <?php else : ?>
-                        <img class="okip-pm__scene-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>">
+                        <img class="okip-pm__scene-media" src="<?php echo esc_url($cmp_url); ?>" alt="<?php echo esc_attr($cmp_alt); ?>" decoding="async">
                     <?php endif; ?>
                 </div>
             <?php else : ?>

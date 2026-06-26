@@ -2,9 +2,9 @@
  * Bloque Product Story (Bloque 4) — estilos.
  * Ref visual: bloque 4.png.
  *
- * Fondo CLARO, conectado visualmente con el Bloque 3 (mismo tono, sin transición).
+ * Fondo CLARO, conectado visualmente con el Bloque 3 (mismo blanco, sin transición).
  * Composición editorial: tres filas de producto, mucho aire.
- *   - Izquierda: recuadro negro (logo + título) o media con caption inferior.
+ *   - Izquierda: recuadro negro (logo + título) con hover a imagen + caption.
  *   - Etiqueta gris (pill) debajo del recuadro.
  *   - Derecha: tarjeta gris clara con heading + descripción monoespaciados.
  *
@@ -19,14 +19,14 @@
 /* Pila monoespaciada local (no hay token global de mono) */
 .okip-ps {
     --okip-ps-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-    --okip-ps-black: #0b0c0e;
-    --okip-ps-card: #e9eaec;
-    --okip-ps-pill: #c8ccd2;
+    --okip-ps-black: #050006;
+    --okip-ps-card: #e6e6e6;
+    --okip-ps-pill: #b7b8ba;
 
     position: relative;
     z-index: var(--okip-ps-z, 4);
     min-height: var(--okip-ps-minh, auto);
-    background: #f7f8fa;   /* mismo tono que el Bloque 3 → continuidad sin costura */
+    background: #ffffff;   /* mismo fondo que Industry Carousel */
     color: #0d1520;
     isolation: isolate;
     /* El root NUNCA recibe transform (regla del proyecto): se animan nodos internos. */
@@ -39,7 +39,7 @@
     top: -3px;
     height: 6px;
     z-index: 0;
-    background: #f7f8fa;
+    background: #ffffff;
     pointer-events: none;
 }
 
@@ -50,7 +50,7 @@
     max-width: var(--okip-ps-cw, 1100px);
     margin-inline: auto;
     padding-inline: var(--okip-container-pad, 1.5rem);
-    padding-block: clamp(3rem, 9vh, 6rem);
+    padding-block: clamp(3rem, 9vh, 5.75rem);
 }
 
 /* Desktop animado: padding inferior extra para que, al fijar la sección en
@@ -73,12 +73,12 @@
 /* ---- Fila ---- */
 .okip-ps__row {
     display: grid;
-    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-    gap: clamp(1.5rem, 4vw, 3.5rem);
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: 0;
     align-items: center;
 }
 .okip-ps__row + .okip-ps__row {
-    margin-top: clamp(2.5rem, 8vh, 5.5rem);
+    margin-top: clamp(3.4rem, 8vh, 4.9rem);
 }
 
 /* ---- Columna izquierda ---- */
@@ -88,35 +88,36 @@
     align-items: flex-start;
 }
 
-/* Recuadro visual: negro, esquinas redondeadas tipo referencia (derecha muy curva) */
+/* Recuadro visual: negro, cuadrado con derecha muy curva como la referencia */
 .okip-ps__visual {
     position: relative;
     width: 100%;
+    aspect-ratio: 1;
     overflow: hidden;
-    border-radius: 12px 64px 64px 12px;
+    border-radius: 0 42px 42px 0;
     background: var(--okip-ps-black);
     color: #f4f7fb;
+    isolation: isolate;
     will-change: transform, clip-path, opacity;
 }
 
-/* logo-title: caja casi cuadrada con logo arriba y título abajo a la izquierda */
-.okip-ps__visual--logo-title {
-    aspect-ratio: 5 / 4;
+/* Estado base: logo arriba, título abajo a la izquierda */
+.okip-ps__visual-base {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: clamp(1rem, 2.2vw, 1.6rem);
-}
-
-/* media-caption: el media llena la caja; el caption va en barra inferior */
-.okip-ps__visual--media-caption {
-    aspect-ratio: 16 / 10;
+    padding: 1.55rem 1.05rem 1.2rem;
+    transition: opacity .42s ease, transform .5s var(--okip-ease, cubic-bezier(.22,1,.36,1));
 }
 
 /* Logo / placeholder (parte superior del recuadro logo-title) */
 .okip-ps__logo {
     display: block;
-    width: clamp(48px, 9vw, 88px);
+    align-self: center;
+    width: 5rem;
     color: #f4f7fb;
 }
 .okip-ps__logo-img,
@@ -135,11 +136,22 @@
     object-fit: contain;
 }
 
-/* Recuadro con video: cursor pointer + contorno de foco accesible */
-.okip-ps__visual:has(video) {
+.okip-ps__row--product-ria .okip-ps__logo {
+    width: 5rem;
+}
+.okip-ps__row--product-covia .okip-ps__logo {
+    width: 5.1rem;
+}
+.okip-ps__row--product-gia .okip-ps__logo {
+    width: 6.35rem;
+    margin-top: .25rem;
+}
+
+/* Recuadro con hover/focus + contorno accesible */
+.okip-ps__visual--has-hover {
     cursor: pointer;
 }
-.okip-ps__visual:focus {
+.okip-ps__visual:focus-visible {
     outline: 2px solid rgba(255, 90, 20, .55);
     outline-offset: 3px;
 }
@@ -147,67 +159,116 @@
 /* Título dentro del recuadro negro (bottom-left) */
 .okip-ps__title {
     margin: 0;
-    font-size: clamp(1.4rem, 2.6vw, 2.1rem);
-    line-height: 1.1;
+    font-size: clamp(1.55rem, 2.3vw, 1.88rem);
+    line-height: .98;
     font-weight: 400;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
     color: #f4f7fb;
 }
 
-/* Media dentro del recuadro media-caption */
-.okip-ps__media {
+/* Estado hover: imagen superior + caption inferior */
+.okip-ps__hover {
     position: absolute;
     inset: 0;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(8px) scale(1.015);
+    clip-path: inset(0 0 0 100%);
+    background: var(--okip-ps-black);
+    transition: opacity .42s ease, transform .55s var(--okip-ease, cubic-bezier(.22,1,.36,1)),
+                clip-path .55s var(--okip-ease, cubic-bezier(.22,1,.36,1));
+    pointer-events: none;
+}
+.okip-ps__hover-frame {
+    position: absolute;
+    top: .85rem;
+    right: 0;
+    left: .55rem;
+    height: 52%;
+    overflow: hidden;
+    background: #16181c;
+}
+.okip-ps__hover-media,
+.okip-ps__hover-ph {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
 }
-/* Placeholder sobrio cuando no hay media real */
-.okip-ps__media-ph {
-    position: absolute;
-    inset: 0;
+.okip-ps__hover-ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background:
-        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 38px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 38px),
-        #15171b;
+        repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0 1px, transparent 1px 24px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 24px),
+        linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.02)),
+        #17191e;
 }
-/* Barra de caption (media-caption) */
-.okip-ps__caption {
+.okip-ps__hover-ph-label {
+    font-family: var(--okip-ps-mono);
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    color: rgba(255, 255, 255, .82);
+}
+.okip-ps__hover-caption {
     position: absolute;
     left: 0;
     bottom: 0;
-    max-width: 80%;
-    padding: .5rem 1.6rem .5rem 1rem;
+    max-width: 100%;
+    min-width: 76%;
+    padding: .44rem 1.35rem .44rem 1rem;
     background: var(--okip-ps-black);
     color: #f4f7fb;
-    font-size: clamp(.82rem, 1.4vw, 1rem);
+    font-size: .82rem;
     line-height: 1.2;
     border-radius: 0 18px 0 0;
+}
+.okip-ps__visual--has-hover:hover .okip-ps__visual-base,
+.okip-ps__visual--has-hover:focus-visible .okip-ps__visual-base {
+    opacity: 0;
+    transform: translateY(-6px) scale(.985);
+}
+.okip-ps__visual--has-hover:hover .okip-ps__hover,
+.okip-ps__visual--has-hover:focus-visible .okip-ps__hover {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 0 0);
 }
 
 /* Etiqueta gris (pill) bajo el recuadro */
 .okip-ps__label {
-    display: inline-block;
-    margin-top: clamp(.7rem, 1.6vh, 1rem);
-    margin-left: clamp(.4rem, 1.2vw, 1rem);
-    padding: .35rem 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 7.5rem;
+    min-height: 1.25rem;
+    margin-top: .85rem;
+    margin-left: .15rem;
+    padding: 0 .8rem;
     background: var(--okip-ps-pill);
-    color: #4a4f57;
+    color: #f4f4f4;
     font-family: var(--okip-ps-mono);
-    font-size: .8rem;
+    font-size: .72rem;
     font-weight: 600;
     letter-spacing: .14em;
-    border-radius: 3px;
+    border-radius: 0;
     will-change: opacity;
 }
 
 /* ---- Columna derecha: tarjeta gris ---- */
+.okip-ps__copy {
+    min-width: 0;
+}
 .okip-ps__card {
     position: relative;
-    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    min-height: 10rem;
+    border-radius: 0;
     overflow: hidden;
-    padding: clamp(1.4rem, 3vw, 2.4rem) clamp(1.4rem, 3.2vw, 2.6rem);
+    padding: clamp(1.35rem, 2.4vw, 1.9rem) clamp(1.4rem, 3vw, 2rem);
 }
 /* Fondo de la tarjeta (capa separada para el wipe horizontal) */
 .okip-ps__card-bg {
@@ -220,25 +281,26 @@
 .okip-ps__card-inner {
     position: relative;
     z-index: 1;
+    width: 100%;
 }
 
 /* Heading monoespaciado */
 .okip-ps__heading {
     margin: 0;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(1.05rem, 2vw, 1.45rem);
+    font-size: clamp(.98rem, 1.25vw, 1.08rem);
     font-weight: 700;
     letter-spacing: .01em;
-    color: #14181f;
+    color: #101318;
 }
 
 /* Descripción monoespaciada, justificada como en la referencia */
 .okip-ps__desc {
-    margin: clamp(.7rem, 1.8vh, 1.1rem) 0 0;
+    margin: clamp(.7rem, 1.8vh, .95rem) 0 0;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(.82rem, 1.4vw, .95rem);
-    line-height: 1.75;
-    color: #4a525e;
+    font-size: clamp(.76rem, 1vw, .82rem);
+    line-height: 1.55;
+    color: #15181d;
     text-align: justify;
     text-wrap: pretty;
 }
@@ -332,23 +394,28 @@
         align-items: stretch;
     }
     .okip-ps__left {
-        align-items: stretch;
+        align-items: flex-start;
     }
     .okip-ps__visual {
-        border-radius: 12px 40px 40px 12px;
-        max-width: 420px;
-    }
-    .okip-ps__visual--logo-title {
-        aspect-ratio: 16 / 9;
+        width: min(100%, 13rem);
+        border-radius: 0 38px 38px 0;
     }
     .okip-ps__label {
         margin-left: 0;
+    }
+    .okip-ps__card {
+        min-height: auto;
+    }
+    .okip-ps__desc {
+        text-align: left;
     }
 }
 
 /* ---- Accesibilidad: reduce-motion ---- */
 @media (prefers-reduced-motion: reduce) {
     .okip-ps__visual,
+    .okip-ps__visual-base,
+    .okip-ps__hover,
     .okip-ps__card-bg,
     .okip-ps__type,
     .okip-ps__char,
