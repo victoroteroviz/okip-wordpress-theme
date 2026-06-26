@@ -35,7 +35,7 @@
        Mantiene accesibilidad: el split queda aria-hidden y se añade una copia SR. */
     function splitType(typeEl) {
         if (typeEl.__okipSplit) { return typeEl.__okipChars; }
-        var full = typeEl.textContent;
+        var full = typeEl.textContent.replace(/\s+/g, ' ').trim();
         var tokens = full.split(/(\s+)/); // conserva los tokens de espacio
         var frag = document.createDocumentFragment();
         var chars = [];

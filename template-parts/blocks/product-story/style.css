@@ -22,6 +22,9 @@
     --okip-ps-black: #050006;
     --okip-ps-card: #e6e6e6;
     --okip-ps-pill: #b7b8ba;
+    --okip-ps-left-w: clamp(21rem, 32vw, 23rem);
+    --okip-ps-card-h: clamp(17.5rem, 26vw, 18.625rem);
+    --okip-ps-copy-measure: 46rem;
 
     position: relative;
     z-index: var(--okip-ps-z, 4);
@@ -73,7 +76,7 @@
 /* ---- Fila ---- */
 .okip-ps__row {
     display: grid;
-    grid-template-columns: 21rem minmax(0, 1fr);
+    grid-template-columns: var(--okip-ps-left-w) minmax(0, 1fr);
     grid-template-rows: auto auto;
     grid-template-areas: "left copy" "label .";
     gap: 0;
@@ -164,7 +167,7 @@
 }
 
 /* Recuadro con hover/focus + contorno accesible */
-.okip-ps__visual--has-hover {
+.okip-ps__row--has-hover .okip-ps__visual {
     cursor: pointer;
 }
 .okip-ps__visual:focus-visible {
@@ -193,21 +196,22 @@
     overflow: hidden;
     background: var(--okip-ps-card);
 }
-/* Marco 16:9 con padding — la imagen NO llena todo el recuadro */
+/* Marco estable: la imagen completa debe caber, aunque su ratio sea panoramico. */
 .okip-ps__hover-zone-frame {
     position: absolute;
-    top: .85rem;
-    left: .55rem;
-    right: 0;
-    aspect-ratio: 16 / 9;
+    top: clamp(1.25rem, 2.1vw, 1.6rem);
+    left: 1rem;
+    right: .125rem;
+    height: min(clamp(10rem, 16vw, 11.65rem), calc(100% - 7.1rem));
     overflow: hidden;
-    background: #16181c;
+    background: #111318;
 }
 .okip-ps__hover-zone-img {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
 }
 .okip-ps__hover-zone-ph {
     width: 100%;
@@ -231,12 +235,15 @@
 .okip-ps__hover-zone-caption {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    padding: .44rem 1rem;
+    display: flex;
+    align-items: center;
+    min-height: 3.125rem;
+    padding: 0 clamp(1.6rem, 2.4vw, 2rem);
     background: var(--okip-ps-black);
     color: #f4f7fb;
-    font-size: .82rem;
+    font-size: clamp(1.25rem, 1.65vw, 1.52rem);
     line-height: 1.2;
-    border-radius: 0 18px 0 0;
+    border-radius: 0 5rem 0 0;
 }
 
 /* Hover: el cuadro negro se desliza hacia abajo (esquina curva sale la última) */
@@ -253,16 +260,16 @@
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
-    min-width: 7.5rem;
-    min-height: 1.25rem;
-    margin-top: .85rem;
-    padding: 0 .8rem;
+    width: min(13.875rem, 100%);
+    min-height: 2.35rem;
+    margin-top: 1rem;
+    padding: 0 clamp(1.9rem, 2.7vw, 2.3rem);
     background: var(--okip-ps-pill);
     color: #f4f4f4;
     font-family: var(--okip-ps-mono);
-    font-size: .72rem;
+    font-size: clamp(1.12rem, 1.85vw, 1.45rem);
     font-weight: 600;
-    letter-spacing: .14em;
+    letter-spacing: .02em;
     border-radius: 0;
     will-change: opacity;
 }
@@ -271,16 +278,16 @@
 .okip-ps__card {
     position: relative;
     display: flex;
-    align-items: center;
-    min-height: 16rem;
+    align-items: flex-start;
+    min-height: var(--okip-ps-card-h);
     border-radius: 0;
-    padding: clamp(1.8rem, 3vw, 2.4rem) clamp(1.8rem, 3.5vw, 2.6rem);
+    padding: clamp(3.2rem, 5vw, 4.6rem) clamp(2rem, 3.7vw, 2.85rem) clamp(2rem, 3.2vw, 2.55rem) clamp(2.9rem, 4.4vw, 3.55rem);
 }
 /* Fondo de la tarjeta — se extiende a la izquierda por detrás del cuadro negro */
 .okip-ps__card-bg {
     position: absolute;
     top: 0; right: 0; bottom: 0;
-    left: calc(-21rem);
+    left: calc(-1 * var(--okip-ps-left-w));
     background: var(--okip-ps-card);
     z-index: 0;
     will-change: clip-path;
@@ -288,33 +295,38 @@
 .okip-ps__card-inner {
     position: relative;
     z-index: 1;
-    width: 100%;
+    width: min(100%, var(--okip-ps-copy-measure));
 }
 
 /* Heading monoespaciado */
 .okip-ps__heading {
     margin: 0;
+    width: 100%;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(1.65rem, 2.11vw, 1.82rem);
+    font-size: clamp(1.55rem, 2.05vw, 1.82rem);
     font-weight: 700;
     letter-spacing: .01em;
     color: #101318;
+    text-align: left;
+    overflow-wrap: break-word;
 }
 
 /* Descripción monoespaciada */
 .okip-ps__desc {
-    margin: clamp(.7rem, 1.8vh, .95rem) 0 0;
+    margin: clamp(.85rem, 1.9vh, 1.05rem) 0 0;
+    width: 100%;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(1.29rem, 1.69vw, 1.39rem);
+    font-size: clamp(1.18rem, 1.58vw, 1.34rem);
     line-height: 1.55;
     color: #15181d;
-    text-align: justify;
+    text-align: left;
     overflow-wrap: break-word;
 }
 
 /* Texto que se anima (heading/desc). Por defecto totalmente visible. */
 .okip-ps__type {
-    display: inline;
+    display: block;
+    width: 100%;
 }
 /* Palabras: no se parten a mitad durante el typewriter */
 .okip-ps__word {
@@ -327,7 +339,7 @@
 }
 .okip-ps__char--space {
     display: inline;
-    white-space: pre;
+    white-space: normal;
 }
 
 /* Copia solo para lectores de pantalla (texto completo cuando se hace split) */
@@ -416,7 +428,15 @@
     .okip-ps__card {
         min-height: auto;
     }
+    .okip-ps__card-inner {
+        max-width: none;
+    }
+    .okip-ps__heading {
+        font-size: clamp(1.35rem, 5.8vw, 1.75rem);
+    }
     .okip-ps__desc {
+        font-size: clamp(1rem, 4.6vw, 1.25rem);
+        line-height: 1.5;
         text-align: left;
     }
 }
