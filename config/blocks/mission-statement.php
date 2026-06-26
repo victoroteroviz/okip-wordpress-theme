@@ -95,12 +95,11 @@ if (! function_exists('okip_normalize_mission_statement_data')) {
 return array(
     'content' => array(
         'lines' => array(
-            'Tecnología 100% mexicana desarrollada por',
-            'talento nacional con la misión de hacer de',
-            'latinoamérica un territorio más',
+            'Tecnología 100% mexicana con la misión de hacer',
+            'de latinoamérica un territorio más',
         ),
         'strong_line' => 'inteligente, conectado e independiente',
-        'kicker'      => 'CREANDO ENTORNOS SEGUROS',
+        'kicker'      => 'creando entornos seguros',
     ),
     'background' => array(
         'mode'     => 'gradient',
@@ -118,7 +117,7 @@ return array(
         'padding_top'    => '7rem',
         'padding_bottom' => '6.5rem',
         'min_height'     => '100svh',
-        'content_width'  => '820px',
+        'content_width'  => '1320px',
         'z_index'        => 5,
     ),
     'animation' => array(
