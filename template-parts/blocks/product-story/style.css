@@ -73,9 +73,12 @@
 /* ---- Fila ---- */
 .okip-ps__row {
     display: grid;
-    grid-template-columns: 12rem minmax(0, 1fr);
+    grid-template-columns: 16rem minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas: "left copy" "label .";
     gap: 0;
-    align-items: center;
+    align-items: end;
+    position: relative;
 }
 .okip-ps__row + .okip-ps__row {
     margin-top: clamp(3.4rem, 8vh, 4.9rem);
@@ -83,22 +86,35 @@
 
 /* ---- Columna izquierda ---- */
 .okip-ps__left {
+    grid-area: left;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
 }
 
-/* Recuadro visual: negro, cuadrado con derecha muy curva como la referencia */
+/* ---- Columna derecha ---- */
+.okip-ps__copy {
+    grid-area: copy;
+    position: relative;
+    z-index: 1;
+}
+
+/* Recuadro visual: negro, cuadrado con esquina superior-derecha curva */
 .okip-ps__visual {
     position: relative;
+    z-index: 2;
     width: 100%;
     aspect-ratio: 1;
     overflow: hidden;
-    border-radius: 0 42px 42px 0;
+    border-radius: 0 42px 0 0;
     background: var(--okip-ps-black);
     color: #f4f7fb;
     isolation: isolate;
     will-change: transform, clip-path, opacity;
+    transition: transform 0.52s cubic-bezier(.22, 1, .36, 1);
 }
 
 /* Estado base: logo arriba, título abajo a la izquierda */
@@ -109,7 +125,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 1.55rem 1.05rem 1.2rem;
+    padding: 2rem 1.37rem 1.56rem;
     transition: opacity .42s ease, transform .5s var(--okip-ease, cubic-bezier(.22,1,.36,1));
 }
 
@@ -117,7 +133,7 @@
 .okip-ps__logo {
     display: block;
     align-self: center;
-    width: 5rem;
+    width: 6.5rem;
     color: #f4f7fb;
 }
 .okip-ps__logo-img,
@@ -137,13 +153,13 @@
 }
 
 .okip-ps__row--product-ria .okip-ps__logo {
-    width: 5rem;
+    width: 6.5rem;
 }
 .okip-ps__row--product-covia .okip-ps__logo {
-    width: 5.1rem;
+    width: 6.6rem;
 }
 .okip-ps__row--product-gia .okip-ps__logo {
-    width: 6.35rem;
+    width: 8.3rem;
     margin-top: .25rem;
 }
 
@@ -159,43 +175,43 @@
 /* Título dentro del recuadro negro (bottom-left) */
 .okip-ps__title {
     margin: 0;
-    font-size: clamp(1.55rem, 2.3vw, 1.88rem);
+    font-size: clamp(2rem, 3vw, 2.44rem);
     line-height: .98;
     font-weight: 400;
     letter-spacing: 0;
     color: #f4f7fb;
 }
 
-/* Estado hover: imagen superior + caption inferior */
-.okip-ps__hover {
+/* Zona hover: imagen + caption, detrás del cuadro negro (z-index: 1) */
+.okip-ps__hover-zone {
     position: absolute;
-    inset: 0;
-    z-index: 2;
-    opacity: 0;
-    transform: translateY(8px) scale(1.015);
-    clip-path: inset(0 0 0 100%);
-    background: var(--okip-ps-black);
-    transition: opacity .42s ease, transform .55s var(--okip-ease, cubic-bezier(.22,1,.36,1)),
-                clip-path .55s var(--okip-ease, cubic-bezier(.22,1,.36,1));
-    pointer-events: none;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--okip-ps-row-card-h, 100%);
+    z-index: 1;
+    overflow: hidden;
+    background: var(--okip-ps-card);
 }
-.okip-ps__hover-frame {
+/* Marco 16:9 con padding — la imagen NO llena todo el recuadro */
+.okip-ps__hover-zone-frame {
     position: absolute;
     top: .85rem;
-    right: 0;
     left: .55rem;
-    height: 52%;
+    right: 0;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
     background: #16181c;
 }
-.okip-ps__hover-media,
-.okip-ps__hover-ph {
+.okip-ps__hover-zone-img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-.okip-ps__hover-ph {
+.okip-ps__hover-zone-ph {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -205,47 +221,41 @@
         linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.02)),
         #17191e;
 }
-.okip-ps__hover-ph-label {
+.okip-ps__hover-zone-ph-label {
     font-family: var(--okip-ps-mono);
     font-size: .74rem;
     font-weight: 700;
     letter-spacing: .14em;
     color: rgba(255, 255, 255, .82);
 }
-.okip-ps__hover-caption {
+.okip-ps__hover-zone-caption {
     position: absolute;
-    left: 0;
-    bottom: 0;
-    max-width: 100%;
-    min-width: 76%;
-    padding: .44rem 1.35rem .44rem 1rem;
+    bottom: 0; left: 0; right: 0;
+    padding: .44rem 1rem;
     background: var(--okip-ps-black);
     color: #f4f7fb;
     font-size: .82rem;
     line-height: 1.2;
     border-radius: 0 18px 0 0;
 }
-.okip-ps__visual--has-hover:hover .okip-ps__visual-base,
-.okip-ps__visual--has-hover:focus-visible .okip-ps__visual-base {
-    opacity: 0;
-    transform: translateY(-6px) scale(.985);
-}
-.okip-ps__visual--has-hover:hover .okip-ps__hover,
-.okip-ps__visual--has-hover:focus-visible .okip-ps__hover {
-    opacity: 1;
-    transform: none;
-    clip-path: inset(0 0 0 0);
+
+/* Hover: el cuadro negro se desliza hacia abajo (esquina curva sale la última) */
+@media (hover: hover) and (pointer: fine) {
+    .okip-ps__row--has-hover:hover .okip-ps__visual,
+    .okip-ps__row--has-hover:focus-within .okip-ps__visual {
+        transform: translateY(105%);
+    }
 }
 
 /* Etiqueta gris (pill) bajo el recuadro */
 .okip-ps__label {
+    grid-area: label;
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
     min-width: 7.5rem;
     min-height: 1.25rem;
     margin-top: .85rem;
-    margin-left: .15rem;
     padding: 0 .8rem;
     background: var(--okip-ps-pill);
     color: #f4f4f4;
@@ -258,22 +268,19 @@
 }
 
 /* ---- Columna derecha: tarjeta gris ---- */
-.okip-ps__copy {
-    min-width: 0;
-}
 .okip-ps__card {
     position: relative;
     display: flex;
     align-items: center;
-    min-height: 10rem;
+    min-height: 13rem;
     border-radius: 0;
-    overflow: hidden;
     padding: clamp(1.35rem, 2.4vw, 1.9rem) clamp(1.4rem, 3vw, 2rem);
 }
-/* Fondo de la tarjeta (capa separada para el wipe horizontal) */
+/* Fondo de la tarjeta — se extiende a la izquierda por detrás del cuadro negro */
 .okip-ps__card-bg {
     position: absolute;
-    inset: 0;
+    top: 0; right: 0; bottom: 0;
+    left: calc(-16rem);
     background: var(--okip-ps-card);
     z-index: 0;
     will-change: clip-path;
@@ -288,17 +295,18 @@
 .okip-ps__heading {
     margin: 0;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(.98rem, 1.25vw, 1.08rem);
+    font-size: clamp(1.27rem, 1.62vw, 1.4rem);
     font-weight: 700;
     letter-spacing: .01em;
     color: #101318;
+    text-align: justify;
 }
 
 /* Descripción monoespaciada, justificada como en la referencia */
 .okip-ps__desc {
     margin: clamp(.7rem, 1.8vh, .95rem) 0 0;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(.76rem, 1vw, .82rem);
+    font-size: clamp(.99rem, 1.3vw, 1.07rem);
     line-height: 1.55;
     color: #15181d;
     text-align: justify;
@@ -338,7 +346,6 @@
    ============================================================ */
 .okip-js .okip-ps--animated:not(.is-static) .okip-ps__visual {
     opacity: 0;
-    transform: translateY(18px);
     clip-path: inset(0 100% 0 0);
 }
 .okip-js .okip-ps--animated:not(.is-static) .okip-ps__card-bg {
@@ -354,10 +361,8 @@
 /* ---- Reveal del FALLBACK vanilla (sin GSAP): is-revealed por fila ---- */
 .okip-ps__row.is-revealed .okip-ps__visual {
     opacity: 1;
-    transform: none;
     clip-path: inset(0 0 0 0);
-    transition: opacity .7s ease, transform .8s var(--okip-ease, cubic-bezier(.22,1,.36,1)),
-                clip-path .85s var(--okip-ease, cubic-bezier(.22,1,.36,1));
+    transition: opacity .7s ease, clip-path .85s var(--okip-ease, cubic-bezier(.22,1,.36,1));
 }
 .okip-ps__row.is-revealed .okip-ps__card-bg {
     clip-path: inset(0 0 0 0);
@@ -385,11 +390,17 @@
     transform: none !important;
     clip-path: none !important;
 }
+/* Sin hover en modo estático (móvil) */
+.okip-ps.is-static .okip-ps__row--has-hover .okip-ps__visual {
+    transform: none !important;
+}
 
 /* ---- Responsive: móvil/tablet (≤1024px) ---- */
 @media (max-width: 1024px) {
     .okip-ps__row {
         grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        grid-template-areas: "left" "copy" "label";
         gap: clamp(1rem, 3vh, 1.6rem);
         align-items: stretch;
     }
@@ -397,11 +408,11 @@
         align-items: flex-start;
     }
     .okip-ps__visual {
-        width: min(100%, 13rem);
-        border-radius: 0 38px 38px 0;
+        width: min(100%, 17rem);
+        border-radius: 0 50px 0 0;
     }
-    .okip-ps__label {
-        margin-left: 0;
+    .okip-ps__card-bg {
+        left: 0; /* reset extensión detrás del cuadro negro */
     }
     .okip-ps__card {
         min-height: auto;

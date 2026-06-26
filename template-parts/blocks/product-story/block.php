@@ -117,8 +117,8 @@ if (empty($items)) {
             $has_hover       = $hover_has_media || $hover_placeholder;
             $product_key     = sanitize_html_class(sanitize_key($label !== '' ? $label : ('item-' . $idx)));
             $row_classes     = 'okip-ps__row okip-ps__row--' . sanitize_html_class($variant) . ' okip-ps__row--product-' . $product_key;
+            $row_classes    .= $has_hover ? ' okip-ps__row--has-hover' : '';
             $visual_classes  = 'okip-ps__visual okip-ps__visual--logo-title';
-            $visual_classes .= $has_hover ? ' okip-ps__visual--has-hover' : '';
             ?>
             <article
                 class="<?php echo esc_attr($row_classes); ?>"
@@ -127,9 +127,28 @@ if (empty($items)) {
                 data-product="<?php echo esc_attr($product_key); ?>"
                 data-variant="<?php echo esc_attr($variant); ?>">
 
-                <!-- Columna izquierda: recuadro visual + etiqueta -->
+                <!-- Columna izquierda: hover-zone (detrás) + cuadro negro (encima) -->
                 <div class="okip-ps__left">
-                    <div class="<?php echo esc_attr($visual_classes); ?>"<?php echo $has_hover ? ' tabindex="0"' : ''; ?>>
+                    <?php if ($has_hover) : ?>
+                        <div class="okip-ps__hover-zone" aria-hidden="true">
+                            <div class="okip-ps__hover-zone-frame">
+                                <?php if ($hover_has_media) : ?>
+                                    <img class="okip-ps__hover-zone-img"
+                                        src="<?php echo esc_url($hover_url); ?>"
+                                        alt="">
+                                <?php else : ?>
+                                    <span class="okip-ps__hover-zone-ph">
+                                        <span class="okip-ps__hover-zone-ph-label"><?php echo esc_html($label); ?></span>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <?php if ($title_left !== '') : ?>
+                                <span class="okip-ps__hover-zone-caption"><?php echo esc_html($title_left); ?></span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="<?php echo esc_attr($visual_classes); ?>">
                         <div class="okip-ps__visual-base">
                             <span class="okip-ps__logo" aria-hidden="true">
                                 <?php if ($has_media && $media_type === 'video') : ?>
@@ -158,31 +177,7 @@ if (empty($items)) {
                                 <h3 class="okip-ps__title"><?php echo esc_html($title_left); ?></h3>
                             <?php endif; ?>
                         </div>
-
-                        <?php if ($has_hover) : ?>
-                            <div class="okip-ps__hover">
-                                <span class="okip-ps__hover-frame">
-                                    <?php if ($hover_has_media) : ?>
-                                        <img class="okip-ps__hover-media"
-                                            src="<?php echo esc_url($hover_url); ?>"
-                                            alt="<?php echo esc_attr($hover_alt); ?>"
-                                            loading="lazy">
-                                    <?php else : ?>
-                                        <span class="okip-ps__hover-ph" aria-hidden="true">
-                                            <span class="okip-ps__hover-ph-label"><?php echo esc_html($label); ?></span>
-                                        </span>
-                                    <?php endif; ?>
-                                </span>
-                                <?php if ($title_left !== '') : ?>
-                                    <span class="okip-ps__hover-caption"><?php echo esc_html($title_left); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
                     </div>
-
-                    <?php if ($label !== '') : ?>
-                        <span class="okip-ps__label"><?php echo esc_html($label); ?></span>
-                    <?php endif; ?>
                 </div>
 
                 <!-- Columna derecha: tarjeta gris con heading + descripción -->
@@ -203,6 +198,10 @@ if (empty($items)) {
                         </div>
                     </div>
                 </div>
+
+                <?php if ($label !== '') : ?>
+                    <span class="okip-ps__label"><?php echo esc_html($label); ?></span>
+                <?php endif; ?>
 
             </article>
         <?php endforeach; ?>

@@ -105,9 +105,22 @@
         });
     }
 
+    /* Sincroniza la altura de la gray zone (hover-zone) con la tarjeta derecha.
+       La hover-zone usa `height: var(--okip-ps-row-card-h)` en CSS. */
+    function syncCardHeight(section) {
+        var rows = Array.prototype.slice.call(section.querySelectorAll('[data-okip-ps-row]'));
+        rows.forEach(function (row) {
+            var card = row.querySelector('.okip-ps__card');
+            if (!card) { return; }
+            row.style.setProperty('--okip-ps-row-card-h', card.offsetHeight + 'px');
+        });
+    }
+
     function initPs(section) {
         if (section.__okipPsInit) { return; }
         section.__okipPsInit = true;
+
+        syncCardHeight(section);
 
         var d            = section.dataset;
         var animOn       = d.anim       === '1';
@@ -251,8 +264,8 @@
             if (visual) {
                 if (leftEnter === 'mask-slide') {
                     tl.fromTo(visual,
-                        { clipPath: 'inset(0 100% 0 0)', opacity: 0, y: 18 },
-                        { clipPath: 'inset(0 0% 0 0)', opacity: 1, y: 0, ease: 'power2.out', duration: 0.42 }, 0);
+                        { clipPath: 'inset(0 100% 0 0)', opacity: 0 },
+                        { clipPath: 'inset(0 0% 0 0)', opacity: 1, ease: 'power2.out', duration: 0.42 }, 0);
                 } else if (leftEnter === 'fade-up') {
                     tl.fromTo(visual,
                         { clipPath: 'inset(0 0% 0 0)', opacity: 0, y: 36 },
@@ -322,6 +335,7 @@
                     section.classList.remove('is-handoff-pinned');
                     section.classList.add('is-static');
                 } else {
+                    syncCardHeight(section);
                     ST.refresh();
                 }
             }, 200);
