@@ -5,7 +5,7 @@
     position: relative;
     z-index: var(--okip-news-z, 6);
     overflow: hidden;
-    min-height: var(--okip-news-minh, 42vh);
+    min-height: max(var(--okip-news-minh, 42vh), calc(var(--okip-news-card-h, 430px) + 6rem));
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -55,28 +55,51 @@
     width: max-content;
     min-width: 100%;
     margin: 0;
-    padding: 0 max(var(--okip-container-pad), calc((100vw - var(--okip-container)) / 2 + var(--okip-container-pad)));
+    padding: 0 max(var(--okip-container-pad), 2rem);
     list-style: none;
 }
 
 .okip-news__item {
     flex: 0 0 var(--okip-news-card-w, 264px);
+    display: flex;
     scroll-snap-align: center;
+}
+
+.okip-news__card-shell {
+    display: flex;
+    width: 100%;
+    height: var(--okip-news-card-h, 190px);
+    padding: 12px;
+    background: #e3e3e1;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, .12);
 }
 
 .okip-news__card {
     position: relative;
-    display: block;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     width: 100%;
-    height: var(--okip-news-card-h, 190px);
-    border-radius: 12px;
-    background: #e9e9e8;
+    height: 100%;
+    border-radius: 0;
+    background: #e1e1e0;
     color: inherit;
+    transition: transform .28s var(--okip-ease);
 }
 
-.okip-news__card--post {
-    background: #111821;
+.okip-news__card-shell:has(.okip-news__card:hover),
+.okip-news__card-shell:has(.okip-news__card:focus-visible) {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 54px rgba(15, 23, 42, .16);
+}
+
+.okip-news__media {
+    position: relative;
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    background: #d7dadd;
 }
 
 .okip-news__image,
@@ -92,44 +115,110 @@
 }
 
 .okip-news__placeholder {
-    background: #e7e7e6;
+    position: relative;
+    display: block;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0)),
+        #d8dbde;
 }
 
-.okip-news__card--post::after {
+.okip-news__placeholder-label {
+    position: absolute;
+    top: 50%;
+    left: clamp(1rem, 1.4vw, 1.45rem);
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    transform: translateY(-50%);
+    min-height: 2rem;
+    padding: .35rem .7rem;
+    border: 1px solid rgba(18, 24, 32, .18);
+    background: rgba(255, 255, 255, .74);
+    color: #303846;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.okip-news__media::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 24%, rgba(0, 0, 0, .74) 100%);
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(5, 10, 18, .28) 0%, rgba(5, 10, 18, .02) 42%, rgba(5, 10, 18, 0) 100%);
 }
 
-.okip-news__card--post:hover .okip-news__image,
-.okip-news__card--post:focus-visible .okip-news__image {
+.okip-news__card:hover .okip-news__image,
+.okip-news__card:focus-visible .okip-news__image {
     transform: scale(1.045);
     filter: saturate(1.08);
 }
 
-.okip-news__meta,
-.okip-news__title {
+.okip-news__category {
     position: absolute;
-    left: 1rem;
-    right: 1rem;
-    z-index: 1;
-    color: #fff;
+    top: clamp(.85rem, 1.25vw, 1.35rem);
+    left: clamp(.85rem, 1.25vw, 1.35rem);
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: .7rem;
+    max-width: calc(100% - 1.7rem);
 }
 
-.okip-news__meta {
-    bottom: 3.15rem;
-    font-size: .68rem;
-    opacity: .72;
+.okip-news__category-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: clamp(2.25rem, 2.9vw, 3.25rem);
+    height: clamp(2.25rem, 2.9vw, 3.25rem);
+    border-radius: 8px;
+    background: #202747;
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+}
+
+.okip-news__item:nth-child(2n) .okip-news__category-icon {
+    background: #3478f6;
+}
+
+.okip-news__item:nth-child(3n) .okip-news__category-icon {
+    background: #7894b8;
+}
+
+.okip-news__category-icon svg {
+    width: 62%;
+    height: auto;
+}
+
+.okip-news__category-text {
+    overflow: hidden;
+    color: #fff;
+    font-size: clamp(.78rem, 1.12vw, 1.18rem);
+    font-weight: 600;
+    line-height: 1;
+    text-overflow: ellipsis;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .42);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.okip-news__body {
+    display: flex;
+    align-items: center;
+    flex: 0 0 clamp(6.65rem, 8.6vw, 8.8rem);
+    padding: clamp(1rem, 1.4vw, 1.45rem);
+    background: #e1e1e0;
 }
 
 .okip-news__title {
-    bottom: .95rem;
     display: -webkit-box;
     overflow: hidden;
-    font-size: .98rem;
-    font-weight: 700;
-    line-height: 1.18;
+    color: #090b10;
+    font-family: var(--okip-ps-mono, ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace);
+    font-size: clamp(1.35rem, 1.78vw, 2.15rem);
+    font-weight: 500;
+    line-height: 1.05;
+    text-transform: uppercase;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
 }
@@ -220,7 +309,7 @@
 
 @media (min-width: 1025px) {
     .okip-news__item {
-        flex-basis: clamp(240px, 21vw, var(--okip-news-card-w, 264px));
+        flex-basis: var(--okip-news-card-w, 264px);
     }
 }
 
@@ -228,6 +317,7 @@
     .okip-news {
         padding-top: 1rem;
         padding-bottom: 2rem;
+        min-height: max(34rem, calc(var(--okip-news-card-h, 430px) + 4rem));
     }
 
     .okip-news__track {
@@ -235,7 +325,25 @@
     }
 
     .okip-news__item {
-        flex-basis: min(82vw, 320px);
+        flex-basis: min(82vw, 350px);
+    }
+
+    .okip-news__card-shell {
+        height: min(112vw, 430px);
+        padding: 12px;
+    }
+
+    .okip-news__category {
+        gap: .55rem;
+    }
+
+    .okip-news__body {
+        flex-basis: 8.35rem;
+    }
+
+    .okip-news__title {
+        font-size: clamp(1.22rem, 6.35vw, 1.65rem);
+        -webkit-line-clamp: 3;
     }
 
     .okip-news__controls {
@@ -257,6 +365,8 @@
     }
 
     .okip-news__image,
+    .okip-news__card,
+    .okip-news__card-shell,
     .okip-news__dot,
     .okip-news__nav {
         transition: none;

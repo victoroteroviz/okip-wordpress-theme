@@ -75,13 +75,19 @@ if ($news_query->have_posts()) {
     while ($news_query->have_posts()) {
         $news_query->the_post();
         $thumb_id = get_post_thumbnail_id();
+        $categories = get_the_category();
+        $category_name = '';
+        if (! empty($categories) && ! is_wp_error($categories)) {
+            $category_name = $categories[0]->name;
+        }
         $items[] = array(
-            'type'      => 'post',
-            'title'     => get_the_title(),
-            'url'       => get_permalink(),
-            'date'      => get_the_date(),
-            'thumb_url' => $thumb_id ? wp_get_attachment_image_url($thumb_id, 'large') : '',
-            'thumb_alt' => $thumb_id ? get_post_meta($thumb_id, '_wp_attachment_image_alt', true) : '',
+            'type'             => 'post',
+            'title'            => get_the_title(),
+            'category'         => $category_name,
+            'url'              => get_permalink(),
+            'thumb_url'        => $thumb_id ? wp_get_attachment_image_url($thumb_id, 'large') : '',
+            'thumb_alt'        => $thumb_id ? get_post_meta($thumb_id, '_wp_attachment_image_alt', true) : '',
+            'placeholder_note' => __('Sin imagen', 'okip'),
         );
     }
     wp_reset_postdata();
@@ -91,13 +97,16 @@ if ($news_query->have_posts()) {
         if (! is_array($item)) {
             continue;
         }
+        $image_ref = isset($item['image']) ? $item['image'] : '';
+        $image_url = (! empty($image_ref) && okip_media_exists($image_ref)) ? okip_media_url($image_ref) : '';
         $items[] = array(
-            'type'      => 'fallback',
-            'title'     => isset($item['title']) ? $item['title'] : '',
-            'url'       => isset($item['url']) ? $item['url'] : '',
-            'date'      => '',
-            'thumb_url' => '',
-            'thumb_alt' => '',
+            'type'             => 'fallback',
+            'title'            => isset($item['title']) ? $item['title'] : '',
+            'category'         => isset($item['category']) ? $item['category'] : '',
+            'url'              => isset($item['url']) ? $item['url'] : '',
+            'thumb_url'        => $image_url,
+            'thumb_alt'        => isset($item['alt']) ? $item['alt'] : '',
+            'placeholder_note' => isset($item['placeholder_note']) ? $item['placeholder_note'] : 'Placeholder',
         );
     }
 }
@@ -129,42 +138,65 @@ $section_style = sprintf(
     data-reveal-mission-lift-vh="<?php echo esc_attr((string) $reveal_mission_lift_vh); ?>"
     style="<?php echo $section_style; ?>">
 
-    <div class="okip-news__viewport" aria-label="<?php echo esc_attr($aria_label); ?>">
-        <ul class="okip-news__track" role="list" data-okip-news-track>
+    <div class="okip-news__viewport" aria-label="<?php echo esc_attr($aria_label); ?>" data-okip-news-track>
+        <ul class="okip-news__track" role="list">
             <?php foreach ($items as $idx => $item) :
                 $is_post = isset($item['type']) && $item['type'] === 'post';
                 $title   = isset($item['title']) ? $item['title'] : '';
+                $category = isset($item['category']) ? $item['category'] : '';
                 $url     = isset($item['url']) ? $item['url'] : '';
+                $thumb_url = isset($item['thumb_url']) ? $item['thumb_url'] : '';
+                $thumb_alt = isset($item['thumb_alt']) ? $item['thumb_alt'] : '';
+                $placeholder_note = ! empty($item['placeholder_note']) ? $item['placeholder_note'] : 'Placeholder';
                 $card_classes = 'okip-news__card' . ($is_post ? ' okip-news__card--post' : ' okip-news__card--fallback');
                 $card_label   = $title !== '' ? $title : ('Referencia ' . ($idx + 1));
                 ?>
                 <li class="okip-news__item" data-okip-news-item>
-                    <?php if ($url !== '') : ?>
-                        <a class="<?php echo esc_attr($card_classes); ?>" href="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
-                    <?php else : ?>
-                        <div class="<?php echo esc_attr($card_classes); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
-                    <?php endif; ?>
-
-                        <?php if (! empty($item['thumb_url'])) : ?>
-                            <img
-                                class="okip-news__image"
-                                src="<?php echo esc_url($item['thumb_url']); ?>"
-                                alt="<?php echo esc_attr($item['thumb_alt'] !== '' ? $item['thumb_alt'] : $title); ?>"
-                                loading="lazy">
+                    <div class="okip-news__card-shell">
+                        <?php if ($url !== '') : ?>
+                            <a class="<?php echo esc_attr($card_classes); ?>" href="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
                         <?php else : ?>
-                            <span class="okip-news__placeholder" aria-hidden="true"></span>
+                            <div class="<?php echo esc_attr($card_classes); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
                         <?php endif; ?>
 
-                        <?php if ($is_post && $title !== '') : ?>
-                            <span class="okip-news__meta"><?php echo esc_html($item['date']); ?></span>
-                            <span class="okip-news__title"><?php echo esc_html($title); ?></span>
-                        <?php endif; ?>
+                            <span class="okip-news__media">
+                                <?php if ($thumb_url !== '') : ?>
+                                    <img
+                                        class="okip-news__image"
+                                        src="<?php echo esc_url($thumb_url); ?>"
+                                        alt="<?php echo esc_attr($thumb_alt !== '' ? $thumb_alt : $title); ?>"
+                                        loading="lazy">
+                                <?php else : ?>
+                                    <span class="okip-news__placeholder">
+                                        <span class="okip-news__placeholder-label"><?php echo esc_html($placeholder_note); ?></span>
+                                    </span>
+                                <?php endif; ?>
 
-                    <?php if ($url !== '') : ?>
-                        </a>
-                    <?php else : ?>
-                        </div>
-                    <?php endif; ?>
+                                <?php if ($category !== '') : ?>
+                                    <span class="okip-news__category">
+                                        <span class="okip-news__category-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 28 20" focusable="false">
+                                                <path d="M14 1.5c5.8 0 10.3 4.4 12.2 8.5-1.9 4.1-6.4 8.5-12.2 8.5S3.7 14.1 1.8 10C3.7 5.9 8.2 1.5 14 1.5Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                                                <circle cx="14" cy="10" r="3.4" fill="currentColor" />
+                                            </svg>
+                                        </span>
+                                        <span class="okip-news__category-text"><?php echo esc_html($category); ?></span>
+                                    </span>
+                                <?php endif; ?>
+                            </span>
+
+                            <?php if ($title !== '') : ?>
+                                <span class="okip-news__body">
+                                    <span class="okip-news__title"><?php echo esc_html($title); ?></span>
+                                </span>
+                            <?php endif; ?>
+
+                        <?php if ($url !== '') : ?>
+                            </a>
+                        <?php else : ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </li>
             <?php endforeach; ?>
         </ul>

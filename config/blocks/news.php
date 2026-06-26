@@ -22,8 +22,12 @@ if (! function_exists('okip_news_fallback_item_defaults')) {
     function okip_news_fallback_item_defaults()
     {
         return array(
-            'title' => '',
-            'url'   => '',
+            'title'            => '',
+            'category'         => '',
+            'image'            => '',
+            'alt'              => '',
+            'placeholder_note' => 'Placeholder',
+            'url'              => '',
         );
     }
 }
@@ -85,8 +89,12 @@ if (! function_exists('okip_normalize_news_data')) {
                     continue;
                 }
                 $merged          = array_merge($item_defaults, $item);
-                $merged['title'] = sanitize_text_field((string) $merged['title']);
-                $merged['url']   = esc_url_raw((string) $merged['url']);
+                $merged['title']            = sanitize_text_field((string) $merged['title']);
+                $merged['category']         = sanitize_text_field((string) $merged['category']);
+                $merged['image']            = sanitize_text_field((string) $merged['image']);
+                $merged['alt']              = sanitize_text_field((string) $merged['alt']);
+                $merged['placeholder_note'] = sanitize_text_field((string) $merged['placeholder_note']);
+                $merged['url']              = esc_url_raw((string) $merged['url']);
                 $items[] = $merged;
             }
             $data['fallback_items'] = $items;
@@ -112,25 +120,42 @@ return array(
     ),
     'fallback_items' => array(
         array(
-            'title' => 'Referencia 1',
-            'url'   => '',
+            'title'    => 'Seguridad mundialista en México',
+            'category' => 'Nacional',
+            'image'    => 'img/news/new-1.png',
+            'alt'      => 'Elementos de Guardia Nacional en un operativo de seguridad',
+            'url'      => '',
         ),
         array(
-            'title' => 'Referencia 2',
-            'url'   => '',
+            'title'    => 'Seguridad democrática ¿qué es?',
+            'category' => 'Formación',
+            'image'    => 'img/news/new-2.png',
+            'alt'      => 'Equipo revisando un mapa de seguridad en un centro de monitoreo',
+            'url'      => '',
         ),
         array(
-            'title' => 'Referencia 3',
-            'url'   => '',
+            'title'    => 'La feria más segura de México',
+            'category' => 'Caso de éxito',
+            'image'    => 'img/news/new-3.png',
+            'alt'      => 'Feria iluminada durante la noche con juegos mecánicos y visitantes',
+            'url'      => '',
+        ),
+        array(
+            'title'            => 'Nueva referencia en preparación',
+            'category'         => 'Placeholder',
+            'image'            => '',
+            'alt'              => '',
+            'placeholder_note' => 'Placeholder',
+            'url'              => '',
         ),
     ),
     'layout' => array(
-        'background'     => '#f6f6f4',
-        'padding_top'    => '1.45rem',
-        'padding_bottom' => '2.55rem',
-        'card_width'     => '264px',
-        'card_height'    => '190px',
-        'gap'            => '1.35rem',
+        'background'     => '#f4f4f2',
+        'padding_top'    => '3rem',
+        'padding_bottom' => '3.35rem',
+        'card_width'     => 'clamp(300px, 28vw, 520px)',
+        'card_height'    => 'clamp(330px, 32vw, 500px)',
+        'gap'            => '14px',
         'z_index'        => 6,
     ),
     'behavior' => array(
