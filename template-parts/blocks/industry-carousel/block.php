@@ -96,9 +96,16 @@ $section_style = sprintf(
         <p class="okip-ic__orange-line" aria-live="polite">
             <span class="okip-ic__orange-wrap" aria-hidden="true">
                 <?php foreach ($items as $idx => $item) : ?>
+                    <?php
+                    $title_color = ! empty($item['title_color']) ? sanitize_hex_color((string) $item['title_color']) : '';
+                    $title_color = $title_color ?: '';
+                    ?>
                     <span
                         class="okip-ic__orange-text<?php echo $idx === 0 ? ' is-active' : ''; ?>"
-                        data-index="<?php echo esc_attr((string) $idx); ?>">
+                        data-index="<?php echo esc_attr((string) $idx); ?>"
+                        <?php if ($title_color !== '') : ?>
+                            style="<?php echo esc_attr('--okip-ic-title-color:' . $title_color . ';'); ?>"
+                        <?php endif; ?>>
                         <?php echo esc_html($item['orange_text']); ?>
                     </span>
                 <?php endforeach; ?>

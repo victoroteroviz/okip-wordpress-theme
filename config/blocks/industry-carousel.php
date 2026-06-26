@@ -26,6 +26,7 @@ if (! function_exists('okip_ic_item_defaults')) {
         return array(
             'title'       => '',  // nombre de la industria (label de ítem)
             'orange_text' => '',  // texto naranja del heading cuando este ítem está activo
+            'title_color' => '',  // color del heading cuando este ítem está activo
             'image'       => '',  // ruta relativa a assets/img/ o URL
             'alt'         => '',
             'video'       => '',  // opcional: ruta a assets/video/
@@ -67,6 +68,7 @@ if (! function_exists('okip_normalize_industry_carousel_data')) {
                 $merged                = array_merge($item_defaults, $item);
                 $merged['title']       = sanitize_text_field((string) $merged['title']);
                 $merged['orange_text'] = sanitize_text_field((string) $merged['orange_text']);
+                $merged['title_color'] = sanitize_hex_color((string) $merged['title_color']) ?: '';
                 $merged['alt']         = sanitize_text_field((string) $merged['alt']);
                 $merged['image']       = sanitize_text_field((string) $merged['image']);
                 $merged['video']       = sanitize_text_field((string) $merged['video']);
@@ -102,6 +104,7 @@ return array(
         array(
             'title'       => 'Gasolineras',
             'orange_text' => 'Gasolineras',
+            'title_color' => '#960003',
             'image'       => 'img/industry-carousel/GASOLINERAS.png',
             'alt'         => 'Estación de gasolina con dispensadores de combustible',
             'video'       => '',
@@ -109,6 +112,7 @@ return array(
         array(
             'title'       => 'Hospitales',
             'orange_text' => 'Hospitales',
+            'title_color' => '#5B7E7B',
             'image'       => 'img/industry-carousel/HOSPITALES.png',
             'alt'         => 'Sala de hospital con camas de atención médica',
             'video'       => '',
@@ -116,6 +120,7 @@ return array(
         array(
             'title'       => 'Fraccionamientos',
             'orange_text' => 'Fraccionamientos',
+            'title_color' => '#899E27',
             'image'       => 'img/industry-carousel/FRACCIONAMIENTOS.png',
             'alt'         => 'Vista aérea de un fraccionamiento residencial',
             'video'       => '',
@@ -123,6 +128,7 @@ return array(
         array(
             'title'       => 'Escuelas',
             'orange_text' => 'Escuelas',
+            'title_color' => '#D1CBC8',
             'image'       => 'img/industry-carousel/ESCUELAS.png',
             'alt'         => 'Aula escolar con estudiantes y profesor frente al pizarrón',
             'video'       => '',
@@ -130,6 +136,7 @@ return array(
         array(
             'title'       => 'Hoteles',
             'orange_text' => 'Hoteles',
+            'title_color' => '#7BB8DB',
             'image'       => 'img/industry-carousel/HOTELES.png',
             'alt'         => 'Hotel con alberca y palmeras',
             'video'       => '',
@@ -137,6 +144,7 @@ return array(
         array(
             'title'       => 'Ferias',
             'orange_text' => 'Ferias',
+            'title_color' => '#014285',
             'image'       => 'img/industry-carousel/FERIAS.png',
             'alt'         => 'Feria iluminada con rueda de la fortuna',
             'video'       => '',
@@ -144,6 +152,7 @@ return array(
         array(
             'title'       => 'Estadios',
             'orange_text' => 'Estadios',
+            'title_color' => '#0B0C0E',
             'image'       => 'img/industry-carousel/ESTADIOS.png',
             'alt'         => 'Estadio iluminado durante un evento deportivo',
             'video'       => '',

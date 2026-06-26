@@ -86,7 +86,7 @@
     letter-spacing: 0;
 }
 
-/* ---- Texto naranja: línea propia centrada grande ---- */
+/* ---- Texto de industria: línea propia centrada grande ---- */
 .okip-ic__orange-line {
     position: relative;
     margin: clamp(.9rem, 2.2vh, 1.35rem) 0 0;
@@ -95,7 +95,7 @@
     min-height: 1.15em;
 }
 
-/* Todos los textos naranjos apilados en la misma celda de grid */
+/* Todos los textos de industria apilados en la misma celda de grid */
 .okip-ic__orange-wrap {
     display: inline-grid;
     vertical-align: top;
@@ -104,14 +104,14 @@
     grid-area: 1 / 1;
 }
 
-/* Texto naranja individual */
+/* Texto de industria individual */
 .okip-ic__orange-text {
     display: block;
     font-size: clamp(2.5rem, 4.6vw, 4.4rem);
     line-height: 1;
     font-weight: 400;
     letter-spacing: 0;
-    color: var(--okip-color-accent, #ff5a14);
+    color: var(--okip-ic-title-color, var(--okip-color-accent, #ff5a14));
     opacity: 0;
     transform: translateY(6px);
     transition: opacity .3s ease, transform .35s var(--okip-ease, cubic-bezier(.4,0,.2,1));
