@@ -159,7 +159,7 @@
 }
 .okip-pm__title {
     margin: 0;
-    font-size: clamp(2.45rem, 4.2vw, 4rem);
+    font-size: clamp(2.45rem, 4.2vw, 3rem);
     line-height: 1.12;
     font-weight: 300; /* base ligero; el resaltado va en negrita (no color) */
     letter-spacing: 0;
@@ -172,7 +172,7 @@
 }
 .okip-pm__subtitle {
     margin: 1.35rem 0 0;
-    font-size: clamp(.72rem, .85vw, .8rem);
+    font-size: clamp(0.9rem, 1.8vw, 1.5rem);
     letter-spacing: 0;
     text-transform: uppercase;
     font-weight: 500;

@@ -332,7 +332,7 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
             <?php endif; ?>
         </h1>
         <?php if ($logo_on) : ?>
-            <div class="okip-hero__logo" style="--okip-logo-width:<?php echo esc_attr($logo_width); ?>;">
+            <div class="okip-hero__logo" style="--okip-logo-width:<?php echo esc_attr($logo_width); ?>;" data-okip-motion-target="text">
                 <img src="<?php echo esc_url($logo_url); ?>" alt="<?php echo esc_attr($logo_alt); ?>" class="okip-hero__logo-img">
             </div>
         <?php endif; ?>
