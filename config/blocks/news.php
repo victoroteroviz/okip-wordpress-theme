@@ -141,12 +141,11 @@ return array(
             'url'      => '',
         ),
         array(
-            'title'            => 'Nueva referencia en preparación',
-            'category'         => 'Placeholder',
-            'image'            => '',
-            'alt'              => '',
-            'placeholder_note' => 'Placeholder',
-            'url'              => '',
+            'title'    => 'Estrategia de seguridad con tecnologia biometrica',
+            'category' => 'Sector publico',
+            'image'    => 'img/news/new-4.png',
+            'alt'      => 'Tecnología biométrica aplicada a una estrategia de seguridad pública',
+            'url'      => '',
         ),
     ),
     'layout' => array(
