@@ -25,7 +25,7 @@ if (! defined('ABSPATH')) {
 return array(
     'logo' => array(
         'text'  => 'OKIP',
-        'image' => '', // ruta a assets/, URL o ID de attachment (futuro).
+        'image' => 'img/okip-logo-navbar.png', // ruta a assets/, URL o ID de attachment (futuro).
     ),
     'appearance' => array(
         'background_color'       => '#000000', // fondo negro (ref navbar.png)

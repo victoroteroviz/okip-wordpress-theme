@@ -50,7 +50,7 @@
     max-width: var(--okip-ps-cw, 1100px);
     margin-inline: auto;
     padding-inline: var(--okip-container-pad, 1.5rem);
-    padding-block: clamp(3rem, 9vh, 5.75rem);
+    padding-block: clamp(5rem, 13vh, 9rem);
 }
 
 /* Desktop animado: padding inferior extra para que, al fijar la sección en
@@ -73,7 +73,7 @@
 /* ---- Fila ---- */
 .okip-ps__row {
     display: grid;
-    grid-template-columns: 16rem minmax(0, 1fr);
+    grid-template-columns: 21rem minmax(0, 1fr);
     grid-template-rows: auto auto;
     grid-template-areas: "left copy" "label .";
     gap: 0;
@@ -109,7 +109,7 @@
     width: 100%;
     aspect-ratio: 1;
     overflow: hidden;
-    border-radius: 0 42px 0 0;
+    border-radius: 0 55px 0 0;
     background: var(--okip-ps-black);
     color: #f4f7fb;
     isolation: isolate;
@@ -125,7 +125,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 2rem 1.37rem 1.56rem;
+    padding: 2.6rem 1.78rem 2.03rem;
     transition: opacity .42s ease, transform .5s var(--okip-ease, cubic-bezier(.22,1,.36,1));
 }
 
@@ -133,7 +133,7 @@
 .okip-ps__logo {
     display: block;
     align-self: center;
-    width: 6.5rem;
+    width: 8.5rem;
     color: #f4f7fb;
 }
 .okip-ps__logo-img,
@@ -153,13 +153,13 @@
 }
 
 .okip-ps__row--product-ria .okip-ps__logo {
-    width: 6.5rem;
+    width: 8.5rem;
 }
 .okip-ps__row--product-covia .okip-ps__logo {
-    width: 6.6rem;
+    width: 8.6rem;
 }
 .okip-ps__row--product-gia .okip-ps__logo {
-    width: 8.3rem;
+    width: 10.8rem;
     margin-top: .25rem;
 }
 
@@ -175,7 +175,7 @@
 /* Título dentro del recuadro negro (bottom-left) */
 .okip-ps__title {
     margin: 0;
-    font-size: clamp(2rem, 3vw, 2.44rem);
+    font-size: clamp(2.6rem, 3.9vw, 3.17rem);
     line-height: .98;
     font-weight: 400;
     letter-spacing: 0;
@@ -272,15 +272,15 @@
     position: relative;
     display: flex;
     align-items: center;
-    min-height: 13rem;
+    min-height: 16rem;
     border-radius: 0;
-    padding: clamp(1.35rem, 2.4vw, 1.9rem) clamp(1.4rem, 3vw, 2rem);
+    padding: clamp(1.8rem, 3vw, 2.4rem) clamp(1.8rem, 3.5vw, 2.6rem);
 }
 /* Fondo de la tarjeta — se extiende a la izquierda por detrás del cuadro negro */
 .okip-ps__card-bg {
     position: absolute;
     top: 0; right: 0; bottom: 0;
-    left: calc(-16rem);
+    left: calc(-21rem);
     background: var(--okip-ps-card);
     z-index: 0;
     will-change: clip-path;
@@ -295,22 +295,21 @@
 .okip-ps__heading {
     margin: 0;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(1.27rem, 1.62vw, 1.4rem);
+    font-size: clamp(1.65rem, 2.11vw, 1.82rem);
     font-weight: 700;
     letter-spacing: .01em;
     color: #101318;
-    text-align: justify;
 }
 
-/* Descripción monoespaciada, justificada como en la referencia */
+/* Descripción monoespaciada */
 .okip-ps__desc {
     margin: clamp(.7rem, 1.8vh, .95rem) 0 0;
     font-family: var(--okip-ps-mono);
-    font-size: clamp(.99rem, 1.3vw, 1.07rem);
+    font-size: clamp(1.29rem, 1.69vw, 1.39rem);
     line-height: 1.55;
     color: #15181d;
     text-align: justify;
-    text-wrap: pretty;
+    overflow-wrap: break-word;
 }
 
 /* Texto que se anima (heading/desc). Por defecto totalmente visible. */
@@ -408,8 +407,8 @@
         align-items: flex-start;
     }
     .okip-ps__visual {
-        width: min(100%, 17rem);
-        border-radius: 0 50px 0 0;
+        width: min(100%, 22rem);
+        border-radius: 0 65px 0 0;
     }
     .okip-ps__card-bg {
         left: 0; /* reset extensión detrás del cuadro negro */

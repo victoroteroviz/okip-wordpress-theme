@@ -27,6 +27,12 @@ return array(
                 'title_line_2' => 'al servicio de la humanidad',
                 'description'  => '',
                 'alignment'    => 'center',
+                'logo' => array(
+                    'enabled' => true,
+                    'media'   => 'assets/img/okip-logo-hero.png',
+                    'alt'     => 'OKIP Logo',
+                    'width'   => '160px',
+                ),
             ),
             'background' => array(
                 // Fondo video por default. El CSS editable sigue disponible cambiando el type.
@@ -59,9 +65,9 @@ return array(
                     'font_family'    => 'Montserrat',
                     'google_family'  => 'Montserrat',
                     'font_weight'    => 300,
-                    'min_px'         => 42,
-                    'fluid_vw'       => 5.2,
-                    'max_px'         => 78,
+                    'min_px'         => 36,
+                    'fluid_vw'       => 4.2,
+                    'max_px'         => 62,
                     'line_height'    => 1.08,
                     'letter_spacing' => 0,
                     'color'          => '#ffffff',

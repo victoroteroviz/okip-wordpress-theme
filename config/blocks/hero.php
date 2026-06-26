@@ -102,6 +102,13 @@ if (! function_exists('okip_normalize_hero_data')) {
         // Contenido.
         $data['content']['alignment'] = okip_one_of($data['content']['alignment'], $align_allowed, 'center');
 
+        // Logo (anidado en content).
+        if (! isset($data['content']['logo']) || ! is_array($data['content']['logo'])) {
+            $data['content']['logo'] = array();
+        }
+        $data['content']['logo']['enabled'] = okip_bool(isset($data['content']['logo']['enabled']) ? $data['content']['logo']['enabled'] : false);
+        $data['content']['logo']['width']   = is_string($data['content']['logo']['width'] ?? '') ? $data['content']['logo']['width'] : '120px';
+
         // Fondo (video por default, CSS editable como alternativa).
         $bg = isset($data['background']) && is_array($data['background']) ? $data['background'] : array();
         if (isset($bg['type']) && $bg['type'] === 'svg' && empty($bg['media'])) {
@@ -209,6 +216,12 @@ return array(
         'description'  => '',
         'alignment'    => 'center', // left | center | right
         'max_width'    => '1000px',
+        'logo'         => array(
+            'enabled' => false,
+            'media'   => '',      // ruta/URL/ID del logo
+            'alt'     => '',
+            'width'   => '150px', // ancho configurable
+        ),
     ),
     'background' => array(
         'type'            => 'video', // css_motion | video | image | svg | gradient

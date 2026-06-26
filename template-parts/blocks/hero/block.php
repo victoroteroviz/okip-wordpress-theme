@@ -33,6 +33,14 @@ $cards      = isset($okip_data['cards']) && is_array($okip_data['cards']) ? $oki
 $motion     = okip_normalize_motion(isset($okip_data['motion']) ? $okip_data['motion'] : array(), array('background', 'text', 'cards'));
 $typography = isset($okip_data['typography']) ? $okip_data['typography'] : array();
 
+$logo       = isset($content['logo']) && is_array($content['logo']) ? $content['logo'] : array();
+$logo_enabled = ! empty($logo['enabled']);
+$logo_media = isset($logo['media']) ? $logo['media'] : '';
+$logo_on    = $logo_enabled && okip_media_exists($logo_media);
+$logo_url   = $logo_on ? okip_media_url($logo_media) : '';
+$logo_alt   = isset($logo['alt']) ? $logo['alt'] : 'Logo';
+$logo_width = isset($logo['width']) ? $logo['width'] : '120px';
+
 $bg_type = isset($background['type']) ? $background['type'] : 'gradient';
 $poster  = isset($background['poster']) && okip_media_exists($background['poster']) ? okip_media_url($background['poster']) : '';
 $obj_pos = isset($background['object_position']) ? $background['object_position'] : 'center center';
@@ -317,12 +325,17 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
         style="--okip-hero-maxw:<?php echo esc_attr($max_width); ?>;">
         <h1 class="okip-hero__title">
             <?php if (! empty($content['title_line_1'])) : ?>
-                <span class="okip-hero__title-line" data-okip-motion-target="text"><?php echo esc_html($content['title_line_1']); ?></span>
+                <span class="okip-hero__title-line okip-hero__title-line--primary" data-okip-motion-target="text"><?php echo esc_html($content['title_line_1']); ?></span>
             <?php endif; ?>
             <?php if (! empty($content['title_line_2'])) : ?>
-                <span class="okip-hero__title-line" data-okip-motion-target="text"><?php echo esc_html($content['title_line_2']); ?></span>
+                <span class="okip-hero__title-line okip-hero__title-line--secondary" data-okip-motion-target="text"><?php echo esc_html($content['title_line_2']); ?></span>
             <?php endif; ?>
         </h1>
+        <?php if ($logo_on) : ?>
+            <div class="okip-hero__logo" style="--okip-logo-width:<?php echo esc_attr($logo_width); ?>;">
+                <img src="<?php echo esc_url($logo_url); ?>" alt="<?php echo esc_attr($logo_alt); ?>" class="okip-hero__logo-img">
+            </div>
+        <?php endif; ?>
         <?php if (! empty($content['description'])) : ?>
             <div class="okip-hero__desc" data-okip-motion-target="text"><?php echo wp_kses_post($content['description']); ?></div>
         <?php endif; ?>

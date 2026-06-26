@@ -124,7 +124,7 @@ return array(
     ),
     'layout' => array(
         'min_height'    => 'auto',   // el bloque fluye natural, sin altura forzada
-        'content_width' => '1100px', // mismo ancho que los otros bloques
+        'content_width' => '1360px', // mismo ancho que los otros bloques
         'z_index'       => 4,        // sobre el Bloque 3 en la cascada de la home
     ),
     'items' => array(
