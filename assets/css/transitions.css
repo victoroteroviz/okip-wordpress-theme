@@ -16,18 +16,22 @@
  */
 
 @media (min-width: 1025px) {
-    /* El OUTER reserva el scroll: altura visible (100svh) + el hold configurable.
-       El centrado/posicionamiento del contenido vive en el stage, no aquí. */
+    /* El OUTER es el elemento STICKY. CLAVE: un sticky se pega respecto a su PADRE,
+       no al viewport. El padre del outer es <main> (toda la página) → se queda fijo
+       arriba y el bloque siguiente (z mayor, opaco) sube y lo cubre, igual que el Hero.
+       Su altura extra (hold) solo retrasa al bloque siguiente; NO mueve la escena.
+       (Antes el sticky vivía en el hijo .okip-cover-stage, cuyo padre era este outer de
+       100svh+hold: se despegaba ~hold antes de que llegara el siguiente bloque → salto.) */
     [data-transition-enabled="1"][data-transition-mode="sticky-cover"] {
+        position: sticky;
+        top: 0;
         min-height: calc(100svh + (var(--okip-hold-vh, 0) * 1vh));
         display: block;
     }
 
-    /* El STAGE es el "viewport" visible que queda pegado arriba mientras el bloque
-       siguiente sube y lo cubre. */
+    /* El STAGE es solo la escena visible (100svh) anclada al top del outer. NO es
+       sticky (lo es el outer); el resto del outer es el hold, bajo el viewport. */
     [data-transition-enabled="1"][data-transition-mode="sticky-cover"] > .okip-cover-stage {
-        position: sticky;
-        top: 0;
         min-height: 100svh;
         overflow: hidden; /* contiene el translateY del reveal sin generar scroll */
     }

@@ -1,10 +1,11 @@
 /*
  * Bloque Video con Título (video-w-title).
  *
- * Estructura: `.okip-vwt` (OUTER, reserva el scroll del hold) > `.okip-vwt__stage`
- * (.okip-cover-stage, el viewport visible que queda sticky en desktop) > capas
- * (bg / overlay / inner). El sticky + hold lo aporta assets/css/transitions.css
- * vía `data-transition-mode="sticky-cover"`; aquí solo va presentación.
+ * Estructura: `.okip-vwt` (OUTER — es el elemento STICKY y reserva el scroll del hold)
+ * > `.okip-vwt__stage` (.okip-cover-stage, la escena visible de 100svh anclada al top)
+ * > capas (bg / overlay / inner). El sticky (en el OUTER, no en el stage) + el hold los
+ * aporta assets/css/transitions.css vía `data-transition-mode="sticky-cover"`; aquí solo
+ * va presentación.
  *
  * Namespacing: .okip-vwt__* — sin dependencias de otros bloques.
  *

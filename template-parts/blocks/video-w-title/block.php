@@ -7,10 +7,11 @@
  * → overlay opcional (capa 2) → bloque de texto centrado (capa 3). Sustituye al
  * antiguo `parallax-monitor` entre el Hero y el Industry Carousel.
  *
- * Traspaso de salida: `transition.mode = sticky-cover`. El contenido visible va en
- * `.okip-vwt__stage.okip-cover-stage`, que queda `position:sticky` (CSS, ver
- * assets/css/transitions.css) mientras el bloque siguiente (z mayor) lo cubre.
- * `--okip-hold-vh` reserva scroll extra de visibilidad. Sin ScrollTrigger.
+ * Traspaso de salida: `transition.mode = sticky-cover`. El OUTER `.okip-vwt` queda
+ * `position:sticky` (CSS, ver assets/css/transitions.css) — su contenedor es <main>,
+ * así que se queda fijo y el bloque siguiente (z mayor, opaco) lo cubre, igual que el
+ * Hero. `.okip-vwt__stage.okip-cover-stage` es solo la escena visible (100svh) anclada
+ * al top; el resto del outer es el `--okip-hold-vh` (scroll extra). Sin ScrollTrigger.
  *
  * Media-driven: el video solo se pinta si el media existe (okip_media_exists);
  * si no → fallback sobrio (color sólido por CSS, sin diseño decorativo falso).

@@ -156,11 +156,15 @@ config/pages/{slug}.php  →  okip_get_page_blocks($slug)   [+filtro okip_page_b
 - Helpers compartidos en `inc/sanitize.php`: `okip_normalize_transition($t,$defaults)` (sanea las
   claves comunes, deja intactas las específicas del bloque) y `okip_transition_attrs($t)` (emite
   `data-transition-{enabled,mode,disable-below}` en el `<section>`).
-- **sticky-cover** (CSS, `assets/css/transitions.css`): el bloque envuelve su contenido en
-  `.okip-cover-stage`; el OUTER reserva `100svh + --okip-hold-vh` y el stage queda `position:sticky`
-  en desktop (≥1025px, lockstep con el Hero). Sin ScrollTrigger → suave a cualquier velocidad.
-  Hoy lo usa `video-w-title`. **ScrollTrigger se reserva** para coreografías complejas
-  (`industry-carousel` = `horizontal-pin`; `product-story`/`news` mantienen su lógica propia).
+- **sticky-cover** (CSS, `assets/css/transitions.css`): el **OUTER** (el `<section>` con el
+  data-attr) es el elemento `position:sticky` y reserva `100svh + --okip-hold-vh`; su contenido
+  visible va en un hijo `.okip-cover-stage` (escena de 100svh, NO sticky). **El sticky DEBE ir en
+  el outer, no en el stage:** un sticky se pega respecto a su PADRE, y el padre del outer es
+  `<main>` (toda la página) → se queda fijo y el siguiente bloque lo cubre, igual que el Hero. Si
+  el sticky va en el stage, su padre es el outer (100svh+hold) y se despega `hold` ANTES de que
+  llegue el siguiente bloque → salto/“pin fantasma”. Desktop ≥1025px (lockstep con el Hero), sin
+  ScrollTrigger. Hoy lo usa `video-w-title`. **ScrollTrigger se reserva** para coreografías
+  complejas (`industry-carousel` = `horizontal-pin`; `product-story`/`news` mantienen su lógica).
 
 ### Añadir un bloque nuevo
 1. `inc/blocks.php`: añade el `type` a `okip_allowed_blocks()`.
@@ -285,10 +289,11 @@ para que Industry Carousel (z mayor) suba desde la base y lo cubra. Migrado al *
 de transiciones** (`transition.mode=sticky-cover`, ver §5): CSS puro → suave a cualquier velocidad
 de scroll, sin los glitches del antiguo pin de ScrollTrigger.
 
-- **Estructura:** `.okip-vwt` (OUTER, reserva el scroll del hold) > `.okip-vwt__stage.okip-cover-stage`
-  (el "viewport" visible que queda `position:sticky` en desktop, vía `assets/css/transitions.css`)
-  > capas por z-index: `.okip-vwt__bg` (video, z1) → `.okip-vwt__overlay` (z2) → `.okip-vwt__inner`
-  con `.okip-vwt__text` (z3).
+- **Estructura:** `.okip-vwt` (OUTER — es el `position:sticky` y reserva el scroll del hold) >
+  `.okip-vwt__stage.okip-cover-stage` (escena visible de 100svh anclada al top, NO sticky) >
+  capas por z-index: `.okip-vwt__bg` (video, z1) → `.okip-vwt__overlay` (z2) → `.okip-vwt__inner`
+  con `.okip-vwt__text` (z3). El sticky va en el OUTER (su padre es `<main>` = toda la página);
+  ponerlo en el stage lo despega `hold` antes de tiempo (ver §5).
 - **Media-driven:** el video solo se pinta si el media existe (`okip_media_exists`); sin media
   → **fallback sobrio** = color sólido (`--okip-color-bg`, sin gradiente/patrón/glow falso).
   Video default: `assets/video/video-w-title/background.mp4` (no existe aún → fallback).
@@ -296,11 +301,12 @@ de scroll, sin los glitches del antiguo pin de ScrollTrigger.
   blanca** (NO color), escapado con el mismo patrón `stripos`/`substr` del Hero. `subtitle` =
   kicker uppercase letterspaced; `eyebrow` y `description` opcionales.
 - **Overlap de salida (sticky-cover, CSS):** `transition.mode=sticky-cover` + `hold_vh` (default 100).
-  El `.okip-vwt__stage` queda sticky y el OUTER reserva `100svh + hold_vh` de scroll → el bloque
-  permanece fijo y visible ~2 viewports antes de que el siguiente lo cubra. Reglas en
-  `assets/css/transitions.css` (`[data-transition-mode=sticky-cover] > .okip-cover-stage`),
-  breakpoint fijo 1025px (lockstep con el sticky del Hero). **Sin ScrollTrigger** → sin glitches
-  en scroll rápido. Requiere que el bloque siguiente sea opaco y con z mayor (lo da el z por orden).
+  El **OUTER `.okip-vwt` es el `position:sticky`** (su padre es `<main>` = toda la página) y reserva
+  `100svh + hold_vh` de scroll → el bloque permanece fijo y visible ~2 viewports antes de que el
+  siguiente lo cubra. Reglas en `assets/css/transitions.css` (`[data-transition-mode=sticky-cover]`
+  = sticky; `> .okip-cover-stage` = escena 100svh), breakpoint fijo 1025px (lockstep con el sticky
+  del Hero). **Sin ScrollTrigger** → sin glitches en scroll rápido. Requiere que el bloque siguiente
+  sea opaco y con z mayor (lo da el z por orden).
 - **Reveal de entrada (determinista):** lo **arma el JS** con la clase `is-anim-armed` (NO el
   `.okip-js` global) → si el `script.js` falla, el texto queda **visible** (nunca oculto). El
   disparo es un **IO de "línea de disparo"** (`rootMargin:'-15% 0px -85% 0px'`): añade `.is-revealed`
