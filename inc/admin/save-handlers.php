@@ -19,6 +19,36 @@ if (! defined('ABSPATH')) {
 }
 
 /**
+ * Manejador del hook load-{page} del panel (PRG).
+ *
+ * Corre ANTES de imprimir HTML, así que puede redirigir sin "headers already
+ * sent". Procesa el POST, persiste los notices en un transient y redirige al GET
+ * de la misma página (Post-Redirect-Get): así recargar NO reenvía el formulario
+ * ni duplica guardados. En GET no hace nada (deja renderizar la pantalla).
+ *
+ * @return void
+ */
+function okip_admin_handle_load()
+{
+    if (! isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return;
+    }
+
+    $available_slugs = okip_admin_page_slugs();
+    $slug = okip_admin_resolve_slug($available_slugs);
+
+    okip_admin_handle_post($slug);
+    okip_admin_persist_notices();
+
+    $redirect = add_query_arg(
+        array('page' => 'okip-blocks', 'okip_page_slug' => $slug),
+        admin_url('admin.php')
+    );
+    wp_safe_redirect($redirect);
+    exit;
+}
+
+/**
  * Resuelve el slug de página de forma segura, usando POST o GET de forma EXPLÍCITA
  * (no $_REQUEST). En POST manda el hidden del formulario; en navegación, el GET.
  *

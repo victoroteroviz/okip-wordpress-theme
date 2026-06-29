@@ -35,7 +35,7 @@ function okip_admin_page_slugs()
  */
 function okip_register_admin_pages()
 {
-    add_menu_page(
+    $hook = add_menu_page(
         __('OKIP Blocks', 'okip'),
         __('OKIP Blocks', 'okip'),
         'manage_options',
@@ -44,6 +44,12 @@ function okip_register_admin_pages()
         'dashicons-layout',
         58
     );
+
+    // El POST se procesa en load-{hook} (antes de imprimir HTML) para poder
+    // redirigir (PRG) y evitar el reenvío del formulario al recargar.
+    if ($hook) {
+        add_action('load-' . $hook, 'okip_admin_handle_load');
+    }
 }
 add_action('admin_menu', 'okip_register_admin_pages');
 
@@ -80,12 +86,11 @@ function okip_admin_enqueue_assets($hook)
 add_action('admin_enqueue_scripts', 'okip_admin_enqueue_assets');
 
 /**
- * Render principal (solo pantalla).
+ * Render principal (solo pantalla, siempre GET).
  *
- * El manejo de POST (permisos, nonce, saneo y persistencia) vive en
- * inc/admin/save-handlers.php; el resultado llega vía notices. Tras guardar, la
- * pantalla se vuelve a dibujar con okip_get_page_blocks($slug) → muestra los
- * datos ya aplicados (overrides incluidos).
+ * El POST se procesa antes, en load-{hook} (okip_admin_handle_load), que guarda y
+ * redirige (PRG). Aquí solo se recuperan los notices persistidos por ese POST y se
+ * dibuja la pantalla con okip_get_page_blocks($slug) → datos ya aplicados.
  *
  * @return void
  */
@@ -98,8 +103,8 @@ function okip_render_blocks_admin_page()
     $available_slugs = okip_admin_page_slugs();
     $slug = okip_admin_resolve_slug($available_slugs);
 
-    // Procesa el POST (si lo hay) y deja notices; nunca hace wp_die por nonce.
-    okip_admin_handle_post($slug);
+    // Notices dejados por el POST previo (sobreviven al redirect vía transient).
+    okip_admin_load_persisted_notices();
 
     $blocks = $slug !== '' ? okip_get_page_blocks($slug) : array();
     ?>

@@ -47,6 +47,53 @@ function okip_admin_add_notice($type, $message)
 }
 
 /**
+ * Clave del transient donde se guardan los notices entre el POST y el GET (PRG).
+ * Es por usuario para no cruzar mensajes entre sesiones admin.
+ *
+ * @return string
+ */
+function okip_admin_notices_transient_key()
+{
+    return 'okip_admin_notices_' . get_current_user_id();
+}
+
+/**
+ * Persiste los notices acumulados antes de un redirect (PRG). Caduca solo; además
+ * se borra al leerlos. No escribe nada si no hay notices.
+ *
+ * @return void
+ */
+function okip_admin_persist_notices()
+{
+    $notices = okip_admin_notices_store();
+    if (! empty($notices)) {
+        set_transient(okip_admin_notices_transient_key(), $notices, MINUTE_IN_SECONDS);
+    }
+}
+
+/**
+ * Recupera los notices guardados por un POST previo (tras el redirect) y los pasa
+ * a la cola en memoria para que okip_admin_render_notices() los imprima. El
+ * transient se borra al leerlo (one-shot).
+ *
+ * @return void
+ */
+function okip_admin_load_persisted_notices()
+{
+    $key = okip_admin_notices_transient_key();
+    $stored = get_transient($key);
+    if (! is_array($stored)) {
+        return;
+    }
+    delete_transient($key);
+    foreach ($stored as $notice) {
+        if (isset($notice['type'], $notice['message'])) {
+            okip_admin_add_notice($notice['type'], $notice['message']);
+        }
+    }
+}
+
+/**
  * Imprime los notices acumulados con el marcado estándar de WP.
  *
  * @return void

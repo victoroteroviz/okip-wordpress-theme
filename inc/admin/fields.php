@@ -135,12 +135,50 @@ function okip_admin_textarea_field($label, $name, $value, $description = '', arr
 }
 
 /**
+ * Resuelve un `step` válido para el valor actual de un input numérico.
+ *
+ * El navegador bloquea el submit (stepMismatch) si el `value` no cae en un
+ * incremento exacto del `step` desde el step base (`min` si existe, si no 0).
+ * Muchos defaults artísticos del tema (0.82, 1180, 1.026, 120…) son intencionales
+ * y no respetan steps rígidos (0.05, 50, 25…). Para no romper el submit ni alterar
+ * los defaults, si el valor NO conforma con el step se degrada a `step="any"`
+ * (precisión libre). Si conforma, se conserva el step original (mejor UX de flechas).
+ * El saneo/clamp del servidor sigue siendo la fuente de seguridad.
+ *
+ * @param mixed $value Valor renderizado.
+ * @param mixed $step  Step solicitado ('any' o numérico).
+ * @param mixed $min   Step base (min); null => 0.
+ * @return string Step seguro para HTML.
+ */
+function okip_admin_resolve_number_step($value, $step, $min = null)
+{
+    if ($step === 'any') {
+        return 'any';
+    }
+    if (! is_numeric($value) || ! is_numeric($step)) {
+        return (string) $step;
+    }
+    $step = (float) $step;
+    if ($step <= 0) {
+        return 'any';
+    }
+    $base = is_numeric($min) ? (float) $min : 0.0;
+    $ratio = ((float) $value - $base) / $step;
+    // Tolerancia para errores de coma flotante (p.ej. 1.2/0.1 = 11.9999…).
+    if (abs($ratio - round($ratio)) < 1e-9) {
+        return (string) $step;
+    }
+    return 'any';
+}
+
+/**
  * Campo numérico.
  */
 function okip_admin_number_field($label, $name, $value, $description = '', array $attrs = array())
 {
     okip_admin_field_open($label, $description);
     $attrs = array_merge(array('step' => '1'), $attrs);
+    $attrs['step'] = okip_admin_resolve_number_step($value, $attrs['step'], isset($attrs['min']) ? $attrs['min'] : null);
     echo '<input type="number" name="' . esc_attr($name) . '" value="' . esc_attr((string) $value) . '"' . okip_admin_attrs($attrs) . '>';
     okip_admin_field_close();
 }
