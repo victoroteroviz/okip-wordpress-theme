@@ -58,7 +58,7 @@ docker exec okip_landing_wordpress php -r 'define("WP_USE_THEMES",false);require
 2. Home desde `front-page.php`. Arquitectura multipágina.
 3. Una página = **lista ordenada de instancias de bloque**.
 4. Cada instancia: `{ type, instance_id, data }`.
-5. `instance_id` **manual, legible y estable** (ej. `home-hero-main`, `home-parallax-monitor`).
+5. `instance_id` **manual, legible y estable** (ej. `home-hero-main`, `home-video-w-title`).
    Sirve de ancla (`/#home-hero-main`), scope CSS/JS y futura clave de guardado.
 6. Un mismo `type` puede repetirse con distinto `instance_id` y `data`.
 7. Datos hoy en `config/` (PHP). Mañana el admin guardará **overrides en `wp_options`**
@@ -88,7 +88,7 @@ okip-theme/
 │   ├── pages/                # (vacío por ahora)
 │   └── blocks/<type>/        # block.php + style.css + script.js (autocontenido)
 │       ├── hero/
-│       └── parallax-monitor/
+│       └── video-w-title/
 ├── config/
 │   ├── blocks/<type>.php     # DEFAULTS + normalizador del tipo
 │   └── pages/<slug>.php      # lista ordenada de instancias de la página
@@ -128,7 +128,8 @@ config/pages/{slug}.php  →  okip_get_page_blocks($slug)   [+filtro okip_page_b
             $args = ['type','instance_id','data']  (data ya normalizada)
 ```
 
-- **Whitelist:** `okip_allowed_blocks()` en `inc/blocks.php`. Hoy: `hero`, `parallax-monitor`.
+- **Whitelist:** `okip_allowed_blocks()` en `inc/blocks.php`. Hoy: `hero`, `video-w-title`,
+  `industry-carousel`, `product-story`, `mission-statement`, `news`.
 - **Merge:** `okip_merge_defaults($data,$defaults)` (recursivo; las **listas** se
   reemplazan, no se fusionan índice a índice — importante para `cards`, etc.).
 - **Normalizador por tipo:** función opcional `okip_normalize_{type}_data($data)`
@@ -201,12 +202,16 @@ También define el **menú de respaldo** (si no hay menú `primary` asignado en 
 - **Hamburguesa:** OCULTA en desktop; visible solo en `@media (max-width:1024px)`
   (mismo breakpoint que el menú móvil colapsable).
 - **Visibilidad (`assets/js/navbar.js`):** en Home con Hero (`after_hero`+`hide_on_hero`)
-  el navbar nace oculto (`okip-navbar--start-hidden` server-side, gated por `.okip-js`)
-  y se controla por **PROGRESO de scroll** (no solo IO, porque con el overlap del Bloque 2
-  el Hero puede seguir intersectando): aparece cuando el progreso de transición supera
-  ~0.15 (pasado el ~85% del Hero) y se oculta al volver. **Guard:** si `hero.offsetHeight<=0`
-  → `hide()` (nunca mostrar por medida inválida). Al ocultarse cierra el menú móvil
-  (`aria-expanded=false`). `is-scrolled` (scrollY>8) solo cambia el fondo, no la visibilidad.
+  el navbar nace oculto (`okip-navbar--start-hidden` server-side, gated por `.okip-js`) y se
+  re-ancla al **bloque que cubre al Hero** (`coverBlock = querySelector('[data-okip-vwt],
+  [data-okip-pm]')`, hoy `video-w-title`). Aparece cuando `coverBlock.getBoundingClientRect().top`
+  cae bajo el **15% superior del viewport** (el bloque tapa ~85% del Hero) y se oculta al volver.
+  No se mide el Hero (es sticky → `rect.top` engañoso). **Perf:** UNA lectura de layout por frame
+  (el rect del coverBlock); la geometría del Hero (solo para el fallback sin coverBlock) se cachea
+  y recalcula en resize, NO por frame, para evitar reflows forzados. Si el coverBlock es el legacy
+  `parallax-monitor` (`data-okip-pm`), sigue su sync `okip:pm-cover`/`is-pm-covered` en su lugar.
+  Al ocultarse cierra el menú móvil (`aria-expanded=false`). `is-scrolled` (scrollY>8) solo cambia
+  el fondo, no la visibilidad.
 - `okip-js` se inyecta en `wp_head` prioridad 1 (antes del `<body>`) → sin parpadeo.
 
 ---
@@ -248,69 +253,52 @@ Capas: **1) background media limpio (video|image|svg)** → **2) overlay opciona
   incluye `placeholder_label/placeholder_enabled`, `play_mode/reset_on_leave`), `animation`.
 - Texto actual: "Inteligencia mexicana" / "al servicio de la humanidad".
 
-### Parallax Monitor (`parallax-monitor`) — instancia `home-parallax-monitor` · ref `bloque 2.png`
-Escena oscura **cinematográfica full-screen** (`min-height:100svh`). Texto grande a la
-izquierda, **monitor protagonista** a la derecha, glow azul tras el monitor, **piso/reflejo
-azul** en la base, fondo negro→azul profundo (sin grid/patrón). **El Hero se mantiene limpio
-y protagonista**: la transición Hero→B2 NO empieza desde el primer pintado, solo al SALIR del
-Hero (≈80% de su scroll).
+### Video con Título (`video-w-title`) — instancia `home-video-w-title` · ref `bloque 2.png`
+**Sustituye al antiguo `parallax-monitor`** en la misma posición (entre Hero e Industry
+Carousel). Escena secundaria casi full-screen (`min-height:100svh`): video de fondo a sangre
+completa + overlay para legibilidad + bloque de texto centrado. **Sin parallax/drift/cover ni
+las 3 capas de reveal** del antiguo B2 (eliminados), pero **conserva los DOS overlaps de
+traspaso**: el Hero sigue `position:sticky` (desktop, z1) y este bloque (z2, fondo opaco) lo
+cubre por flujo al entrar; y a la salida **se auto-pinea (HOLD-PIN)** para que Industry Carousel
+(z3) suba desde la base y lo cubra, igual que el traspaso Hero→bloque.
 
-- **3 capas reales** con z-index 1/2/3 y `data-okip-pm-layer="background|computer|text"`.
-  **Separación estricta reveal/parallax (regla crítica — nunca el mismo nodo):**
-  - PARALLAX = `transform` inline (GSAP o rAF) SOLO en el nodo **EXTERIOR**
-    (`.okip-pm__bg`, `.okip-pm__monitor`, `.okip-pm__text`) → solo drift.
-  - REVEAL = opacidad/translate por **CLASE** (`is-bg-revealed`, `is-computer-revealed`,
-    `is-text-revealed`) en el nodo **INTERIOR** (`.okip-pm__bg-inner`,
-    `.okip-pm__computer-reveal`, `.okip-pm__text-reveal`), con transición CSS.
-  - **El fondo está dividido en exterior (`.okip-pm__bg`, parallax + headroom `inset:-8% 0`)
-    e interior (`.okip-pm__bg-inner`, reveal/opacidad/media/gradiente).** El gradiente del
-    estado sin media va en `.okip-pm__bg-inner--missing/--gradient`.
-  - **El ROOT `.okip-pm` NUNCA recibe transform de masa** (no se mueve "de golpe").
-- **Transición Hero→Bloque 2 (`script.js`) — 3 conceptos SEPARADOS:**
-  1. **Hero recede** (scrub, `trigger: hero`): el Hero se hunde (`y/scale/opacity`) SOLO en
-     su último ~20% (`start ≈ top+80%·heroH`, `end ≈ top+100%·heroH`). El bloque controla
-     el hundimiento del Hero (por eso el `scroll_3d` del Hero está off).
-  2. **Reveal one-shot** (`once`, `trigger: hero`, `start ≈ top+82%·heroH`): añade las 3
-     clases de reveal A LA VEZ; el **escalonado fondo→texto→monitor lo da el CSS**
-     (`transition-delay`) → suave, nunca "de golpe" ni atascado. (No usa `onUpdate`.)
-  3. **Parallax drift** (scrub, `trigger: section`): `fromTo(y)` por capa en los nodos
-     exteriores con `data-speed`.
-  - **Fallback vanilla** (sin GSAP): rAF para drift + recede; reveal por IO one-shot
-    (threshold 0.45). `heroProgress` arranca al 80%. Sin pin (B2→B3 degrada a apilado).
-  - Desactivado (modo `is-static`, reveal inmediato) en móvil/tablet (**≤1024px**) y reduce-motion.
-- **Transición Bloque 2 → Bloque 3 (overlap real):** B2 se **auto-pinea como fondo**
-  (`{id}-bgpin`: `pin:true, pinSpacing:false`, dura `background_pin_vh` vh ≈ 90) → queda
-  FIJO (position:fixed, **sin transform**) mientras el Bloque 3 (z-index mayor) **sube por
-  scroll ENCIMA**. B3 NUNCA escribe transforms sobre `.okip-pm` ni sus capas. Solo desktop+GSAP.
-- **Monitor media-driven:** `computer.type` (`video|image|svg|placeholder`) + `computer.media`;
-  sin media → **placeholder esquemático tipo dashboard** (barra+dots, panel "mapa", tarjetas
-  laterales) + marco mínimo. `autoplay_on_enter`: el video de pantalla puede arrancar al revelarse.
-- **Título con resaltado:** `highlighted_text` envuelto en `.okip-pm__highlight` = **negrita
-  blanca** (NO color naranja; ref `bloque 2.png`), escapado. `subtitle` = kicker uppercase
-  letterspaced bajo el título.
-- **Cover Hero→B2 DETERMINISTA:** `.okip-pm__cover` (capa `fixed`) NO usa tween por
-  tiempo; su opacidad se deriva de `self.progress` del ScrollTrigger del cover en
-  `setCoverProgress()` (`gsap.set`, instantáneo) → nunca queda "a medias" en scroll
-  rápido. `cover_start_vh` = vh antes del top donde empieza; `cover_ramp` (0..1) =
-  fracción de la ventana hasta opacidad total (**ATAR** con `computer_enter_range` para
-  que el cover cierre ANTES del reveal del monitor; ver comentario en script.js).
-- **Navbar sincronizado:** B2 expone el estado en `<html>`: `is-pm-sync-ready`,
-  `is-pm-covering` (rampa, hook CSS reservado), `is-pm-covered` (opaco) + evento
-  `okip:pm-cover`. `navbar.js` sigue ESE estado (no `getBoundingClientRect`) → sin
-  franja. El estado también se emite en modo estático/vanilla (`initCoverSyncFallback`).
-- Config: `config/blocks/parallax-monitor.php`. Grupos: `content` (`eyebrow`, `title`,
-  `highlighted_text`, `subtitle`, `description`), `layout` (`min_height`, `content_width`,
-  `z_index`), `background`, `computer`, `cta`, `overlay`, `glow`, `animation` (`use_gsap`,
-  `use_vanilla_fallback`, `parallax_enabled`, `overlap_breakpoint=1024` ≤ → estático sin
-  pin/cover, `background_pin`, `background_pin_vh=100`, `entry_scroll_vh=155`,
-  `cover_delay_vh=50`, `cover_start_vh=8`, `cover_ramp=0.45`, `parallax_drift_px=180`,
-  `{background,computer,text}_speed` = **0.45 / 0.78 / 0.95**, `{background,computer,text}_enter_range`).
-  **Knobs eliminados** (estaban muertos): `overlap_previous`, `overlap_start`,
-  `overlap_amount`, `overlap_transition_enabled`, `pin_enabled`, `text_reveal`,
-  `start_progress`, `disable_parallax_below` (→ `overlap_breakpoint`).
+- **3 capas por z-index** (sin layers de parallax): `.okip-vwt__bg` (video, z1) →
+  `.okip-vwt__overlay` (z2) → `.okip-vwt__inner` con `.okip-vwt__text` (z3).
+- **Media-driven:** el video solo se pinta si el media existe (`okip_media_exists`); sin media
+  → **fallback sobrio** = color sólido (`--okip-color-bg`, sin gradiente/patrón/glow falso).
+  Video default: `assets/video/video-w-title/background.mp4` (no existe aún → fallback).
+- **Título con resaltado:** `highlighted_text` envuelto en `.okip-vwt__highlight` = **negrita
+  blanca** (NO color), escapado con el mismo patrón `stripos`/`substr` del Hero. `subtitle` =
+  kicker uppercase letterspaced; `eyebrow` y `description` opcionales.
+- **Animación de entrada (reveal):** 100% CSS gated por `.okip-js` (`.okip-vwt--animated` →
+  `opacity:0`/`translateY`; `.is-revealed` la dispara, escalonado por `nth-child`). El
+  `script.js` (`setupReveal`) solo añade `.is-revealed` por IntersectionObserver y es
+  **defensivo**: sin IO, con `data-anim=0`, o `prefers-reduced-motion` → revela de inmediato.
+- **Overlap de salida (HOLD-PIN, `setupOverlap`):** solo desktop + GSAP+ScrollTrigger. La
+  sección se auto-pinea (`pin:true, pinSpacing:false`) durante su propia altura (`+=offsetHeight`,
+  = la distancia que el bloque siguiente recorre hasta el top) → queda FIJA mientras Industry
+  Carousel (z3, opaco) sube por encima. **NO** escribe transforms sobre otros bloques ni empuja
+  con `margin-top` (el antiguo B2 sí, por su coreografía depth-entry; aquí no hace falta). Gated
+  por `data-overlap`/`data-overlap-bp` (≤bp, reduce-motion o sin GSAP → flujo apilado, sin pin;
+  el resize a ≤bp mata el pin). Requiere `nextElementSibling`. Flag `__okipVwtInit` evita doble init.
+- **Navbar:** este bloque NO emite el sync `okip:pm-cover` del antiguo B2. `navbar.js` re-ancla
+  el reveal a ESTE bloque (selector `[data-okip-vwt], [data-okip-pm]`): aparece cuando su
+  `getBoundingClientRect().top` cae bajo el 15% superior del viewport (tapa ~85% del Hero) y se
+  mantiene mientras lo cubra. Una sola lectura de layout por frame; la geometría del Hero (solo
+  para el fallback sin bloque-cubierta) se cachea y recalcula en resize, no en cada frame.
+- Config: `config/blocks/video-w-title.php`. Grupos: `content` (`eyebrow`, `title`,
+  `highlighted_text`, `subtitle`, `description`), `video` (`media`, `poster`, `autoplay`,
+  `loop`, `muted`, `playsinline`), `overlay` (`enabled`, `color`, `opacity`), `layout`
+  (`min_height=100svh`, `content_width`, `z_index=2`, `alignment` = `left|center`),
+  `animation` (`enabled`, `disable_below`, `overlap_enabled=true`, `overlap_breakpoint=1024`).
+  Normalizador: `okip_normalize_video_w_title_data()`.
 - Contenido actual: title "Facilitando la **toma de decisiones** en tiempo real" (highlight
-  "toma de decisiones"), subtitle "MONITOREO, GESTIÓN E INTELIGENCIA OPERATIVA", **sin CTA**
-  (la referencia no lo muestra), sin eyebrow ni descripción.
+  "toma de decisiones"), subtitle "Monitoreo, gestión e inteligencia operativa", sin eyebrow,
+  descripción ni CTA. Alignment `center`.
+- **Migración del orden del admin (opción B):** `okip_get_page_block_order()` remapea el
+  `instance_id` viejo `home-parallax-monitor` → `home-video-w-title` (vía
+  `okip_page_block_order_remap()`, filtrable) para que un orden guardado antiguo conserve la
+  posición en lugar de anexar el bloque nuevo al final.
 
 ### Industry Carousel (`industry-carousel`) — instancia `home-industry-carousel` · ref `bloque 3.png`
 Sección con **fondo claro** (blanco/gris muy claro) — opuesto al Bloque 2. Estructura visual:
@@ -355,12 +343,11 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
   (funciona con `wp_nav_menu`), subrayado activo.
 - Hero media-driven con escena dual-video (intro→crossfade→loop); **tarjetas con placeholder**
   (sin media) y reproducción solo por hover/tap via `play_mode` (sin autoplay).
-- **Bloque 2 (Rev.2):** rediseño visual hacia `bloque 2.png` (fondo premium, monitor
-  protagonista con mockup dashboard, glow + piso/reflejo, título con highlight negrita +
-  subtítulo). Hero protagonista: transición Hero→B2 solo al salir del Hero (recede 80% +
-  reveal one-shot 82%, root sin transform). Fondo dividido exterior(parallax)/interior(reveal);
-  drift visible en las 3 capas (0.30/0.85/0.08). **Transición B2→B3:** B2 auto-pin como fondo
-  (`pinSpacing:false`) y B3 sube encima por z-index, sin tocar `.okip-pm`.
+- **Bloque 2 — `video-w-title`** (sustituye al antiguo `parallax-monitor`, eliminado): escena
+  de video de fondo + overlay + texto centrado (título con highlight negrita + subtítulo). Sin
+  parallax/pin/cover: el Hero sticky (z1) lo cubre por flujo, Industry Carousel (z3) cubre
+  después. Migración del orden del admin por remap de `instance_id` (opción B). El diseño
+  cinematográfico previo (monitor/glow/parallax) vive en el historial de git.
 - Páginas placeholder: `config/pages/{contacto,sala-de-prensa,fabrica-de-tecnologias}.php`
   (devuelven `[]` → fallback `the_content()`).
 
@@ -381,8 +368,11 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
 
 **`config/pages/home.php` actual (orden):**
 1. `hero` → `home-hero-main`
-2. `parallax-monitor` → `home-parallax-monitor`
+2. `video-w-title` → `home-video-w-title`
 3. `industry-carousel` → `home-industry-carousel`
+4. `product-story` → `home-product-story`
+5. `mission-statement` → `home-mission-statement`
+6. `news` → `home-news`
 
 ---
 
@@ -398,47 +388,24 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
   añade `okip-navbar__link` con `nav_menu_link_attributes` y el CSS targetea `.okip-navbar__menu a`.
 - **Imágenes/video en `assets/`:** siguen vacías → fondos en fallback neutro y tarjetas/
   monitor en placeholder; es lo esperado, no un bug.
-- **Bloque 2 — no mezclar reveal y parallax en el mismo nodo:** parallax (transform inline)
-  va en el nodo EXTERIOR; reveal (clase/opacidad) en el INTERIOR. Aplica también al FONDO:
-  `.okip-pm__bg` (exterior) solo transform; `.okip-pm__bg-inner` (interior) solo opacidad/
-  media/gradiente. Si los juntas, el contenido se congela en estado intermedio.
-- **Bloque 2 — el ROOT `.okip-pm` no debe recibir transform de masa:** mueve "todo de golpe"
-  y rompe la sensación de capas. El overlap Hero→B2 por margin negativo ("lip") fue ELIMINADO
-  porque hacía que B2 invadiera al Hero desde el load. El Hero queda limpio; B2 entra solo por
-  recede del Hero + reveal escalonado.
-- **Bloque 2 — disparar la transición tarde (al SALIR del Hero):** recede `start ≈ top+80%·heroH`,
-  reveal one-shot `start ≈ top+82%·heroH`, ambos `trigger: hero`. Disparar temprano (50% o
-  `section top 78%`) le quita protagonismo al Hero.
-- **Bloque 2 — reveal one-shot (no `onUpdate`):** se añaden las 3 clases a la vez y el CSS las
-  escalona con `transition-delay`. Latchear por `onUpdate(progress)` en un rango corto hace que
-  todo "suba de golpe".
-- **Bloque 2 — drift del fondo debe ser visible:** con `speed` muy bajo (≈0.16) parece que solo
-  se mueve el monitor. Valores actuales 0.30/0.85/0.08; el exterior del fondo necesita headroom
-  (`inset:-8% 0`) para que el drift no descubra bordes.
-- **Bloque 2 → Bloque 3 (overlap):** B2 se auto-pinea (`pin:true, pinSpacing:false`) como fondo
-  fijo (position:fixed, sin transform) y B3 sube encima por z-index. B3 **no** debe escribir
-  transforms sobre `.okip-pm` ni sus capas. El handoff con el pin del carrusel de B3 es secuencial.
-- **Bloque 2 → Bloque 3 — NO retrasar a B3 con un selector adyacente:** el empuje que evita que
-  B3 cubra a B2 antes de tiempo (sobrante del depth-entry + hold estático) debe aplicarse como
-  `margin-top` **inline** sobre B3 desde el JS de B2. Una regla `.okip-pm.is-gsap + .okip-ic`
-  se ROMPE porque ScrollTrigger envuelve a B2 en un `.pin-spacer` al pinearlo → la adyacencia
-  deja de cumplirse → `margin:0` → B3 cubre a B2 mientras el texto aún se revela. (Era el bug.)
-- **Bloque 2 → Bloque 3 — la duración del pin se calcula con `offsetHeight`, no `offsetTop`:**
-  `holdPinDistance = section.offsetHeight + margin(B3)` (≡ `B3.offsetTop − B2.offsetTop`). Tras el
-  `.pin-spacer`, los `offsetTop` cambian de offsetParent y son poco fiables; `offsetHeight` es estable.
-- **Bloque 2 → Bloque 3 — el hold estático es `cover_delay_vh` (≈50vh = medio viewport):** se suma
-  al sobrante del depth-entry para que B2 quede revelado y quieto un rato antes de que B3 cubra.
-- **Bloque 2 — móvil/tablet (≤1024px) sin pin/overlap:** el JS gatea por `isSmallViewport()`
-  (`canAnimate && !isSmall`) → entra en `is-static` (reveal inmediato) y NO empuja a B3; flujo
-  vertical normal. El resize a ≤1024px desmonta el pin (`bgPinST.kill()`) y limpia el `margin-top`.
+- **Bloque 2 (`parallax-monitor`) fue ELIMINADO y sustituido por `video-w-title`.** El overlap
+  de traspaso B2→B3 **SE CONSERVA** (HOLD-PIN: `video-w-title` se auto-pinea `pin:true,
+  pinSpacing:false` durante `+=offsetHeight` y el Industry Carousel z3 sube encima). Lo que
+  desapareció con el bloque viejo es solo su coreografía interna: separación reveal/parallax por
+  nodo exterior/interior (`.okip-pm__*`), drift por capa, cover determinista, el empuje por
+  `margin-top` inline sobre B3 (innecesario aquí: sin depth-entry, el pin dura justo la altura
+  propia), el sync `okip:pm-cover` del navbar y el `scroll_3d` del Hero apagado. Para esos detalles
+  ver el historial de git de `template-parts/blocks/parallax-monitor/`.
+- **`video-w-title` — el overlap necesita z-index del bloque siguiente MAYOR (opaco):** Industry
+  Carousel es z3 / fondo blanco opaco, `video-w-title` z2 → el carrusel pinta encima del bloque
+  fijo. Si el bloque siguiente fuera transparente o z menor, se vería el pin a través. El pin
+  requiere `nextElementSibling`; sin bloque siguiente no se pinea.
+- **`video-w-title` — el reveal es por CSS gated por `.okip-js` + `.is-revealed`:** sin JS el
+  texto queda visible (no hay `.okip-js`); con JS nace en `opacity:0` y el `script.js` añade
+  `.is-revealed` por IntersectionObserver. Si el texto quedara invisible, revisar que el IO
+  o el fallback (sin IO / reduce-motion / `data-anim=0`) esté disparando la clase.
 - **Bloque 3 — el contenido se revela TARDE (`start: 'top 15%'`, no `'top 80%'`):** debe aparecer
   solo cuando el panel blanco ya cubre ≈85% del viewport, no al asomar el bloque.
-- **No animar el Hero desde dos sitios:** su `scroll_3d` está OFF en Home porque el Bloque 2
-  ya transforma el Hero (`hero.style.transform/opacity`). Si reactivas `scroll_3d` en Home,
-  habrá doble transform.
-- **GSAP `start/end` de la transición usan `hero.offsetHeight`** (layout, no afectado por
-  transform) con `invalidateOnRefresh` → estables en resize. No uses `getBoundingClientRect`
-  para los límites del ScrollTrigger (el Hero se escala y daría feedback).
 - **Lint "short array syntax" (PHP7103):** es solo un *hint*; el tema usa `array()` por
   convención. No "corregir" a `[]`.
 - **Bloque 3 — no usar dos ScrollTriggers simultáneos sobre el mismo nodo:** el ST de

@@ -26,8 +26,11 @@
         var hideOnHero = navbar.getAttribute('data-hide-on-hero') === '1';
 
         var hero = document.querySelector('[data-okip-hero]');
-        var pm = document.querySelector('[data-okip-pm]');
-        var autoHide = (revealMode === 'after_hero') && hideOnHero && (!!pm || !!hero);
+        // Bloque que cubre al Hero (antes `parallax-monitor`; ahora `video-w-title`). El
+        // navbar se revela cuando ESE bloque sube y tapa al Hero, no por la geometría del
+        // Hero (que es sticky y daría medidas engañosas).
+        var coverBlock = document.querySelector('[data-okip-vwt], [data-okip-pm]');
+        var autoHide = (revealMode === 'after_hero') && hideOnHero && (!!coverBlock || !!hero);
 
         /* ---------- Mostrar / ocultar ---------- */
         function show() {
@@ -44,74 +47,74 @@
             navbar.classList.add('is-hidden');
             navbar.classList.remove('okip-navbar--start-hidden');
 
-            // Con Bloque 2 + GSAP, Parallax Monitor emite el estado compartido
-            // `is-pm-covered` / `okip:pm-cover`; el navbar lo sigue para no
-            // decidir en un frame distinto al cover. Sin ese sync, cae al fallback.
-            // Fallback (solo páginas con Hero pero SIN Bloque 2): progreso por scroll.
-            var startProg = 0.85;
-            var REVEAL_AT = 0.15; // progreso de transición para mostrar el navbar
+            var REVEAL_RATIO = 0.15; // muestra el navbar cuando el bloque-cubierta tapa ~85%
             var docEl = document.documentElement;
 
             function setByPmCovered(covered) {
                 if (covered) { show(); } else { hide(); }
             }
 
-            if (pm) {
+            // Si el bloque-cubierta emite el sync `okip:pm-cover` (legacy `parallax-monitor`),
+            // lo seguimos para decidir en el mismo frame que el cover. `video-w-title` NO lo
+            // emite → se usa la geometría del propio bloque (rect.top), barata y robusta.
+            var hasPmSync = !!(coverBlock && coverBlock.hasAttribute('data-okip-pm'));
+            if (hasPmSync) {
                 document.addEventListener('okip:pm-cover', function (e) {
                     setByPmCovered(!!(e.detail && e.detail.covered));
                 });
             }
 
-            function docTop(el) {
-                var top = 0;
-                while (el) {
-                    top += el.offsetTop || 0;
-                    el = el.offsetParent;
-                }
-                return top;
-            }
             function scrollY() {
                 return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+            }
+
+            // Geometría del Hero cacheada (SOLO para el fallback sin bloque-cubierta). Se
+            // recalcula en resize, no en cada frame de scroll → evita reflows forzados
+            // (el recorrido por offsetParent es caro y fuerza layout sincrónico).
+            var heroTopDoc = 0, heroH = 0;
+            function measureHero() {
+                if (!hero) { return; }
+                var top = 0, el = hero;
+                while (el) { top += el.offsetTop || 0; el = el.offsetParent; }
+                heroTopDoc = top;
+                heroH = hero.offsetHeight || 0;
             }
 
             var navTicking = false;
             var evalNav = function () {
                 navTicking = false;
 
-                if (pm) {
-                    if (docEl.classList.contains('is-pm-sync-ready')) {
+                // Camino preferente: el bloque que cubre al Hero. UNA sola lectura de layout
+                // (getBoundingClientRect) por frame; sin recorrer offsetParent.
+                if (coverBlock) {
+                    if (hasPmSync && docEl.classList.contains('is-pm-sync-ready')) {
                         setByPmCovered(docEl.classList.contains('is-pm-covered'));
-                    } else if (pm.getBoundingClientRect().top <= 1) {
-                        show();
-                    } else {
-                        hide();
+                        return;
                     }
+                    // Aparece cuando el bloque-cubierta ha subido y su top cae bajo el 15%
+                    // superior del viewport (tapa ~85% del Hero), y se mantiene mientras lo cubra.
+                    var rectTop = coverBlock.getBoundingClientRect().top;
+                    if (rectTop <= window.innerHeight * REVEAL_RATIO - offset) { show(); } else { hide(); }
                     return;
                 }
 
-                var y = scrollY();
-
-                var h = hero.offsetHeight;
-                // Guard: si el Hero aún no tiene altura (layout no listo), mantener
-                // OCULTO. Nunca mostrar por una medida inválida.
-                if (!h || h <= 0) { hide(); return; }
-                // Posición por layout, no por getBoundingClientRect(): sticky mantiene
-                // rect.top en 0 mientras el scroll real sigue avanzando.
-                var topDoc = docTop(hero);
-                var start = topDoc + h * startProg - offset;
-                var end = topDoc + h;
-                var p = (end <= start) ? (y >= start ? 1 : 0)
-                    : Math.max(0, Math.min(1, (y - start) / (end - start)));
-                var visibleByProgress = p >= REVEAL_AT;
-                var visibleByFallback = y >= (topDoc + h * 0.85 - offset);
-                if (visibleByProgress || visibleByFallback) { show(); } else { hide(); }
+                // Fallback (Hero sin bloque-cubierta): progreso por scroll, con medidas cacheadas.
+                if (!heroH || heroH <= 0) { measureHero(); }
+                if (!heroH || heroH <= 0) { hide(); return; }
+                var threshold = heroTopDoc + heroH * (1 - REVEAL_RATIO) - offset;
+                if (scrollY() >= threshold) { show(); } else { hide(); }
             };
             var onNavScroll = function () {
                 if (!navTicking) { navTicking = true; window.requestAnimationFrame(evalNav); }
             };
+            var onNavResize = function () {
+                measureHero();
+                onNavScroll();
+            };
+            measureHero();
             evalNav();
             window.addEventListener('scroll', onNavScroll, { passive: true });
-            window.addEventListener('resize', onNavScroll, { passive: true });
+            window.addEventListener('resize', onNavResize, { passive: true });
         } else {
             show();
         }

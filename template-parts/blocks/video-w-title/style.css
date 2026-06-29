@@ -1,0 +1,171 @@
+/*
+ * Bloque Video con Título (video-w-title).
+ *
+ * Escena secundaria casi full-screen con video de fondo a sangre completa,
+ * overlay para legibilidad y bloque de texto centrado (o a la izquierda).
+ * Namespacing: .okip-vwt__* — sin reglas globales ni dependencias de otros
+ * bloques (NO usa nada de .okip-pm__*).
+ *
+ * Fallback sobrio: sin video real, el fondo queda en color sólido (--okip-color-bg),
+ * nunca un diseño decorativo falso.
+ *
+ * Animación de entrada: 100% CSS, gated por `.okip-js` (sin JS → todo visible).
+ * Respeta prefers-reduced-motion.
+ */
+
+.okip-vwt {
+    position: relative;
+    z-index: var(--okip-vwt-z, 2);
+    min-height: var(--okip-vwt-minh, 100svh);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background-color: var(--okip-color-bg, #020711);
+    color: var(--okip-color-text, #f4f7fb);
+    isolation: isolate;
+}
+
+/* ---------- Capa 1: video de fondo ---------- */
+.okip-vwt__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    /* Fallback sobrio (sin media): color sólido, coherente con el Hero. */
+    background-color: var(--okip-color-bg, #020711);
+}
+
+.okip-vwt__bg-media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+/* ---------- Capa 2: overlay ---------- */
+.okip-vwt__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background-color: var(--okip-vwt-overlay-color, #05080f);
+    opacity: var(--okip-vwt-overlay-opacity, 0.45);
+    pointer-events: none;
+}
+
+/* ---------- Capa 3: texto ---------- */
+.okip-vwt__inner {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: var(--okip-vwt-cw, 1100px);
+    margin: 0 auto;
+    padding: var(--okip-space-6, 4rem) var(--okip-space-4, 1.5rem);
+}
+
+.okip-vwt__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--okip-space-3, 1rem);
+}
+
+.okip-vwt--align-center .okip-vwt__text {
+    align-items: center;
+    text-align: center;
+}
+
+.okip-vwt--align-left .okip-vwt__text {
+    align-items: flex-start;
+    text-align: left;
+}
+
+.okip-vwt__eyebrow {
+    margin: 0;
+    font-size: clamp(0.72rem, 1vw, 0.85rem);
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--okip-color-accent-2, #3c8cff);
+}
+
+.okip-vwt__title {
+    margin: 0;
+    max-width: 18ch;
+    font-size: clamp(1.9rem, 4.4vw, 3.6rem);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--okip-color-text, #f4f7fb);
+}
+
+.okip-vwt--align-left .okip-vwt__title {
+    max-width: 22ch;
+}
+
+/* Resaltado = negrita blanca (no color), según convención del tema. */
+.okip-vwt__highlight {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.okip-vwt__subtitle {
+    margin: 0;
+    font-size: clamp(0.78rem, 1.2vw, 0.95rem);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--okip-color-text-muted, #b9c4d4);
+}
+
+.okip-vwt__desc {
+    margin: 0;
+    max-width: 56ch;
+    font-size: clamp(1rem, 1.4vw, 1.18rem);
+    line-height: 1.55;
+    color: var(--okip-color-text-muted, #b9c4d4);
+}
+
+/* ---------- Animación de entrada (gated por .okip-js) ---------- */
+.okip-js .okip-vwt--animated .okip-vwt__text > * {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+        opacity 0.7s ease,
+        transform 0.7s ease;
+}
+
+.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > * {
+    opacity: 1;
+    transform: none;
+}
+
+/* Escalonado suave por orden de aparición. */
+.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > *:nth-child(2) {
+    transition-delay: 0.08s;
+}
+.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > *:nth-child(3) {
+    transition-delay: 0.16s;
+}
+.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > *:nth-child(4) {
+    transition-delay: 0.24s;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .okip-vwt__inner {
+        padding: var(--okip-space-5, 2.5rem) var(--okip-space-3, 1rem);
+    }
+
+    .okip-vwt__title {
+        max-width: 100%;
+    }
+}
+
+/* ---------- Accesibilidad ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .okip-js .okip-vwt--animated .okip-vwt__text > * {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

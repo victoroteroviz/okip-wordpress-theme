@@ -117,7 +117,7 @@ function okip_page_order_option_key($slug)
  * Formato:
  * [
  *   'home-hero-main',
- *   'home-parallax-monitor',
+ *   'home-video-w-title',
  * ]
  *
  * @param string $slug
@@ -130,15 +130,46 @@ function okip_get_page_block_order($slug)
         return array();
     }
 
+    $remap = okip_page_block_order_remap($slug);
+
     $clean = array();
     foreach ($order as $instance_id) {
         $instance_id = okip_sanitize_instance_id($instance_id, '');
+        // Migración de instance_id renombrados: conserva la posición guardada en
+        // lugar de anexar el bloque nuevo al final (ej. parallax-monitor → video-w-title).
+        if (isset($remap[$instance_id])) {
+            $instance_id = $remap[$instance_id];
+        }
         if ($instance_id !== '' && ! in_array($instance_id, $clean, true)) {
             $clean[] = $instance_id;
         }
     }
 
     return $clean;
+}
+
+/**
+ * Mapa de instance_id antiguos → nuevos, para preservar el orden guardado por el
+ * panel cuando un bloque se renombra o se sustituye por otro en la misma posición.
+ *
+ * @param string $slug
+ * @return array<string,string>
+ */
+function okip_page_block_order_remap($slug)
+{
+    $remap = array(
+        'home' => array(
+            'home-parallax-monitor' => 'home-video-w-title',
+        ),
+    );
+
+    $map = isset($remap[$slug]) ? $remap[$slug] : array();
+
+    /**
+     * @param array<string,string> $map  Renombrados old_id => new_id.
+     * @param string               $slug Slug de la página.
+     */
+    return apply_filters('okip_page_block_order_remap', $map, $slug);
 }
 
 /**

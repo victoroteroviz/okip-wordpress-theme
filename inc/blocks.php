@@ -28,7 +28,7 @@ function okip_allowed_blocks()
      */
     return apply_filters('okip_allowed_blocks', array(
         'hero',
-        'parallax-monitor',
+        'video-w-title',
         'industry-carousel',
         'product-story',
         'mission-statement',

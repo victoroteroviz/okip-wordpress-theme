@@ -90,22 +90,16 @@ return array(
     ),
 
     array(
-        'type'        => 'parallax-monitor',
-        'instance_id' => 'home-parallax-monitor',
+        'type'        => 'video-w-title',
+        'instance_id' => 'home-video-w-title',
         'data'        => array(
             'content' => array(
-                // Ref `referencias/bloque 2.png`: título con resaltado en negrita (no color)
-                // + subtítulo kicker debajo. Sin eyebrow ni descripción ni CTA.
-                'eyebrow'          => '',
+                // Título con resaltado en negrita (no color) + subtítulo kicker debajo.
                 'title'            => 'Facilitando la toma de decisiones en tiempo real',
                 'highlighted_text' => 'toma de decisiones',
                 'subtitle'         => 'Monitoreo, gestión e inteligencia operativa',
-                'description'      => '',
             ),
-            'cta' => array(
-                'enabled' => false,
-            ),
-            // background/monitor sin media real → fallback neutro/geométrico mínimo.
+            // video sin media real → fallback sobrio (color sólido por CSS).
         ),
     ),
 
