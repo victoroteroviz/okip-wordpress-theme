@@ -141,6 +141,27 @@ config/pages/{slug}.php  →  okip_get_page_blocks($slug)   [+filtro okip_page_b
   Versionado con `filemtime()`. Dedupe por handle `okip-block-{type}`.
   El JS de bloque depende de `okip-gsap-init`; el CSS de `okip-components`.
 
+### z-index por ORDEN de render (apilado robusto al reordenar)
+- `okip_render_page()` pasa el índice `$i` a `okip_render_block($type,$id,$data,$order)`, que lo
+  expone como `$args['order']`. Cada `block.php` calcula su z-index raíz así:
+  `$z = (layout.z_index>0) ? layout.z_index : ($order+1)`. Los defaults de `layout.z_index` en
+  config son **0** (= auto por orden); un valor >0 es **override avanzado**.
+- El admin reordena el array **antes** de renderizar (`okip_apply_page_block_order`), así que
+  `$order` ya refleja el orden nuevo → el z **siempre** sube con el DOM. Reordenar no rompe el
+  apilado (el bloque posterior queda por encima del anterior). Incluye al Hero (`--okip-hero-z`).
+
+### Sistema híbrido de transiciones (`transition.mode`)
+- Grupo `transition` por bloque: `{enabled, mode, disable_below, hold_vh}`. Modos:
+  `none` · `sticky-cover` (CSS, cobertura simple) · `scrolltrigger-pin` · `horizontal-pin`.
+- Helpers compartidos en `inc/sanitize.php`: `okip_normalize_transition($t,$defaults)` (sanea las
+  claves comunes, deja intactas las específicas del bloque) y `okip_transition_attrs($t)` (emite
+  `data-transition-{enabled,mode,disable-below}` en el `<section>`).
+- **sticky-cover** (CSS, `assets/css/transitions.css`): el bloque envuelve su contenido en
+  `.okip-cover-stage`; el OUTER reserva `100svh + --okip-hold-vh` y el stage queda `position:sticky`
+  en desktop (≥1025px, lockstep con el Hero). Sin ScrollTrigger → suave a cualquier velocidad.
+  Hoy lo usa `video-w-title`. **ScrollTrigger se reserva** para coreografías complejas
+  (`industry-carousel` = `horizontal-pin`; `product-story`/`news` mantienen su lógica propia).
+
 ### Añadir un bloque nuevo
 1. `inc/blocks.php`: añade el `type` a `okip_allowed_blocks()`.
 2. `config/blocks/{type}.php`: `return` con defaults + (opcional) `okip_normalize_{type}_data()`.
@@ -203,15 +224,16 @@ También define el **menú de respaldo** (si no hay menú `primary` asignado en 
   (mismo breakpoint que el menú móvil colapsable).
 - **Visibilidad (`assets/js/navbar.js`):** en Home con Hero (`after_hero`+`hide_on_hero`)
   el navbar nace oculto (`okip-navbar--start-hidden` server-side, gated por `.okip-js`) y se
-  re-ancla al **bloque que cubre al Hero** (`coverBlock = querySelector('[data-okip-vwt],
-  [data-okip-pm]')`, hoy `video-w-title`). Aparece cuando `coverBlock.getBoundingClientRect().top`
-  cae bajo el **15% superior del viewport** (el bloque tapa ~85% del Hero) y se oculta al volver.
-  No se mide el Hero (es sticky → `rect.top` engañoso). **Perf:** UNA lectura de layout por frame
-  (el rect del coverBlock); la geometría del Hero (solo para el fallback sin coverBlock) se cachea
-  y recalcula en resize, NO por frame, para evitar reflows forzados. Si el coverBlock es el legacy
-  `parallax-monitor` (`data-okip-pm`), sigue su sync `okip:pm-cover`/`is-pm-covered` en su lugar.
-  Al ocultarse cierra el menú móvil (`aria-expanded=false`). `is-scrolled` (scrollY>8) solo cambia
-  el fondo, no la visibilidad.
+  re-ancla al **bloque que cubre al Hero**, derivado del **DOM/orden real**: `coverBlock =
+  nextBlock(hero)` = el primer hermano con `data-block-instance` tras el Hero (NO un selector
+  de tipo fijo) → si el admin reordena, el navbar sigue al bloque correcto. Aparece cuando
+  `coverBlock.getBoundingClientRect().top` cae bajo el **15% superior del viewport** (el bloque
+  tapa ~85% del Hero) y se oculta al volver. No se mide el Hero (es sticky → `rect.top` engañoso).
+  **Perf:** UNA lectura de layout por frame (el rect del coverBlock); la geometría del Hero (solo
+  para el fallback sin coverBlock) se cachea y recalcula en resize, NO por frame, para evitar
+  reflows forzados. Si el coverBlock es el legacy `parallax-monitor` (`data-okip-pm`), sigue su
+  sync `okip:pm-cover`/`is-pm-covered` en su lugar. Al ocultarse cierra el menú móvil
+  (`aria-expanded=false`). `is-scrolled` (scrollY>8) solo cambia el fondo, no la visibilidad.
 - `okip-js` se inyecta en `wp_head` prioridad 1 (antes del `<body>`) → sin parpadeo.
 
 ---
@@ -256,42 +278,41 @@ Capas: **1) background media limpio (video|image|svg)** → **2) overlay opciona
 ### Video con Título (`video-w-title`) — instancia `home-video-w-title` · ref `bloque 2.png`
 **Sustituye al antiguo `parallax-monitor`** en la misma posición (entre Hero e Industry
 Carousel). Escena secundaria casi full-screen (`min-height:100svh`): video de fondo a sangre
-completa + overlay para legibilidad + bloque de texto centrado. **Sin parallax/drift/cover ni
-las 3 capas de reveal** del antiguo B2 (eliminados), pero **conserva los DOS overlaps de
-traspaso**: el Hero sigue `position:sticky` (desktop, z1) y este bloque (z2, fondo opaco) lo
-cubre por flujo al entrar; y a la salida **se auto-pinea (HOLD-PIN)** para que Industry Carousel
-(z3) suba desde la base y lo cubra, igual que el traspaso Hero→bloque.
+completa + overlay para legibilidad + bloque de texto centrado. **Conserva los DOS overlaps de
+traspaso, ahora AMBOS por CSS sticky** (sin ScrollTrigger): el Hero sigue `position:sticky` y este
+bloque (opaco) lo cubre por flujo al entrar; y a la salida **el propio bloque es sticky-cover**
+para que Industry Carousel (z mayor) suba desde la base y lo cubra. Migrado al **sistema híbrido
+de transiciones** (`transition.mode=sticky-cover`, ver §5): CSS puro → suave a cualquier velocidad
+de scroll, sin los glitches del antiguo pin de ScrollTrigger.
 
-- **3 capas por z-index** (sin layers de parallax): `.okip-vwt__bg` (video, z1) →
-  `.okip-vwt__overlay` (z2) → `.okip-vwt__inner` con `.okip-vwt__text` (z3).
+- **Estructura:** `.okip-vwt` (OUTER, reserva el scroll del hold) > `.okip-vwt__stage.okip-cover-stage`
+  (el "viewport" visible que queda `position:sticky` en desktop, vía `assets/css/transitions.css`)
+  > capas por z-index: `.okip-vwt__bg` (video, z1) → `.okip-vwt__overlay` (z2) → `.okip-vwt__inner`
+  con `.okip-vwt__text` (z3).
 - **Media-driven:** el video solo se pinta si el media existe (`okip_media_exists`); sin media
   → **fallback sobrio** = color sólido (`--okip-color-bg`, sin gradiente/patrón/glow falso).
   Video default: `assets/video/video-w-title/background.mp4` (no existe aún → fallback).
 - **Título con resaltado:** `highlighted_text` envuelto en `.okip-vwt__highlight` = **negrita
   blanca** (NO color), escapado con el mismo patrón `stripos`/`substr` del Hero. `subtitle` =
   kicker uppercase letterspaced; `eyebrow` y `description` opcionales.
-- **Animación de entrada (reveal):** 100% CSS gated por `.okip-js` (`.okip-vwt--animated` →
-  `opacity:0`/`translateY`; `.is-revealed` la dispara, escalonado por `nth-child`). El
-  `script.js` (`setupReveal`) solo añade `.is-revealed` por IntersectionObserver y es
-  **defensivo**: sin IO, con `data-anim=0`, o `prefers-reduced-motion` → revela de inmediato.
-- **Overlap de salida (HOLD-PIN, `setupOverlap`):** solo desktop + GSAP+ScrollTrigger. La
-  sección se auto-pinea (`pin:true, pinSpacing:false`) durante su propia altura (`+=offsetHeight`,
-  = la distancia que el bloque siguiente recorre hasta el top) → queda FIJA mientras Industry
-  Carousel (z3, opaco) sube por encima. **NO** escribe transforms sobre otros bloques ni empuja
-  con `margin-top` (el antiguo B2 sí, por su coreografía depth-entry; aquí no hace falta). Gated
-  por `data-overlap`/`data-overlap-bp` (≤bp, reduce-motion o sin GSAP → flujo apilado, sin pin;
-  el resize a ≤bp mata el pin). Requiere `nextElementSibling`. Flag `__okipVwtInit` evita doble init.
-- **Navbar:** este bloque NO emite el sync `okip:pm-cover` del antiguo B2. `navbar.js` re-ancla
-  el reveal a ESTE bloque (selector `[data-okip-vwt], [data-okip-pm]`): aparece cuando su
-  `getBoundingClientRect().top` cae bajo el 15% superior del viewport (tapa ~85% del Hero) y se
-  mantiene mientras lo cubra. Una sola lectura de layout por frame; la geometría del Hero (solo
-  para el fallback sin bloque-cubierta) se cachea y recalcula en resize, no en cada frame.
+- **Overlap de salida (sticky-cover, CSS):** `transition.mode=sticky-cover` + `hold_vh` (default 100).
+  El `.okip-vwt__stage` queda sticky y el OUTER reserva `100svh + hold_vh` de scroll → el bloque
+  permanece fijo y visible ~2 viewports antes de que el siguiente lo cubra. Reglas en
+  `assets/css/transitions.css` (`[data-transition-mode=sticky-cover] > .okip-cover-stage`),
+  breakpoint fijo 1025px (lockstep con el sticky del Hero). **Sin ScrollTrigger** → sin glitches
+  en scroll rápido. Requiere que el bloque siguiente sea opaco y con z mayor (lo da el z por orden).
+- **Reveal de entrada (determinista):** lo **arma el JS** con la clase `is-anim-armed` (NO el
+  `.okip-js` global) → si el `script.js` falla, el texto queda **visible** (nunca oculto). El
+  disparo es un **IO de "línea de disparo"** (`rootMargin:'-15% 0px -85% 0px'`): añade `.is-revealed`
+  cuando el top del bloque cruza el 15% superior (cubre ~85%), UNA vez — mismo punto que el navbar.
+  Sin IO / `reduce-motion` / `data-anim=0` → revela de inmediato sin armar. Flag `__okipVwtInit`.
+- **Navbar:** lo sigue por geometría (ver §8); este bloque no emite eventos al navbar.
 - Config: `config/blocks/video-w-title.php`. Grupos: `content` (`eyebrow`, `title`,
   `highlighted_text`, `subtitle`, `description`), `video` (`media`, `poster`, `autoplay`,
   `loop`, `muted`, `playsinline`), `overlay` (`enabled`, `color`, `opacity`), `layout`
-  (`min_height=100svh`, `content_width`, `z_index=2`, `alignment` = `left|center`),
-  `animation` (`enabled`, `disable_below`, `overlap_enabled=true`, `overlap_breakpoint=1024`).
-  Normalizador: `okip_normalize_video_w_title_data()`.
+  (`min_height=100svh`, `content_width`, `z_index=0` → auto por orden, `alignment` = `left|center`),
+  `animation` (`enabled` = reveal), `transition` (`enabled`, `mode=sticky-cover`, `disable_below`,
+  `hold_vh=100`). Normalizador: `okip_normalize_video_w_title_data()`.
 - Contenido actual: title "Facilitando la **toma de decisiones** en tiempo real" (highlight
   "toma de decisiones"), subtitle "Monitoreo, gestión e inteligencia operativa", sin eyebrow,
   descripción ni CTA. Alignment `center`.
@@ -388,22 +409,19 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
   añade `okip-navbar__link` con `nav_menu_link_attributes` y el CSS targetea `.okip-navbar__menu a`.
 - **Imágenes/video en `assets/`:** siguen vacías → fondos en fallback neutro y tarjetas/
   monitor en placeholder; es lo esperado, no un bug.
-- **Bloque 2 (`parallax-monitor`) fue ELIMINADO y sustituido por `video-w-title`.** El overlap
-  de traspaso B2→B3 **SE CONSERVA** (HOLD-PIN: `video-w-title` se auto-pinea `pin:true,
-  pinSpacing:false` durante `+=offsetHeight` y el Industry Carousel z3 sube encima). Lo que
-  desapareció con el bloque viejo es solo su coreografía interna: separación reveal/parallax por
-  nodo exterior/interior (`.okip-pm__*`), drift por capa, cover determinista, el empuje por
-  `margin-top` inline sobre B3 (innecesario aquí: sin depth-entry, el pin dura justo la altura
-  propia), el sync `okip:pm-cover` del navbar y el `scroll_3d` del Hero apagado. Para esos detalles
-  ver el historial de git de `template-parts/blocks/parallax-monitor/`.
-- **`video-w-title` — el overlap necesita z-index del bloque siguiente MAYOR (opaco):** Industry
-  Carousel es z3 / fondo blanco opaco, `video-w-title` z2 → el carrusel pinta encima del bloque
-  fijo. Si el bloque siguiente fuera transparente o z menor, se vería el pin a través. El pin
-  requiere `nextElementSibling`; sin bloque siguiente no se pinea.
-- **`video-w-title` — el reveal es por CSS gated por `.okip-js` + `.is-revealed`:** sin JS el
-  texto queda visible (no hay `.okip-js`); con JS nace en `opacity:0` y el `script.js` añade
-  `.is-revealed` por IntersectionObserver. Si el texto quedara invisible, revisar que el IO
-  o el fallback (sin IO / reduce-motion / `data-anim=0`) esté disparando la clase.
+- **El overlap de salida de `video-w-title` es CSS `sticky-cover`, NO un pin de ScrollTrigger.**
+  El pin JS antiguo glitcheaba en scroll rápido (los pins van atados a eventos de scroll y el
+  navegador se salta los puntos start/end). Migrado a `transition.mode=sticky-cover` (CSS sticky,
+  igual que el Hero) → suave a cualquier velocidad. Si vuelve a aparecer un salto, NO reintroducir
+  el pin: revisar el sticky en `assets/css/transitions.css` y el z por orden.
+- **sticky-cover necesita que el bloque SIGUIENTE sea opaco y de z MAYOR.** Lo garantiza el z por
+  orden (`$order+1`). Si un bloque sticky se asoma por encima del siguiente, casi siempre es un
+  `layout.z_index` override (>0) que rompe la escalera: ponerlo a 0 para que mande el orden.
+- **`video-w-title` — el reveal lo ARMA el JS (`is-anim-armed`), no `.okip-js`.** Sin que corra
+  el `script.js`, el texto queda **visible** (no se arma el estado oculto). El disparo es un IO de
+  "línea de disparo" (`rootMargin:'-15% 0px -85% 0px'`) → `.is-revealed` al cubrir ~85%. Si el
+  texto quedara invisible, revisar que el JS añada `is-anim-armed` Y luego `is-revealed` (IO o el
+  atajo "ya en vista"); sin IO / reduce-motion / `data-anim=0` revela de inmediato sin armar.
 - **Bloque 3 — el contenido se revela TARDE (`start: 'top 15%'`, no `'top 80%'`):** debe aparecer
   solo cuando el panel blanco ya cubre ≈85% del viewport, no al asomar el bloque.
 - **Lint "short array syntax" (PHP7103):** es solo un *hint*; el tema usa `array()` por

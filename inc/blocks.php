@@ -103,9 +103,12 @@ function okip_normalize_block_data($type, $data)
  * @param string $type
  * @param string $instance_id
  * @param array  $data
+ * @param int    $order Posición de la instancia en la página (0-based). Permite que
+ *                      el bloque derive su z-index raíz del orden de render, de modo
+ *                      que reordenar en el admin no rompa el apilado.
  * @return void
  */
-function okip_render_block($type, $instance_id, $data = array())
+function okip_render_block($type, $instance_id, $data = array(), $order = 0)
 {
     $type = sanitize_key($type);
 
@@ -128,6 +131,7 @@ function okip_render_block($type, $instance_id, $data = array())
             'type'        => $type,
             'instance_id' => $instance_id,
             'data'        => $data,
+            'order'       => (int) $order,
         )
     );
 }
@@ -152,7 +156,7 @@ function okip_render_page($page_config)
         $instance_id = isset($block['instance_id']) ? $block['instance_id'] : ($type . '-' . $i);
         $data        = isset($block['data']) && is_array($block['data']) ? $block['data'] : array();
 
-        okip_render_block($type, $instance_id, $data);
+        okip_render_block($type, $instance_id, $data, $i);
     }
 }
 

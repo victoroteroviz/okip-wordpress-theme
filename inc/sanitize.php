@@ -219,3 +219,65 @@ function okip_array_diff_recursive($new, $base)
     }
     return $diff;
 }
+
+/**
+ * Normaliza el grupo `transition` compartido (sistema híbrido de traspaso de bloques).
+ *
+ * Sanea SOLO las claves comunes a todos los modos; deja intactas las específicas de
+ * cada bloque (p.ej. `handoff_pin`, `start/end`, crossfade del Hero), que cada
+ * normalizador trata aparte.
+ *
+ * Modos:
+ *   none              sin traspaso (flujo apilado normal)
+ *   sticky-cover      el bloque queda sticky y el siguiente (z mayor) lo cubre (CSS)
+ *   scrolltrigger-pin pin con ScrollTrigger (coreografías complejas)
+ *   horizontal-pin    pin con desplazamiento horizontal (carrusel)
+ *
+ * @param mixed $t        Grupo transition de la instancia (parcial).
+ * @param array $defaults Defaults de las claves comunes para este bloque.
+ * @return array
+ */
+function okip_normalize_transition($t, $defaults = array())
+{
+    $t = is_array($t) ? $t : array();
+    $d = is_array($defaults) ? $defaults : array();
+
+    $get = function ($key, $fallback) use ($t, $d) {
+        if (array_key_exists($key, $t)) {
+            return $t[$key];
+        }
+        if (array_key_exists($key, $d)) {
+            return $d[$key];
+        }
+        return $fallback;
+    };
+
+    $modes = array('none', 'sticky-cover', 'scrolltrigger-pin', 'horizontal-pin');
+
+    $t['enabled']       = okip_bool($get('enabled', true));
+    $t['mode']          = okip_one_of($get('mode', 'none'), $modes, 'none');
+    $t['disable_below'] = okip_clamp_int($get('disable_below', 1024), 0, 9999);
+    $t['hold_vh']       = okip_clamp_int($get('hold_vh', 0), 0, 400);
+
+    return $t;
+}
+
+/**
+ * Atributos HTML `data-transition-*` para la raíz de un bloque, a partir del grupo
+ * `transition` ya normalizado. NO emite `style` (la var `--okip-hold-vh` la añade el
+ * bloque a su propio style para no duplicar el atributo).
+ *
+ * @param mixed $t Grupo transition normalizado.
+ * @return string Atributos ya escapados, listos para imprimir en el `<section>`.
+ */
+function okip_transition_attrs($t)
+{
+    $t = is_array($t) ? $t : array();
+
+    return sprintf(
+        'data-transition-enabled="%s" data-transition-mode="%s" data-transition-disable-below="%s"',
+        esc_attr(! empty($t['enabled']) ? '1' : '0'),
+        esc_attr(isset($t['mode']) ? $t['mode'] : 'none'),
+        esc_attr((string) (isset($t['disable_below']) ? (int) $t['disable_below'] : 1024))
+    );
+}

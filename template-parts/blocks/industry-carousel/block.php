@@ -28,13 +28,17 @@ $okip_data     = isset($args['data']) && is_array($args['data']) ? $args['data']
 
 $content   = isset($okip_data['content'])   ? $okip_data['content']   : array();
 $layout    = isset($okip_data['layout'])    ? $okip_data['layout']    : array();
-$cta_cfg   = isset($okip_data['cta'])       ? $okip_data['cta']       : array();
-$items     = isset($okip_data['items'])     ? $okip_data['items']     : array();
-$animation = isset($okip_data['animation']) ? $okip_data['animation'] : array();
+$cta_cfg    = isset($okip_data['cta'])        ? $okip_data['cta']        : array();
+$items      = isset($okip_data['items'])      ? $okip_data['items']      : array();
+$animation  = isset($okip_data['animation'])  ? $okip_data['animation']  : array();
+$transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
 
 // Layout.
 $min_height = isset($layout['min_height']) ? $layout['min_height'] : '100svh';
-$z_index    = isset($layout['z_index']) ? (int) $layout['z_index'] : 3;
+// z-index raíz por ORDEN de render; layout.z_index>0 = override avanzado (retrocompat).
+$z_index    = (isset($layout['z_index']) && (int) $layout['z_index'] > 0)
+    ? (int) $layout['z_index']
+    : ((isset($args['order']) ? (int) $args['order'] : 0) + 1);
 
 // Animación.
 $anim_on       = ! empty($animation['enabled']);
@@ -75,6 +79,7 @@ $section_style = sprintf(
     data-pin="<?php echo $pin_on ? '1' : '0'; ?>"
     data-disable-below="<?php echo esc_attr((string) $disable_below); ?>"
     data-scrub="<?php echo esc_attr((string) $scrub); ?>"
+    <?php echo okip_transition_attrs($transition); ?>
     style="<?php echo $section_style; ?>">
 
     <!-- Bloque de texto centrado (fijo durante el pin) -->

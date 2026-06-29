@@ -125,7 +125,7 @@ return array(
     'layout' => array(
         'min_height'    => 'auto',   // el bloque fluye natural, sin altura forzada
         'content_width' => '1360px', // mismo ancho que los otros bloques
-        'z_index'       => 4,        // sobre el Bloque 3 en la cascada de la home
+        'z_index'       => 0,        // 0 = z-index automático por orden de render (override si >0)
     ),
     'items' => array(
         array(

@@ -118,7 +118,7 @@ return array(
         'padding_bottom' => '6.5rem',
         'min_height'     => '100svh',
         'content_width'  => '1320px',
-        'z_index'        => 5,
+        'z_index'        => 0, // 0 = z-index automático por orden de render (override si >0)
     ),
     'animation' => array(
         'enabled'              => true,

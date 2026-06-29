@@ -70,7 +70,8 @@ function okip_enqueue_assets()
     wp_enqueue_style('okip-base', $css_url . '/base.css', array('okip-tokens'), okip_asset_version($css_dir . '/base.css'));
     wp_enqueue_style('okip-layout', $css_url . '/layout.css', array('okip-base'), okip_asset_version($css_dir . '/layout.css'));
     wp_enqueue_style('okip-components', $css_url . '/components.css', array('okip-layout'), okip_asset_version($css_dir . '/components.css'));
-    wp_enqueue_style('okip-animations', $css_url . '/animations.css', array('okip-components'), okip_asset_version($css_dir . '/animations.css'));
+    wp_enqueue_style('okip-transitions', $css_url . '/transitions.css', array('okip-components'), okip_asset_version($css_dir . '/transitions.css'));
+    wp_enqueue_style('okip-animations', $css_url . '/animations.css', array('okip-transitions'), okip_asset_version($css_dir . '/animations.css'));
 
     /* ---- GSAP local (condicional) ---- */
     $gsap_deps = array();

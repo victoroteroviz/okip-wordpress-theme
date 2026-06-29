@@ -155,7 +155,7 @@ return array(
         'card_width'     => 'clamp(300px, 28vw, 520px)',
         'card_height'    => 'clamp(330px, 32vw, 500px)',
         'gap'            => '14px',
-        'z_index'        => 6,
+        'z_index'        => 0, // 0 = z-index automático por orden de render (override si >0)
     ),
     'behavior' => array(
         'dots'   => true,

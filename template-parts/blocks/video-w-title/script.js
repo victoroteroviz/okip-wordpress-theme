@@ -1,48 +1,58 @@
 /*
  * OKIP — bloque Video con Título (video-w-title).
  *
- * Dos comportamientos independientes, ambos defensivos:
+ * Solo REVEAL de entrada (determinista). El overlap de salida NO vive aquí: es
+ * `position: sticky` por CSS (transition.mode = sticky-cover; ver style.css +
+ * assets/css/transitions.css) → suave a cualquier velocidad, sin ScrollTrigger.
  *
- *  1) REVEAL de entrada (IntersectionObserver): añade `is-revealed` cuando la
- *     sección entra en viewport; el escalonado lo da el CSS (transition-delay).
- *     Sin IO, con `data-anim=0` o `prefers-reduced-motion` → revela de inmediato.
+ * Reveal robusto:
+ *  - El estado inicial oculto lo ARMA este script (clase `is-anim-armed`). Si el
+ *    script no corre, el texto queda visible (nunca oculto permanentemente).
+ *  - Disparo determinista por IO de "línea de disparo": revela cuando el top del
+ *    bloque cruza el 15% superior del viewport (el bloque cubre ~85%), UNA vez.
+ *    Mismo punto que el reveal del navbar → coherente, sin estados a medias.
+ *  - Sin IO / reduce-motion / data-anim=0 → revela de inmediato sin armar.
  *
- *  2) OVERLAP de salida (HOLD-PIN, solo desktop + GSAP+ScrollTrigger): la sección
- *     se auto-pinea (fija, `pinSpacing:false`) mientras el bloque siguiente —de
- *     z-index mayor, ej. industry-carousel (z3)— sube desde la base y la cubre.
- *     Reproduce el traspaso tipo Hero→bloque. El pin dura la altura propia de la
- *     sección (justo lo que el bloque siguiente tarda en llegar al top). En
- *     ≤`data-overlap-bp` px, reduce-motion o sin GSAP → flujo apilado normal.
- *
- * No depende de GSAP para el reveal ni de selectores de otros bloques.
+ * No depende de GSAP ni de selectores de otros bloques. Flag `__okipVwtInit` evita
+ * doble init.
  */
 (function () {
     'use strict';
+
+    var REVEAL_RATIO = 0.15; // top del bloque bajo el 15% superior = cubre ~85%
 
     function reduceMotion() {
         return (window.OKIP && window.OKIP.reduceMotion) ||
             (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     }
 
-    function stReady() {
-        return !!(window.okipGsap && window.okipGsap.ready && window.gsap &&
-                  window.okipGsap.hasScrollTrigger && window.ScrollTrigger);
-    }
-
-    /* ---------- 1) Reveal de entrada ---------- */
     function reveal(section) {
         section.classList.add('is-revealed');
     }
 
-    function setupReveal(section) {
+    function setupSection(section) {
+        if (section.__okipVwtInit) { return; }
+        section.__okipVwtInit = true;
+
         var animEnabled = section.getAttribute('data-anim') === '1';
 
-        // Sin animación o reduce-motion → mostrar de inmediato.
+        // Sin animación, reduce-motion o sin IO → mostrar de inmediato (no armar).
         if (!animEnabled || reduceMotion() || typeof window.IntersectionObserver !== 'function') {
             reveal(section);
             return;
         }
 
+        // Armar el estado inicial oculto SOLO ahora (por JS).
+        section.classList.add('is-anim-armed');
+
+        // Caso "ya en vista": si el top ya cruzó el umbral, revelar sin esperar al IO.
+        if (section.getBoundingClientRect().top <= window.innerHeight * REVEAL_RATIO) {
+            reveal(section);
+            return;
+        }
+
+        // IO de "línea de disparo": root reducido a una banda fina en el 15% superior;
+        // intersecta cuando el TOP del bloque la cruza (el bloque cubre ~85%).
         var io = new window.IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
@@ -50,66 +60,9 @@
                     io.unobserve(entry.target);
                 }
             });
-        }, { threshold: 0.25 });
+        }, { rootMargin: '-15% 0px -85% 0px', threshold: 0 });
 
         io.observe(section);
-    }
-
-    /* ---------- 2) Overlap de salida (hold-pin) ---------- */
-    function setupOverlap(section) {
-        var overlapOn = section.getAttribute('data-overlap') === '1';
-        if (!overlapOn || reduceMotion() || !stReady()) { return; }
-
-        // Bloque siguiente: solo tiene sentido pinear si hay algo que suba a cubrir.
-        var following = section.nextElementSibling;
-        if (!following) { return; }
-
-        var bp = (window.OKIP && window.OKIP.readInt)
-            ? window.OKIP.readInt(section.getAttribute('data-overlap-bp'), 1024)
-            : (parseInt(section.getAttribute('data-overlap-bp'), 10) || 1024);
-
-        function isSmall() {
-            return !!(window.matchMedia && window.matchMedia('(max-width: ' + bp + 'px)').matches);
-        }
-        if (isSmall()) { return; }
-
-        var ST = window.ScrollTrigger;
-        var stId = (section.id || 'okip-vwt') + '-overlap';
-
-        // HOLD-PIN: la sección queda fija (sin reservar espacio) y el bloque siguiente
-        // sube por encima. El pin dura la altura propia de la sección, que es justo la
-        // distancia que el bloque siguiente recorre hasta llegar al top del viewport.
-        var pinST = ST.create({
-            id:                  stId,
-            trigger:             section,
-            start:               'top top',
-            end:                 function () { return '+=' + (section.offsetHeight || window.innerHeight); },
-            pin:                 true,
-            pinSpacing:          false,
-            anticipatePin:       1,
-            invalidateOnRefresh: true
-        });
-
-        // Resize: si se cruza a móvil/tablet, desmontar el pin (flujo apilado normal).
-        var rt;
-        window.addEventListener('resize', function () {
-            window.clearTimeout(rt);
-            rt = window.setTimeout(function () {
-                if (isSmall()) {
-                    if (pinST) { pinST.kill(); pinST = null; }
-                } else if (ST) {
-                    ST.refresh();
-                }
-            }, 200);
-        }, { passive: true });
-    }
-
-    function setupSection(section) {
-        if (section.__okipVwtInit) { return; }
-        section.__okipVwtInit = true;
-
-        setupReveal(section);
-        setupOverlap(section);
     }
 
     function init() {

@@ -9,7 +9,7 @@
 
 .okip-hero {
     position: relative;
-    z-index: 1; /* orden de overlap explícito: hero(1) < pm(2) < ic(3) — Bloque 2 sube encima */
+    z-index: var(--okip-hero-z, 1); /* z por orden de render (block.php); el sticky sigue abajo */
     min-height: 100svh;
     min-height: 100vh;
     display: grid;

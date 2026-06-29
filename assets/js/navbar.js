@@ -14,6 +14,15 @@
 (function () {
     'use strict';
 
+    // Primer hermano que sea un bloque OKIP (tiene data-block-instance). Deriva el
+    // "bloque-cubierta" del orden real del DOM, no de un tipo concreto.
+    function nextBlock(el) {
+        if (!el) { return null; }
+        var n = el.nextElementSibling;
+        while (n && !n.hasAttribute('data-block-instance')) { n = n.nextElementSibling; }
+        return n;
+    }
+
     function init() {
         var navbar = document.querySelector('[data-okip-navbar]');
         if (!navbar) { return; }
@@ -26,10 +35,11 @@
         var hideOnHero = navbar.getAttribute('data-hide-on-hero') === '1';
 
         var hero = document.querySelector('[data-okip-hero]');
-        // Bloque que cubre al Hero (antes `parallax-monitor`; ahora `video-w-title`). El
-        // navbar se revela cuando ESE bloque sube y tapa al Hero, no por la geometría del
-        // Hero (que es sticky y daría medidas engañosas).
-        var coverBlock = document.querySelector('[data-okip-vwt], [data-okip-pm]');
+        // Bloque que cubre al Hero = el PRIMER bloque renderizado tras el Hero, derivado
+        // del DOM/orden real (no un selector de tipo fijo). Así, si el admin reordena, el
+        // navbar sigue al bloque correcto. Se revela cuando ese bloque sube y tapa al Hero,
+        // no por la geometría del Hero (sticky → rect.top engañoso).
+        var coverBlock = nextBlock(hero);
         var autoHide = (revealMode === 'after_hero') && hideOnHero && (!!coverBlock || !!hero);
 
         /* ---------- Mostrar / ocultar ---------- */

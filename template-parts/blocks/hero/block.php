@@ -126,7 +126,9 @@ $css_variant = okip_one_of(isset($background['css_variant']) ? $background['css_
 $css_variant_class = ' okip-hero__css-bg--' . sanitize_html_class(str_replace('_', '-', $css_variant));
 $css_motion_class = $css_variant_class . ($css_motion_enabled ? ' is-motion-enabled' : '');
 
-$hero_style = '--okip-hero-xfade:' . esc_attr((string) $effective_crossfade_ms) . 'ms;';
+// z-index raíz por ORDEN de render (el Hero conserva su sticky CSS; solo el z es dinámico).
+$hero_style = '--okip-hero-z:' . (int) ((isset($args['order']) ? (int) $args['order'] : 0) + 1) . ';';
+$hero_style .= '--okip-hero-xfade:' . esc_attr((string) $effective_crossfade_ms) . 'ms;';
 $hero_style .= okip_typography_css_vars('okip-hero-title', $title_typography);
 $hero_style .= okip_typography_css_vars('okip-hero-desc', $desc_typography);
 $hero_style .= okip_css_vars(array(

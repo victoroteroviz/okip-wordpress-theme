@@ -41,7 +41,10 @@ $transition = isset($okip_data['transition']) ? $okip_data['transition'] : array
 // Layout.
 $min_height    = isset($layout['min_height'])    ? $layout['min_height']    : 'auto';
 $content_width = isset($layout['content_width']) ? $layout['content_width'] : '1100px';
-$z_index       = isset($layout['z_index'])       ? (int) $layout['z_index'] : 4;
+// z-index raíz por ORDEN de render; layout.z_index>0 = override avanzado (retrocompat).
+$z_index       = (isset($layout['z_index']) && (int) $layout['z_index'] > 0)
+    ? (int) $layout['z_index']
+    : ((isset($args['order']) ? (int) $args['order'] : 0) + 1);
 
 // Contenido.
 $section_label = isset($content['section_label']) ? $content['section_label'] : '';

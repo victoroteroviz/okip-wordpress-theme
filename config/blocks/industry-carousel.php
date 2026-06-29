@@ -57,6 +57,13 @@ if (! function_exists('okip_normalize_industry_carousel_data')) {
         $a['scrub']         = okip_clamp_float($a['scrub'], 0, 5);
         $data['animation']  = $a;
 
+        // Traspaso (etiqueta del sistema híbrido): el mecanismo es su propio carrusel
+        // horizontal con ScrollTrigger (no sticky-cover). Solo expone modo/attrs.
+        $data['transition'] = okip_normalize_transition(
+            isset($data['transition']) ? $data['transition'] : array(),
+            array('enabled' => true, 'mode' => 'horizontal-pin', 'disable_below' => 1024, 'hold_vh' => 0)
+        );
+
         // Normalizar ítems.
         $item_defaults = okip_ic_item_defaults();
         if (! empty($data['items']) && is_array($data['items'])) {
@@ -98,7 +105,7 @@ return array(
     ),
     'layout' => array(
         'min_height' => '100svh',
-        'z_index'    => 3,
+        'z_index'    => 0, // 0 = z-index automático por orden de render (override si >0)
     ),
     'items' => array(
         array(
@@ -163,5 +170,10 @@ return array(
         'pin_enabled'   => true,   // pin GSAP en desktop; un solo ST maestro
         'disable_below' => 1024,   // ≤ este ancho px → is-static, scroll nativo
         'scrub'         => 1,      // suavizado del scrub GSAP
+    ),
+    'transition' => array(
+        'enabled'       => true,
+        'mode'          => 'horizontal-pin', // carrusel horizontal con ScrollTrigger (no sticky)
+        'disable_below' => 1024,
     ),
 );

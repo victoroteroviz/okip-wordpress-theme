@@ -76,7 +76,10 @@ $padding_top    = isset($layout['padding_top'])    ? $layout['padding_top']    :
 $padding_bottom = isset($layout['padding_bottom']) ? $layout['padding_bottom'] : '6.5rem';
 $min_height     = isset($layout['min_height'])     ? $layout['min_height']     : '100svh';
 $content_width  = isset($layout['content_width'])  ? $layout['content_width']  : '820px';
-$z_index        = isset($layout['z_index'])        ? (int) $layout['z_index']  : 5;
+// z-index raíz por ORDEN de render; layout.z_index>0 = override avanzado (retrocompat).
+$z_index        = (isset($layout['z_index']) && (int) $layout['z_index'] > 0)
+    ? (int) $layout['z_index']
+    : ((isset($args['order']) ? (int) $args['order'] : 0) + 1);
 
 $anim_on   = ! empty($animation['enabled']);
 $text_anim = isset($animation['text']) ? $animation['text'] : 'fade-up';

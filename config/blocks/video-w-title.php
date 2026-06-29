@@ -11,6 +11,11 @@
  * Media-driven: el video solo se pinta si el media existe (okip_media_exists);
  * si no, fallback sobrio = color sólido (sin gradiente/patrón/glow falso).
  *
+ * Traspaso de salida: `transition.mode = sticky-cover` (CSS, ver assets/css/transitions.css
+ * y el wrapper `.okip-cover-stage` en block.php). Sin ScrollTrigger → suave a cualquier
+ * velocidad de scroll. `hold_vh` reserva scroll extra de visibilidad antes de que el
+ * bloque siguiente lo cubra.
+ *
  * Whitelists:
  *   layout.alignment : left | center
  *
@@ -33,7 +38,7 @@ if (! function_exists('okip_normalize_video_w_title_data')) {
      */
     function okip_normalize_video_w_title_data($data)
     {
-        // Layout.
+        // Layout. z_index default 0 = automático por orden de render; >0 = override.
         $data['layout']['z_index']   = okip_clamp_int($data['layout']['z_index'], 0, 50);
         $data['layout']['alignment'] = okip_one_of($data['layout']['alignment'], array('left', 'center'), 'center');
 
@@ -47,11 +52,14 @@ if (! function_exists('okip_normalize_video_w_title_data')) {
         $data['overlay']['enabled'] = okip_bool($data['overlay']['enabled']);
         $data['overlay']['opacity'] = okip_clamp_float($data['overlay']['opacity'], 0, 1);
 
-        // Animación.
-        $data['animation']['enabled']           = okip_bool($data['animation']['enabled']);
-        $data['animation']['disable_below']     = okip_clamp_int($data['animation']['disable_below'], 0, 4096);
-        $data['animation']['overlap_enabled']   = okip_bool($data['animation']['overlap_enabled']);
-        $data['animation']['overlap_breakpoint'] = okip_clamp_int($data['animation']['overlap_breakpoint'], 0, 4096);
+        // Animación de entrada (reveal).
+        $data['animation']['enabled'] = okip_bool($data['animation']['enabled']);
+
+        // Traspaso de salida (sistema híbrido): sticky-cover por CSS.
+        $data['transition'] = okip_normalize_transition(
+            isset($data['transition']) ? $data['transition'] : array(),
+            array('enabled' => true, 'mode' => 'sticky-cover', 'disable_below' => 1024, 'hold_vh' => 100)
+        );
 
         return $data;
     }
@@ -82,16 +90,16 @@ return array(
     'layout' => array(
         'min_height'    => '100svh', // escena casi full-screen
         'content_width' => '1100px',
-        'z_index'       => 2,        // compatible con la transición Hero (z) → Industry
+        'z_index'       => 0,        // 0 = z-index automático por orden de render (override si >0)
         'alignment'     => 'center', // left | center
     ),
     'animation' => array(
-        'enabled'       => true, // entrada por fade/translate (CSS + JS defensivo)
-        'disable_below' => 0,    // 0 = activa en todos los anchos; >0 desactiva ≤ ese ancho
-        // Overlap de salida: el bloque se auto-pinea (fijo) mientras el bloque siguiente
-        // (z-index mayor, ej. industry-carousel z3) sube desde la base y lo cubre. Igual
-        // que el traspaso Hero→bloque. Solo desktop + GSAP+ScrollTrigger.
-        'overlap_enabled'    => true,
-        'overlap_breakpoint' => 1024, // ≤ este ancho (px): sin pin → flujo apilado normal
+        'enabled' => true, // reveal de entrada (fade/translate); el JS lo "arma" y lo dispara
+    ),
+    'transition' => array(
+        'enabled'       => true,
+        'mode'          => 'sticky-cover', // CSS sticky: queda fijo y el siguiente bloque lo cubre
+        'disable_below' => 1024,           // breakpoint informativo (el sticky CSS usa 1025px)
+        'hold_vh'       => 100,            // scroll extra de visibilidad antes del traspaso
     ),
 );

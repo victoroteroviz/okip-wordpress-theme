@@ -38,7 +38,10 @@ $padding_bottom = isset($layout['padding_bottom']) ? $layout['padding_bottom'] :
 $card_width     = isset($layout['card_width']) ? $layout['card_width'] : '264px';
 $card_height    = isset($layout['card_height']) ? $layout['card_height'] : '190px';
 $gap            = isset($layout['gap']) ? $layout['gap'] : '1.35rem';
-$z_index        = isset($layout['z_index']) ? (int) $layout['z_index'] : 6;
+// z-index raíz por ORDEN de render; layout.z_index>0 = override avanzado (retrocompat).
+$z_index        = (isset($layout['z_index']) && (int) $layout['z_index'] > 0)
+    ? (int) $layout['z_index']
+    : ((isset($args['order']) ? (int) $args['order'] : 0) + 1);
 
 $dots_on   = ! empty($behavior['dots']);
 $arrows_on = ! empty($behavior['arrows']);

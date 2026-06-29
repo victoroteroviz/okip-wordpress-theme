@@ -1,28 +1,38 @@
 /*
  * Bloque Video con Título (video-w-title).
  *
- * Escena secundaria casi full-screen con video de fondo a sangre completa,
- * overlay para legibilidad y bloque de texto centrado (o a la izquierda).
- * Namespacing: .okip-vwt__* — sin reglas globales ni dependencias de otros
- * bloques (NO usa nada de .okip-pm__*).
+ * Estructura: `.okip-vwt` (OUTER, reserva el scroll del hold) > `.okip-vwt__stage`
+ * (.okip-cover-stage, el viewport visible que queda sticky en desktop) > capas
+ * (bg / overlay / inner). El sticky + hold lo aporta assets/css/transitions.css
+ * vía `data-transition-mode="sticky-cover"`; aquí solo va presentación.
  *
- * Fallback sobrio: sin video real, el fondo queda en color sólido (--okip-color-bg),
- * nunca un diseño decorativo falso.
+ * Namespacing: .okip-vwt__* — sin dependencias de otros bloques.
  *
- * Animación de entrada: 100% CSS, gated por `.okip-js` (sin JS → todo visible).
- * Respeta prefers-reduced-motion.
+ * Fallback sobrio: sin video real, el fondo queda en color sólido (--okip-color-bg).
+ *
+ * Reveal de entrada: lo ARMA el JS (clase `is-anim-armed`), no `.okip-js` global →
+ * si el script del bloque falla, el texto queda visible (nunca oculto). Respeta
+ * prefers-reduced-motion.
  */
 
+/* ---------- OUTER: reserva de scroll ---------- */
 .okip-vwt {
     position: relative;
     z-index: var(--okip-vwt-z, 2);
     min-height: var(--okip-vwt-minh, 100svh);
-    display: flex;
-    align-items: center;
-    overflow: hidden;
     background-color: var(--okip-color-bg, #020711);
     color: var(--okip-color-text, #f4f7fb);
+}
+
+/* ---------- STAGE: viewport visible (sticky en desktop vía transitions.css) ---------- */
+.okip-vwt__stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: var(--okip-vwt-minh, 100svh);
+    overflow: hidden;
     isolation: isolate;
+    background-color: var(--okip-color-bg, #020711);
 }
 
 /* ---------- Capa 1: video de fondo ---------- */
@@ -125,8 +135,8 @@
     color: var(--okip-color-text-muted, #b9c4d4);
 }
 
-/* ---------- Animación de entrada (gated por .okip-js) ---------- */
-.okip-js .okip-vwt--animated .okip-vwt__text > * {
+/* ---------- Reveal de entrada (armado por JS: .is-anim-armed) ---------- */
+.okip-vwt--animated.is-anim-armed .okip-vwt__text > * {
     opacity: 0;
     transform: translateY(18px);
     transition:
@@ -134,19 +144,19 @@
         transform 0.7s ease;
 }
 
-.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > * {
+.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__text > * {
     opacity: 1;
     transform: none;
 }
 
 /* Escalonado suave por orden de aparición. */
-.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > *:nth-child(2) {
+.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__text > *:nth-child(2) {
     transition-delay: 0.08s;
 }
-.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > *:nth-child(3) {
+.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__text > *:nth-child(3) {
     transition-delay: 0.16s;
 }
-.okip-js .okip-vwt--animated.is-revealed .okip-vwt__text > *:nth-child(4) {
+.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__text > *:nth-child(4) {
     transition-delay: 0.24s;
 }
 
@@ -163,7 +173,7 @@
 
 /* ---------- Accesibilidad ---------- */
 @media (prefers-reduced-motion: reduce) {
-    .okip-js .okip-vwt--animated .okip-vwt__text > * {
+    .okip-vwt--animated.is-anim-armed .okip-vwt__text > * {
         opacity: 1;
         transform: none;
         transition: none;
