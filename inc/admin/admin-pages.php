@@ -208,25 +208,42 @@ function okip_render_blocks_admin_page()
                 <button type="submit" name="okip_refresh_fonts" class="button"><?php esc_html_e('Refrescar catálogo de fuentes', 'okip'); ?></button>
             </div>
 
-            <?php okip_admin_render_block_order_panel($blocks, $base_order); ?>
+            <div class="okip-admin-tabs okip-admin-page-tabs" data-okip-tabs>
+                <div class="okip-admin-tabs__nav" role="tablist">
+                    <button type="button" class="okip-admin-tab-btn is-active" data-okip-tab-target="page-order"><?php esc_html_e('Orden de visualización', 'okip'); ?></button>
+                    <button type="button" class="okip-admin-tab-btn" data-okip-tab-target="page-blocks"><?php esc_html_e('Configuración de bloques', 'okip'); ?></button>
+                </div>
 
-            <?php foreach ($blocks as $block) : ?>
-                <?php
-                $type = isset($block['type']) ? $block['type'] : '';
-                $instance_id = isset($block['instance_id']) ? $block['instance_id'] : $type;
-                ?>
-                <section class="okip-admin-block">
-                    <header class="okip-admin-block__head">
-                        <span><?php echo esc_html($type); ?></span>
-                        <code><?php echo esc_html($instance_id); ?></code>
-                    </header>
-                    <?php if ($type === 'hero') : ?>
-                        <?php okip_render_admin_hero_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
+                <div class="okip-admin-tab-panel is-active" data-okip-tab="page-order">
+                    <?php okip_admin_render_block_order_panel($blocks, $base_order); ?>
+                </div>
+
+                <div class="okip-admin-tab-panel" data-okip-tab="page-blocks">
+                    <?php if (empty($blocks)) : ?>
+                        <section class="okip-admin-block">
+                            <p class="description"><?php esc_html_e('Esta página no tiene bloques configurados. Cuando se agreguen en config/pages, aquí aparecerán sus editores.', 'okip'); ?></p>
+                        </section>
                     <?php else : ?>
-                        <p class="description"><?php esc_html_e('Este bloque se muestra para contexto. Su editor se añadirá usando los mismos campos reutilizables.', 'okip'); ?></p>
+                        <?php foreach ($blocks as $block) : ?>
+                            <?php
+                            $type = isset($block['type']) ? $block['type'] : '';
+                            $instance_id = isset($block['instance_id']) ? $block['instance_id'] : $type;
+                            ?>
+                            <section class="okip-admin-block">
+                                <header class="okip-admin-block__head">
+                                    <span><?php echo esc_html($type); ?></span>
+                                    <code><?php echo esc_html($instance_id); ?></code>
+                                </header>
+                                <?php if ($type === 'hero') : ?>
+                                    <?php okip_render_admin_hero_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
+                                <?php else : ?>
+                                    <p class="description"><?php esc_html_e('Este bloque se muestra para contexto. Su editor se añadirá usando los mismos campos reutilizables.', 'okip'); ?></p>
+                                <?php endif; ?>
+                            </section>
+                        <?php endforeach; ?>
                     <?php endif; ?>
-                </section>
-            <?php endforeach; ?>
+                </div>
+            </div>
 
             <div class="okip-admin-actions okip-admin-actions--bottom">
                 <button type="submit" name="okip_save_blocks" class="button button-primary button-large"><?php esc_html_e('Guardar cambios', 'okip'); ?></button>

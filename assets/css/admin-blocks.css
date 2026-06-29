@@ -357,6 +357,26 @@
     display: block;
 }
 
+.okip-admin-page-tabs {
+    margin: 18px 0;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.okip-admin-page-tabs > .okip-admin-tab-panel > .okip-admin-order {
+    margin: 0;
+}
+
+.okip-admin-page-tabs > .okip-admin-tab-panel > .okip-admin-block:first-child {
+    margin-top: 0;
+}
+
+.okip-admin-page-tabs > .okip-admin-tab-panel > .okip-admin-block:last-child {
+    margin-bottom: 0;
+}
+
 /* ---- Animación: targets colapsables + acento por fase ---- */
 .okip-admin-motion-group {
     background: #fff;

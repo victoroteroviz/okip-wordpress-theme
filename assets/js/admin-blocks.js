@@ -136,8 +136,12 @@
 
     function initBlockTabs() {
         document.querySelectorAll('[data-okip-tabs]').forEach(function (group) {
-            var buttons = group.querySelectorAll('.okip-admin-tab-btn');
-            var panels = group.querySelectorAll('.okip-admin-tab-panel');
+            var buttons = Array.prototype.slice.call(group.querySelectorAll('.okip-admin-tab-btn')).filter(function (button) {
+                return button.closest('[data-okip-tabs]') === group;
+            });
+            var panels = Array.prototype.slice.call(group.querySelectorAll('.okip-admin-tab-panel')).filter(function (panel) {
+                return panel.closest('[data-okip-tabs]') === group;
+            });
 
             function activate(name) {
                 buttons.forEach(function (b) {
@@ -155,7 +159,7 @@
             });
 
             // Activar la primera tab si ninguna viene marcada desde el servidor.
-            if (!group.querySelector('.okip-admin-tab-btn.is-active') && buttons[0]) {
+            if (!buttons.some(function (button) { return button.classList.contains('is-active'); }) && buttons[0]) {
                 activate(buttons[0].getAttribute('data-okip-tab-target'));
             }
         });
@@ -179,7 +183,10 @@
 
     function initConditionalFields() {
         document.querySelectorAll('[data-okip-tabs]').forEach(function (root) {
-            var bgSelect = root.querySelector('select[name$="[background][type]"]');
+            var bgSelect = Array.prototype.slice.call(root.querySelectorAll('select[name$="[background][type]"]')).filter(function (select) {
+                return select.closest('[data-okip-tabs]') === root;
+            })[0];
+
             if (bgSelect) {
                 var applyBg = function () {
                     toggleWhen(root, '[data-okip-when-bg]', 'data-okip-when-bg', bgSelect.value);
@@ -188,10 +195,14 @@
                 applyBg();
             }
 
-            root.querySelectorAll('[data-okip-card]').forEach(applyCardType);
+            Array.prototype.slice.call(root.querySelectorAll('[data-okip-card]')).filter(function (card) {
+                return card.closest('[data-okip-tabs]') === root;
+            }).forEach(applyCardType);
+
             root.addEventListener('change', function (e) {
                 var sel = e.target;
                 if (sel && sel.matches && sel.matches('select[name$="][type]"]')) {
+                    if (sel.closest('[data-okip-tabs]') !== root) { return; }
                     var card = sel.closest('[data-okip-card]');
                     if (card) { applyCardType(card); }
                 }
