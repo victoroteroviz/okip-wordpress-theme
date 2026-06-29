@@ -46,8 +46,8 @@
         var dots        = OKIP.toArray(section.querySelectorAll('.okip-ic__dot'));
         var orangeSr    = section.querySelector('.okip-ic__orange-sr');
 
-        // DOM como fuente de verdad: el conteo y los índices salen de los nodos reales,
-        // no de data-item-count (que queda solo informativo en el markup).
+        // DOM como única fuente de verdad: el conteo y los índices salen de los nodos
+        // reales (items.length), no de ningún atributo en el markup.
         var itemCount = items.length || 1;
         items.forEach(function (el, i) { el.dataset.index = String(i); });
         orangeTexts.forEach(function (el, i) { el.dataset.index = String(i); });

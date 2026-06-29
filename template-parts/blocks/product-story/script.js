@@ -22,8 +22,11 @@
 (function () {
     'use strict';
 
-    var reduceMotion = (window.OKIP && typeof window.OKIP.reduceMotion === 'boolean')
-        ? window.OKIP.reduceMotion
+    // OKIP garantizado por la cadena de deps (okip-app → gsap-init → animations → bloque).
+    var OKIP = window.OKIP;
+
+    var reduceMotion = (OKIP && typeof OKIP.reduceMotion === 'boolean')
+        ? OKIP.reduceMotion
         : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
     function stReady() {
@@ -84,7 +87,7 @@
        Si noMotion es true, los videos quedan estáticos. */
     function setupVideoInteraction(section, noMotion, small) {
         if (noMotion) { return; }
-        var visuals = Array.prototype.slice.call(section.querySelectorAll('.okip-ps__visual'));
+        var visuals = OKIP.toArray(section.querySelectorAll('.okip-ps__visual'));
         visuals.forEach(function (visual) {
             var vid = visual.querySelector('video');
             if (!vid) { return; }
@@ -108,7 +111,7 @@
     /* Sincroniza la altura de la gray zone (hover-zone) con la tarjeta derecha.
        La hover-zone usa `height: var(--okip-ps-row-card-h)` en CSS. */
     function syncCardHeight(section) {
-        var rows = Array.prototype.slice.call(section.querySelectorAll('[data-okip-ps-row]'));
+        var rows = OKIP.toArray(section.querySelectorAll('[data-okip-ps-row]'));
         rows.forEach(function (row) {
             var card = row.querySelector('.okip-ps__card');
             if (!card) { return; }
@@ -141,20 +144,17 @@
         var animOn       = d.anim       === '1';
         var useGsap      = d.useGsap    === '1';
         var useVanilla   = d.useVanilla === '1';
-        var disableBelow = parseInt(d.disableBelow, 10) || 1024;
-        var scrub        = parseFloat(d.scrub);
-        if (isNaN(scrub)) { scrub = 1; }
+        var disableBelow = OKIP.readInt(d.disableBelow, 1024);
+        var scrub        = OKIP.readFloat(d.scrub, 1);
         var leftEnter    = d.leftEnter   || 'mask-slide';
         var copyBgEnter  = d.copyBgEnter || 'wipe-left';
         var textReveal   = d.textReveal  || 'scroll-typewriter';
         var handoffPin   = d.handoffPin === '1';
-        var handoffDurationVh = parseInt(d.handoffDurationVh, 10);
-        if (isNaN(handoffDurationVh)) { handoffDurationVh = 132; }
-        var handoffDisableBelow = parseInt(d.handoffDisableBelow, 10);
-        if (isNaN(handoffDisableBelow)) { handoffDisableBelow = disableBelow; }
+        var handoffDurationVh = OKIP.readInt(d.handoffDurationVh, 132);
+        var handoffDisableBelow = OKIP.readInt(d.handoffDisableBelow, disableBelow);
 
         var psId    = section.id || d.blockInstance || 'ps';
-        var rows    = Array.prototype.slice.call(section.querySelectorAll('[data-okip-ps-row]'));
+        var rows    = OKIP.toArray(section.querySelectorAll('[data-okip-ps-row]'));
         // DOM como fuente de verdad: el data-index de cada fila es su posición real.
         rows.forEach(function (row, i) { row.dataset.index = String(i); });
         var isSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
@@ -249,7 +249,7 @@
             var visual = row.querySelector('.okip-ps__visual');
             var cardBg = row.querySelector('.okip-ps__card-bg');
             var label  = row.querySelector('.okip-ps__label');
-            var types  = Array.prototype.slice.call(row.querySelectorAll('.okip-ps__type'));
+            var types  = OKIP.toArray(row.querySelectorAll('.okip-ps__type'));
 
             var tlId = psId + '-row-' + i;
             triggerIds.push(tlId);

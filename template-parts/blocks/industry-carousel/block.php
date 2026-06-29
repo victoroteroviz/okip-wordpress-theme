@@ -75,7 +75,6 @@ $section_style = sprintf(
     data-pin="<?php echo $pin_on ? '1' : '0'; ?>"
     data-disable-below="<?php echo esc_attr((string) $disable_below); ?>"
     data-scrub="<?php echo esc_attr((string) $scrub); ?>"
-    data-item-count="<?php echo esc_attr((string) $item_count); ?>"
     style="<?php echo $section_style; ?>">
 
     <!-- Bloque de texto centrado (fijo durante el pin) -->

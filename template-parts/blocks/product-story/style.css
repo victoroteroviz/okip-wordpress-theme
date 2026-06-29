@@ -115,7 +115,7 @@
     color: #f4f7fb;
     isolation: isolate;
     will-change: transform, clip-path, opacity;
-    transition: transform 0.52s var(--okip-ease, cubic-bezier(.22,1,.36,1));
+    transition: transform 0.52s var(--okip-ease);
 }
 
 /* Estado base: logo arriba, título abajo a la izquierda */
@@ -127,7 +127,7 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 2.6rem 1.78rem 2.03rem;
-    transition: opacity .42s ease, transform .5s var(--okip-ease, cubic-bezier(.22,1,.36,1));
+    transition: opacity .42s ease, transform .5s var(--okip-ease);
 }
 
 /* Logo / placeholder (parte superior del recuadro logo-title) */
@@ -365,11 +365,11 @@
 .okip-ps__row.is-revealed .okip-ps__visual {
     opacity: 1;
     clip-path: inset(0 0 0 0);
-    transition: opacity .7s ease, clip-path .85s var(--okip-ease, cubic-bezier(.22,1,.36,1));
+    transition: opacity .7s ease, clip-path .85s var(--okip-ease);
 }
 .okip-ps__row.is-revealed .okip-ps__card-bg {
     clip-path: inset(0 0 0 0);
-    transition: clip-path .75s var(--okip-ease, cubic-bezier(.22,1,.36,1)) .18s;
+    transition: clip-path .75s var(--okip-ease) .18s;
 }
 .okip-ps__row.is-revealed .okip-ps__type {
     opacity: 1;

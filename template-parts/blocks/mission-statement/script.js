@@ -16,8 +16,11 @@
 
     var STEPS = 2; // frase completa · kicker
 
-    var reduceMotion = (window.OKIP && typeof window.OKIP.reduceMotion === 'boolean')
-        ? window.OKIP.reduceMotion
+    // OKIP garantizado por la cadena de deps (okip-app → gsap-init → animations → bloque).
+    var OKIP = window.OKIP;
+
+    var reduceMotion = (OKIP && typeof OKIP.reduceMotion === 'boolean')
+        ? OKIP.reduceMotion
         : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
     var blocks = document.querySelectorAll('[data-okip-ms]');
@@ -31,17 +34,12 @@
                   window.okipGsap.hasScrollTrigger && window.ScrollTrigger);
     }
 
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
     function vh() {
         return window.innerHeight || document.documentElement.clientHeight || 1;
     }
 
     function dataInt(block, key, fallback) {
-        var value = parseInt(block.dataset[key], 10);
-        return isNaN(value) ? fallback : value;
+        return OKIP.readInt(block.dataset[key], fallback);
     }
 
     function isSmallViewport(block) {

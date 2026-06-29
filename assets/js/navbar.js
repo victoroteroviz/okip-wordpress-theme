@@ -22,7 +22,7 @@
         var nav = navbar.querySelector('[data-okip-nav]');
 
         var revealMode = navbar.getAttribute('data-reveal-mode') || 'after_hero';
-        var offset = parseInt(navbar.getAttribute('data-reveal-offset'), 10) || 0;
+        var offset = window.OKIP.readInt(navbar.getAttribute('data-reveal-offset'), 0);
         var hideOnHero = navbar.getAttribute('data-hide-on-hero') === '1';
 
         var hero = document.querySelector('[data-okip-hero]');

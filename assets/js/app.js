@@ -30,7 +30,7 @@
         return value < min ? min : (value > max ? max : value);
     };
 
-    // parseInt con fallback EXPLÍCITO (evita el bug de `parseInt(x) || 0` con índice 0).
+    // parseInt con fallback EXPLÍCITO (evita el bug del idioma "or-cero" con índice 0).
     OKIP.readInt = function (value, fallback) {
         var n = parseInt(value, 10);
         return isNaN(n) ? fallback : n;

@@ -10,9 +10,9 @@
        del último elemento). 0 si la fase está deshabilitada. */
     function entryEnd(stage, count) {
         if (!stage || !stage.enabled || stage.preset === 'none') { return 0; }
-        var delay = parseInt(stage.delay_ms, 10) || 0;
-        var dur = parseInt(stage.duration_ms, 10) || 700;
-        var stagger = parseInt(stage.stagger_ms, 10) || 0;
+        var delay = window.OKIP.readInt(stage.delay_ms, 0);
+        var dur = parseInt(stage.duration_ms, 10) || 700; // 0 → usar default (no migrar)
+        var stagger = window.OKIP.readInt(stage.stagger_ms, 0);
         return delay + dur + stagger * Math.max(0, count - 1);
     }
 

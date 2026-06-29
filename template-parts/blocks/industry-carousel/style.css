@@ -114,7 +114,7 @@
     color: var(--okip-ic-title-color, var(--okip-color-accent, #ff5a14));
     opacity: 0;
     transform: translateY(6px);
-    transition: opacity .3s ease, transform .35s var(--okip-ease, cubic-bezier(.4,0,.2,1));
+    transition: opacity .3s ease, transform .35s var(--okip-ease);
     will-change: opacity, transform;
     pointer-events: none;
     user-select: none;
@@ -188,7 +188,7 @@
     /* Inactivo: escala de grises + pequeño */
     filter: grayscale(1) brightness(0.86);
     transform: scale(0.92);
-    transition: filter .4s ease, transform .4s var(--okip-ease, cubic-bezier(.4,0,.2,1)),
+    transition: filter .4s ease, transform .4s var(--okip-ease),
                 box-shadow .4s ease;
     cursor: default;
     background: #d0d5dd; /* placeholder color claro cuando no hay media */
