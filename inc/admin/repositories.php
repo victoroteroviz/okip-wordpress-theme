@@ -47,3 +47,31 @@ function okip_save_page_block_overrides($slug, array $overrides)
     $now = is_array($now) ? $now : array();
     return ($now == $overrides) ? 'saved' : 'error';
 }
+
+/**
+ * Guarda el orden de bloques de una página y reporta qué ocurrió realmente.
+ *
+ * @param string   $slug
+ * @param string[] $order Instance IDs ya saneados.
+ * @return string 'saved' | 'unchanged' | 'error'
+ */
+function okip_save_page_block_order($slug, array $order)
+{
+    $key = okip_page_order_option_key($slug);
+
+    $previous = get_option($key, array());
+    $previous = is_array($previous) ? array_values($previous) : array();
+    $order    = array_values($order);
+
+    if ($previous === $order) {
+        return 'unchanged';
+    }
+
+    if (update_option($key, $order, false)) {
+        return 'saved';
+    }
+
+    $now = get_option($key, array());
+    $now = is_array($now) ? array_values($now) : array();
+    return ($now === $order) ? 'saved' : 'error';
+}

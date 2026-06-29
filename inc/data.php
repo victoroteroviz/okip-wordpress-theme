@@ -101,6 +101,115 @@ function okip_get_page_block_overrides($slug)
 }
 
 /**
+ * Opción donde el panel guarda el orden de bloques de una página.
+ *
+ * @param string $slug
+ * @return string
+ */
+function okip_page_order_option_key($slug)
+{
+    return 'okip_page_blocks_order_' . sanitize_key($slug);
+}
+
+/**
+ * Orden guardado por el panel para una página.
+ *
+ * Formato:
+ * [
+ *   'home-hero-main',
+ *   'home-parallax-monitor',
+ * ]
+ *
+ * @param string $slug
+ * @return string[]
+ */
+function okip_get_page_block_order($slug)
+{
+    $order = get_option(okip_page_order_option_key($slug), array());
+    if (! is_array($order)) {
+        return array();
+    }
+
+    $clean = array();
+    foreach ($order as $instance_id) {
+        $instance_id = okip_sanitize_instance_id($instance_id, '');
+        if ($instance_id !== '' && ! in_array($instance_id, $clean, true)) {
+            $clean[] = $instance_id;
+        }
+    }
+
+    return $clean;
+}
+
+/**
+ * Reordena una lista de bloques según instance_id.
+ *
+ * Los bloques nuevos que no estén en la opción guardada se anexan al final en el
+ * orden base de config/, para que una actualización del tema no los desaparezca.
+ *
+ * @param array    $blocks
+ * @param string[] $order
+ * @return array
+ */
+function okip_order_page_blocks($blocks, array $order)
+{
+    if (! is_array($blocks) || empty($order)) {
+        return is_array($blocks) ? $blocks : array();
+    }
+
+    $by_id = array();
+    foreach ($blocks as $block) {
+        if (! is_array($block) || empty($block['instance_id'])) {
+            continue;
+        }
+        $instance_id = okip_sanitize_instance_id($block['instance_id'], '');
+        if ($instance_id !== '') {
+            $by_id[$instance_id] = $block;
+        }
+    }
+
+    if (empty($by_id)) {
+        return $blocks;
+    }
+
+    $ordered = array();
+    foreach ($order as $instance_id) {
+        if (isset($by_id[$instance_id])) {
+            $ordered[] = $by_id[$instance_id];
+            unset($by_id[$instance_id]);
+        }
+    }
+
+    foreach ($blocks as $block) {
+        if (! is_array($block) || empty($block['instance_id'])) {
+            $ordered[] = $block;
+            continue;
+        }
+
+        $instance_id = okip_sanitize_instance_id($block['instance_id'], '');
+        if ($instance_id !== '' && isset($by_id[$instance_id])) {
+            $ordered[] = $by_id[$instance_id];
+            unset($by_id[$instance_id]);
+        }
+    }
+
+    return $ordered;
+}
+
+/**
+ * Aplica el orden guardado por el panel sobre la configuración base.
+ *
+ * @param array  $blocks
+ * @param string $slug
+ * @return array
+ */
+function okip_apply_page_block_order($blocks, $slug)
+{
+    return okip_order_page_blocks($blocks, okip_get_page_block_order($slug));
+}
+add_filter('okip_page_blocks', 'okip_apply_page_block_order', 10, 2);
+
+/**
  * Mezcla overrides del panel sobre la configuración base del theme.
  *
  * @param array  $blocks

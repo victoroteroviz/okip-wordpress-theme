@@ -115,19 +115,21 @@ function okip_admin_handle_post($slug)
         }
 
         $raw_blocks = isset($_POST['okip_blocks']) ? wp_unslash($_POST['okip_blocks']) : array();
-        $overrides  = okip_admin_sanitize_page_overrides($slug, $raw_blocks);
-        $result     = okip_save_page_block_overrides($slug, $overrides);
+        $raw_order  = isset($_POST['okip_block_order']) ? wp_unslash($_POST['okip_block_order']) : array();
 
-        switch ($result) {
-            case 'saved':
-                okip_admin_add_notice('success', __('Cambios guardados.', 'okip'));
-                break;
-            case 'unchanged':
-                okip_admin_add_notice('info', __('No había cambios que guardar.', 'okip'));
-                break;
-            default:
-                okip_admin_add_notice('error', __('No se pudieron guardar los cambios. Inténtalo de nuevo.', 'okip'));
-                break;
+        $overrides     = okip_admin_sanitize_page_overrides($slug, $raw_blocks);
+        $block_order   = okip_admin_sanitize_page_block_order($slug, $raw_order);
+        $data_result   = okip_save_page_block_overrides($slug, $overrides);
+        $order_result  = okip_save_page_block_order($slug, $block_order);
+        $has_error     = in_array('error', array($data_result, $order_result), true);
+        $has_saved     = in_array('saved', array($data_result, $order_result), true);
+
+        if ($has_error) {
+            okip_admin_add_notice('error', __('No se pudieron guardar todos los cambios. Inténtalo de nuevo.', 'okip'));
+        } elseif ($has_saved) {
+            okip_admin_add_notice('success', __('Cambios guardados.', 'okip'));
+        } else {
+            okip_admin_add_notice('info', __('No había cambios que guardar.', 'okip'));
         }
     }
 }

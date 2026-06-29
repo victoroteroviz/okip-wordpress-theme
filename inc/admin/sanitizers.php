@@ -48,6 +48,75 @@ function okip_admin_sanitize_css_size($value, $default)
 }
 
 /**
+ * Devuelve los instance_id base de una página, en el orden declarado en config/.
+ *
+ * @param string $slug
+ * @return string[]
+ */
+function okip_admin_base_block_order($slug)
+{
+    $slug = sanitize_file_name($slug);
+    $config_file = okip_page_config_file($slug);
+    $base_blocks = is_readable($config_file) ? include $config_file : array();
+    if (! is_array($base_blocks)) {
+        return array();
+    }
+
+    $order = array();
+    foreach ($base_blocks as $i => $block) {
+        if (! is_array($block) || empty($block['type'])) {
+            continue;
+        }
+        $type = sanitize_key($block['type']);
+        $instance_id = isset($block['instance_id']) ? $block['instance_id'] : ($type . '-' . $i);
+        $instance_id = okip_sanitize_instance_id($instance_id, $type);
+        if ($instance_id !== '' && ! in_array($instance_id, $order, true)) {
+            $order[] = $instance_id;
+        }
+    }
+
+    return $order;
+}
+
+/**
+ * Sanea el orden enviado por el panel.
+ *
+ * Solo acepta instance_id existentes en la config base. Los bloques base omitidos
+ * se anexan al final, así no se pierden al reordenar desde una UI vieja o parcial.
+ * Si el resultado coincide con el orden base, devuelve array vacío.
+ *
+ * @param string $slug
+ * @param mixed  $raw_order
+ * @return string[]
+ */
+function okip_admin_sanitize_page_block_order($slug, $raw_order)
+{
+    $base_order = okip_admin_base_block_order($slug);
+    if (empty($base_order)) {
+        return array();
+    }
+
+    $raw_order = is_array($raw_order) ? $raw_order : array();
+    $allowed = array_fill_keys($base_order, true);
+    $order = array();
+
+    foreach ($raw_order as $instance_id) {
+        $instance_id = okip_sanitize_instance_id($instance_id, '');
+        if ($instance_id !== '' && isset($allowed[$instance_id]) && ! in_array($instance_id, $order, true)) {
+            $order[] = $instance_id;
+        }
+    }
+
+    foreach ($base_order as $instance_id) {
+        if (! in_array($instance_id, $order, true)) {
+            $order[] = $instance_id;
+        }
+    }
+
+    return $order === $base_order ? array() : $order;
+}
+
+/**
  * Sanea los overrides de una página completa.
  *
  * @param string $slug

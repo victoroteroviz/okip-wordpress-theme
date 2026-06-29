@@ -29,6 +29,80 @@ function okip_admin_page_slugs()
 }
 
 /**
+ * Panel para reordenar las instancias de bloque de la página seleccionada.
+ *
+ * @param array    $blocks     Bloques en el orden efectivo actual.
+ * @param string[] $base_order Instance IDs en el orden base de config/.
+ * @return void
+ */
+function okip_admin_render_block_order_panel($blocks, array $base_order)
+{
+    $blocks = is_array($blocks) ? $blocks : array();
+    $base_order_json = wp_json_encode(array_values($base_order));
+    if (! is_string($base_order_json)) {
+        $base_order_json = '[]';
+    }
+    ?>
+    <section class="okip-admin-order" data-okip-order data-base-order="<?php echo esc_attr($base_order_json); ?>">
+        <header class="okip-admin-order__head">
+            <div>
+                <h2><?php esc_html_e('Orden de visualización', 'okip'); ?></h2>
+                <p><?php esc_html_e('Define la secuencia en que los bloques se renderizan para esta página.', 'okip'); ?></p>
+            </div>
+        </header>
+
+        <?php if (empty($blocks)) : ?>
+            <p class="description okip-admin-order__empty">
+                <?php esc_html_e('Esta página no tiene bloques configurados. Cuando se agreguen en config/pages, aparecerán aquí para ordenarlos.', 'okip'); ?>
+            </p>
+        <?php else : ?>
+            <ol class="okip-admin-order__list" data-okip-order-list>
+                <?php
+                $position = 0;
+                foreach ($blocks as $i => $block) :
+                    if (! is_array($block) || empty($block['type'])) {
+                        continue;
+                    }
+                    $type = sanitize_key($block['type']);
+                    $instance_id = isset($block['instance_id']) ? $block['instance_id'] : ($type . '-' . $i);
+                    $instance_id = okip_sanitize_instance_id($instance_id, $type);
+                    $base_index = array_search($instance_id, $base_order, true);
+                    $position++;
+                    ?>
+                    <li
+                        class="okip-admin-order__item"
+                        data-okip-order-item
+                        data-instance-id="<?php echo esc_attr($instance_id); ?>"
+                        draggable="true">
+                        <input type="hidden" name="okip_block_order[]" value="<?php echo esc_attr($instance_id); ?>">
+                        <span class="okip-admin-order__pos" data-okip-order-position><?php echo esc_html((string) $position); ?></span>
+                        <span class="okip-admin-order__handle" data-okip-order-handle aria-hidden="true">
+                            <span class="dashicons dashicons-menu"></span>
+                        </span>
+                        <span class="okip-admin-order__meta">
+                            <strong><?php echo esc_html($type); ?></strong>
+                            <code><?php echo esc_html($instance_id); ?></code>
+                            <?php if ($base_index !== false) : ?>
+                                <small><?php echo esc_html(sprintf(__('Base #%d', 'okip'), (int) $base_index + 1)); ?></small>
+                            <?php endif; ?>
+                        </span>
+                        <span class="okip-admin-order__tools">
+                            <button type="button" class="button button-small" data-okip-order-up><?php esc_html_e('Subir', 'okip'); ?></button>
+                            <button type="button" class="button button-small" data-okip-order-down><?php esc_html_e('Bajar', 'okip'); ?></button>
+                        </span>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+            <div class="okip-admin-order__actions">
+                <button type="button" class="button" data-okip-order-reset><?php esc_html_e('Restaurar orden base', 'okip'); ?></button>
+                <span class="description"><?php esc_html_e('Guarda los cambios para aplicar esta secuencia en el frontend.', 'okip'); ?></span>
+            </div>
+        <?php endif; ?>
+    </section>
+    <?php
+}
+
+/**
  * Registra la página admin.
  *
  * @return void
@@ -107,6 +181,7 @@ function okip_render_blocks_admin_page()
     okip_admin_load_persisted_notices();
 
     $blocks = $slug !== '' ? okip_get_page_blocks($slug) : array();
+    $base_order = $slug !== '' ? okip_admin_base_block_order($slug) : array();
     ?>
     <div class="wrap okip-admin">
         <h1><?php esc_html_e('OKIP Blocks', 'okip'); ?></h1>
@@ -132,6 +207,8 @@ function okip_render_blocks_admin_page()
                 <button type="submit" name="okip_save_blocks" class="button button-primary"><?php esc_html_e('Guardar cambios', 'okip'); ?></button>
                 <button type="submit" name="okip_refresh_fonts" class="button"><?php esc_html_e('Refrescar catálogo de fuentes', 'okip'); ?></button>
             </div>
+
+            <?php okip_admin_render_block_order_panel($blocks, $base_order); ?>
 
             <?php foreach ($blocks as $block) : ?>
                 <?php

@@ -419,12 +419,145 @@
         document.querySelectorAll('[data-okip-cards]').forEach(setupCardsGroup);
     }
 
+    // ---- Orden de bloques por página ----
+    function setupBlockOrder(root) {
+        var list = root.querySelector('[data-okip-order-list]');
+        var reset = root.querySelector('[data-okip-order-reset]');
+        var dragging = null;
+
+        if (!list) { return; }
+
+        function items() {
+            return Array.prototype.slice.call(list.querySelectorAll('[data-okip-order-item]'));
+        }
+
+        function updateState() {
+            var all = items();
+            all.forEach(function (item, index) {
+                var pos = item.querySelector('[data-okip-order-position]');
+                var up = item.querySelector('[data-okip-order-up]');
+                var down = item.querySelector('[data-okip-order-down]');
+
+                if (pos) { pos.textContent = String(index + 1); }
+                if (up) { up.disabled = index === 0; }
+                if (down) { down.disabled = index === all.length - 1; }
+            });
+        }
+
+        function moveItem(item, direction) {
+            if (!item) { return; }
+            if (direction < 0 && item.previousElementSibling) {
+                list.insertBefore(item, item.previousElementSibling);
+            } else if (direction > 0 && item.nextElementSibling) {
+                list.insertBefore(item.nextElementSibling, item);
+            }
+            updateState();
+        }
+
+        function resetToBase() {
+            var baseOrder;
+            try {
+                baseOrder = JSON.parse(root.getAttribute('data-base-order') || '[]');
+            } catch (e) {
+                baseOrder = [];
+            }
+
+            if (!Array.isArray(baseOrder) || !baseOrder.length) {
+                return;
+            }
+
+            var byId = {};
+            items().forEach(function (item) {
+                byId[item.getAttribute('data-instance-id') || ''] = item;
+            });
+
+            baseOrder.forEach(function (id) {
+                if (byId[id]) {
+                    list.appendChild(byId[id]);
+                    delete byId[id];
+                }
+            });
+
+            Object.keys(byId).forEach(function (id) {
+                list.appendChild(byId[id]);
+            });
+
+            updateState();
+        }
+
+        list.addEventListener('click', function (event) {
+            var up = event.target.closest('[data-okip-order-up]');
+            var down = event.target.closest('[data-okip-order-down]');
+            if (!up && !down) { return; }
+
+            event.preventDefault();
+            moveItem(event.target.closest('[data-okip-order-item]'), up ? -1 : 1);
+        });
+
+        list.addEventListener('dragstart', function (event) {
+            var item = event.target.closest('[data-okip-order-item]');
+            if (!item) { return; }
+
+            dragging = item;
+            item.classList.add('is-dragging');
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', item.getAttribute('data-instance-id') || '');
+            }
+        });
+
+        list.addEventListener('dragover', function (event) {
+            var item;
+            var rect;
+            var after;
+
+            if (!dragging) { return; }
+
+            item = event.target.closest('[data-okip-order-item]');
+            if (!item || item === dragging) { return; }
+
+            event.preventDefault();
+            rect = item.getBoundingClientRect();
+            after = event.clientY > rect.top + (rect.height / 2);
+            list.insertBefore(dragging, after ? item.nextSibling : item);
+            updateState();
+        });
+
+        list.addEventListener('drop', function (event) {
+            if (dragging) {
+                event.preventDefault();
+            }
+        });
+
+        list.addEventListener('dragend', function () {
+            if (dragging) {
+                dragging.classList.remove('is-dragging');
+                dragging = null;
+                updateState();
+            }
+        });
+
+        if (reset) {
+            reset.addEventListener('click', function (event) {
+                event.preventDefault();
+                resetToBase();
+            });
+        }
+
+        updateState();
+    }
+
+    function initBlockOrder() {
+        document.querySelectorAll('[data-okip-order]').forEach(setupBlockOrder);
+    }
+
     function initAll() {
         initFonts();
         initMediaFields();
         initBlockTabs();
         initConditionalFields();
         initHeroCards();
+        initBlockOrder();
     }
 
     if (document.readyState === 'loading') {
