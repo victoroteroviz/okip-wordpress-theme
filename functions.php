@@ -63,5 +63,12 @@ if (is_admin()) {
     okip_require('inc/admin/sanitizers.php');
     okip_require('inc/admin/fields.php');
     okip_require('inc/admin/media-fields.php');
+    /* Infraestructura del panel: notices, persistencia y manejo de POST. */
+    okip_require('inc/admin/notices.php');
+    okip_require('inc/admin/repositories.php');
+    okip_require('inc/admin/save-handlers.php');
+    /* Partials y editores por bloque (antes del controlador que los invoca). */
+    okip_require('inc/admin/partials/hero-cards.php');
+    okip_require('inc/admin/editors/hero.php');
     okip_require('inc/admin/admin-pages.php');
 }
