@@ -68,7 +68,7 @@
 
         // Copia accesible con el texto completo (hermano dentro del heading/p).
         var sr = document.createElement('span');
-        sr.className = 'okip-ps__sr';
+        sr.className = 'okip-ps__sr okip-sr-only';
         sr.textContent = full;
         if (typeEl.parentNode) { typeEl.parentNode.appendChild(sr); }
 
@@ -116,11 +116,26 @@
         });
     }
 
+    /* Mantiene --okip-ps-row-card-h al día cuando la tarjeta cambia de alto tras el
+       primer pintado (carga de imágenes/fuentes, reflow). ResizeObserver si existe;
+       si no, fallback a window load + resize. */
+    function setupCardHeightSync(section) {
+        syncCardHeight(section);
+        if ('ResizeObserver' in window) {
+            var ro = new ResizeObserver(function () { syncCardHeight(section); });
+            var cards = section.querySelectorAll('.okip-ps__card');
+            Array.prototype.forEach.call(cards, function (card) { ro.observe(card); });
+        } else {
+            window.addEventListener('load', function () { syncCardHeight(section); });
+            window.addEventListener('resize', function () { syncCardHeight(section); }, { passive: true });
+        }
+    }
+
     function initPs(section) {
         if (section.__okipPsInit) { return; }
         section.__okipPsInit = true;
 
-        syncCardHeight(section);
+        setupCardHeightSync(section);
 
         var d            = section.dataset;
         var animOn       = d.anim       === '1';
@@ -140,6 +155,8 @@
 
         var psId    = section.id || d.blockInstance || 'ps';
         var rows    = Array.prototype.slice.call(section.querySelectorAll('[data-okip-ps-row]'));
+        // DOM como fuente de verdad: el data-index de cada fila es su posición real.
+        rows.forEach(function (row, i) { row.dataset.index = String(i); });
         var isSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
         var isHandoffSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + handoffDisableBelow + 'px)').matches);
 

@@ -111,7 +111,7 @@ $section_style = sprintf(
                 <?php endforeach; ?>
             </span>
             <!-- Texto visible para lectores de pantalla -->
-            <span class="okip-ic__orange-sr"><?php echo esc_html($first_orange); ?></span>
+            <span class="okip-ic__orange-sr okip-sr-only"><?php echo esc_html($first_orange); ?></span>
         </p>
 
         <?php if ($cta_on) : ?>

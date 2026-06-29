@@ -10,11 +10,10 @@
     flex-direction: column;
     justify-content: center;
     padding: var(--okip-news-pt, 1.45rem) 0 var(--okip-news-pb, 2.55rem);
-    background: var(--okip-news-bg, #ffffff);
+    background: var(--okip-news-bg, var(--okip-color-surface-light));
     color: #0b111b;
     --okip-news-content-y: 0px;
     --okip-news-content-opacity: 1;
-    --okip-ps-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 }
 
 /* Cover-rise: News es una "hoja" clara opaca que sube y cubre a Mission. La sombra
@@ -221,7 +220,7 @@
     display: -webkit-box;
     overflow: hidden;
     color: #050607;
-    font-family: var(--okip-ps-mono, ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace);
+    font-family: var(--okip-font-mono);
     font-size: clamp(1.35rem, 1.78vw, 2.15rem);
     font-weight: 500;
     line-height: 1.05;

@@ -419,18 +419,17 @@
         document.querySelectorAll('[data-okip-cards]').forEach(setupCardsGroup);
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            initFonts();
-            initMediaFields();
-            initBlockTabs();
-            initConditionalFields();
-            initHeroCards();
-        });
-    } else {
+    function initAll() {
         initFonts();
         initMediaFields();
         initBlockTabs();
+        initConditionalFields();
         initHeroCards();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
     }
 })();

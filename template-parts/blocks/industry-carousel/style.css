@@ -19,7 +19,7 @@
     position: relative;
     min-height: var(--okip-ic-minh, 100svh);
     z-index: var(--okip-ic-z, 3);
-    background: #ffffff;
+    background: var(--okip-color-surface-light);
     color: #05070a;
     display: flex;
     flex-direction: column;
@@ -62,7 +62,7 @@
     font-size: .78rem;
     letter-spacing: 0;
     text-transform: uppercase;
-    color: #7a8899;
+    color: var(--okip-color-text-dark-muted);
 }
 
 /* Título principal uppercase (ref: "ECOSISTEMAS DE SEGURIDAD") */
@@ -126,14 +126,7 @@
     user-select: auto;
 }
 
-/* Solo lectores de pantalla */
-.okip-ic__orange-sr {
-    position: absolute;
-    width: 1px; height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-}
+/* (Solo lectores de pantalla → utilidad global .okip-sr-only en base.css) */
 
 /* CTA */
 .okip-ic__cta {
@@ -148,7 +141,7 @@
     text-transform: uppercase;
     text-decoration: none;
     color: #6d6f73;
-    background: #ffffff;
+    background: var(--okip-color-surface-light);
     border: 1px solid rgba(18, 24, 32, .08);
     border-radius: 9px;
     box-shadow: 0 5px 10px rgba(4, 8, 15, .18);
@@ -234,7 +227,7 @@
     font-weight: 600;
     letter-spacing: .08em;
     text-transform: uppercase;
-    color: #7a8899;
+    color: var(--okip-color-text-dark-muted);
     text-align: center;
     padding: .5rem;
 }

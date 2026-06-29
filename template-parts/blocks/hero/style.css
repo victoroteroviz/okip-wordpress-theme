@@ -589,7 +589,7 @@
 /* Hover (solo punteros finos) — se anima el media para no tocar el centrado */
 @media (hover: hover) and (pointer: fine) {
     .okip-hero__card-media {
-        transition: transform .4s cubic-bezier(.22, 1, .36, 1), box-shadow .4s ease;
+        transition: transform .4s var(--okip-ease, cubic-bezier(.22,1,.36,1)), box-shadow .4s ease;
     }
     .okip-hero__card:hover .okip-hero__card-media {
         transform: scale(1.05);

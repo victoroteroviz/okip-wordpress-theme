@@ -30,26 +30,33 @@
         if (section.__okipIcInit) { return; }
         section.__okipIcInit = true;
 
+        var OKIP = window.OKIP;
         var d            = section.dataset;
         var animOn       = d.anim          === '1';
         var pinOn        = d.pin           === '1';
-        var disableBelow = parseInt(d.disableBelow, 10) || 1024;
-        var scrub        = parseFloat(d.scrub) || 1;
-        var itemCount    = parseInt(d.itemCount, 10) || 1;
+        var disableBelow = OKIP.readInt(d.disableBelow, 1024);
+        var scrub        = OKIP.readFloat(d.scrub, 1);
 
         var icId    = section.id || d.blockInstance || 'ic';
         var isSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
 
         var track       = section.querySelector('.okip-ic__track');
-        var items       = Array.prototype.slice.call(section.querySelectorAll('.okip-ic__item'));
-        var orangeTexts = Array.prototype.slice.call(section.querySelectorAll('.okip-ic__orange-text'));
-        var dots        = Array.prototype.slice.call(section.querySelectorAll('.okip-ic__dot'));
+        var items       = OKIP.toArray(section.querySelectorAll('.okip-ic__item'));
+        var orangeTexts = OKIP.toArray(section.querySelectorAll('.okip-ic__orange-text'));
+        var dots        = OKIP.toArray(section.querySelectorAll('.okip-ic__dot'));
         var orangeSr    = section.querySelector('.okip-ic__orange-sr');
+
+        // DOM como fuente de verdad: el conteo y los índices salen de los nodos reales,
+        // no de data-item-count (que queda solo informativo en el markup).
+        var itemCount = items.length || 1;
+        items.forEach(function (el, i) { el.dataset.index = String(i); });
+        orangeTexts.forEach(function (el, i) { el.dataset.index = String(i); });
+        dots.forEach(function (el, i) { el.dataset.index = String(i); });
 
         /* ---- Estado activo ---- */
         var prevIdx = -1;
         function setActive(idx) {
-            idx = Math.max(0, Math.min(itemCount - 1, idx));
+            idx = OKIP.clamp(idx, 0, itemCount - 1);
             if (idx === prevIdx) { return; }
             prevIdx = idx;
 
@@ -66,10 +73,10 @@
                 }
             });
             orangeTexts.forEach(function (el) {
-                el.classList.toggle('is-active', parseInt(el.dataset.index, 10) === idx);
+                el.classList.toggle('is-active', OKIP.readInt(el.dataset.index, -1) === idx);
             });
             dots.forEach(function (el) {
-                var di = parseInt(el.dataset.index, 10);
+                var di = OKIP.readInt(el.dataset.index, -1);
                 el.classList.toggle('is-active', di === idx);
                 el.setAttribute('aria-selected', di === idx ? 'true' : 'false');
                 el.setAttribute('tabindex', di === idx ? '0' : '-1');
@@ -96,7 +103,7 @@
                     entries.forEach(function (e) {
                         if (e.intersectionRatio > bestRatio) {
                             bestRatio = e.intersectionRatio;
-                            bestIdx   = parseInt(e.target.dataset.index, 10);
+                            bestIdx   = OKIP.readInt(e.target.dataset.index, -1);
                         }
                     });
                     if (bestIdx >= 0) { setActive(bestIdx); }
@@ -107,7 +114,7 @@
             // Dots: scroll horizontal al ítem.
             dots.forEach(function (dot) {
                 dot.addEventListener('click', function () {
-                    var idx    = parseInt(dot.dataset.index, 10);
+                    var idx    = OKIP.readInt(dot.dataset.index, 0);
                     var target = items[idx];
                     if (target && track && track.parentElement) {
                         track.parentElement.scrollTo({ left: target.offsetLeft - 24, behavior: 'smooth' });
@@ -211,7 +218,7 @@
         // Dots: navegar haciendo scroll al punto correcto.
         dots.forEach(function (dot) {
             dot.addEventListener('click', function () {
-                var idx   = parseInt(dot.dataset.index, 10);
+                var idx   = OKIP.readInt(dot.dataset.index, 0);
                 var stPin = ST.getById(icId + '-pin');
                 if (!stPin) { return; }
                 var progress = itemCount > 1 ? idx / (itemCount - 1) : 0;

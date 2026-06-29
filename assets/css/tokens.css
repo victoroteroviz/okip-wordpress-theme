@@ -12,6 +12,10 @@
     --okip-color-accent-2: #3c8cff;     /* azul tecnológico */
     --okip-color-line: rgba(255, 255, 255, .12);
 
+    /* Superficies claras (bloques 3-6: Industry Carousel, Product Story, News) */
+    --okip-color-surface-light: #ffffff;     /* fondo blanco compartido */
+    --okip-color-text-dark-muted: #7a8899;   /* texto atenuado sobre fondo claro */
+
     /* Navbar (los valores configurables se sobreescriben inline desde navbar.php) */
     --okip-navbar-h: 68px;
     --okip-navbar-bg: rgba(0, 0, 0, .86);          /* negro casi sólido (ref navbar.png) */
@@ -35,6 +39,7 @@
 
     /* Tipografía */
     --okip-font-base: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --okip-font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 
     /* Capas (z-index) */
     --okip-z-navbar: 1000;

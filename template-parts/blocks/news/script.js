@@ -122,6 +122,11 @@
             return;
         }
 
+        // DOM como fuente de verdad: el índice de cada dot es su posición real.
+        dots.forEach(function (dot, index) {
+            dot.setAttribute('data-okip-news-dot', String(index));
+        });
+
         function update() {
             ticking = false;
             activeIndex = closestIndex(track, items);
@@ -144,7 +149,9 @@
 
         dots.forEach(function (dot) {
             dot.addEventListener('click', function () {
-                var index = parseInt(dot.getAttribute('data-okip-news-dot'), 10) || 0;
+                // Fallback explícito (-1 → clamp a 0) y protección si el conteo cambió.
+                var raw = parseInt(dot.getAttribute('data-okip-news-dot'), 10);
+                var index = clamp(isNaN(raw) ? 0 : raw, 0, items.length - 1);
                 scrollToIndex(track, items, index);
             });
         });
