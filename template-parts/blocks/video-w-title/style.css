@@ -30,6 +30,9 @@
     position: relative;
     display: flex;
     align-items: center;
+    /* En desktop, transitions.css reduce esta altura a (100svh - navbar) y ancla el
+       outer bajo el navbar → el bloque entero (video incluido) queda DEBAJO del navbar,
+       con su propio espacio. El contenido centrado cae naturalmente bajo el navbar. */
     min-height: var(--okip-vwt-minh, 100svh);
     overflow: hidden;
     isolation: isolate;
@@ -39,6 +42,8 @@
 /* ---------- Capa 1: video de fondo ---------- */
 .okip-vwt__bg {
     position: absolute;
+    /* A sangre completa: el video pasa por DETRÁS del navbar (comparten espacio).
+       No se recorta para no dejar una línea visible durante la transición. */
     inset: 0;
     z-index: 1;
     /* Fallback sobrio (sin media): color sólido, coherente con el Hero. */

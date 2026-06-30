@@ -193,9 +193,9 @@
             var padBottom = parseFloat(cs.paddingBottom) || 0;
             var gap = parseFloat(cs.rowGap || cs.gap) || 0;
             var available = (section.clientHeight || window.innerHeight) - padTop - padBottom - navH - gap;
-            var fallback = Math.min(window.innerHeight * 0.58, 470);
+            var fallback = Math.min(window.innerHeight * 0.6, 500);
             var desired = isFinite(available) ? Math.min(available * 0.94, fallback) : fallback;
-            var cardH = OKIP.clamp(desired, 300, 470);
+            var cardH = OKIP.clamp(desired, 330, 500);
             section.style.setProperty('--okip-ic-card-h', Math.floor(cardH) + 'px');
         }
 

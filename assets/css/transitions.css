@@ -24,15 +24,18 @@
        100svh+hold: se despegaba ~hold antes de que llegara el siguiente bloque → salto.) */
     [data-transition-enabled="1"][data-transition-mode="sticky-cover"] {
         position: sticky;
-        top: 0;
-        min-height: calc(100svh + (var(--okip-hold-vh, 0) * 1vh));
+        /* Se ancla DEBAJO del navbar: el bloque tiene su propio espacio y NO comparte
+           con el navbar. La escena ocupa solo el alto restante del viewport. */
+        top: var(--okip-navbar-h, 0px);
+        min-height: calc(100svh - var(--okip-navbar-h, 0px) + (var(--okip-hold-vh, 0) * 1vh));
         display: block;
     }
 
-    /* El STAGE es solo la escena visible (100svh) anclada al top del outer. NO es
-       sticky (lo es el outer); el resto del outer es el hold, bajo el viewport. */
+    /* El STAGE es solo la escena visible (alto del viewport menos la franja del navbar)
+       anclada al top del outer. NO es sticky (lo es el outer); el resto del outer es el
+       hold, bajo el viewport. */
     [data-transition-enabled="1"][data-transition-mode="sticky-cover"] > .okip-cover-stage {
-        min-height: 100svh;
+        min-height: calc(100svh - var(--okip-navbar-h, 0px));
         overflow: hidden; /* contiene el translateY del reveal sin generar scroll */
     }
 }

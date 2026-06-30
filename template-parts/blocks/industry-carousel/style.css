@@ -24,7 +24,7 @@
     align-items: stretch;
     justify-content: flex-start;
     gap: var(--okip-ic-gap, clamp(2rem, 4vh, 3rem));
-    padding-block: calc(var(--okip-navbar-h, 68px) + clamp(.55rem, 1.8vh, 1.35rem)) clamp(2rem, 5vh, 3.5rem);
+    padding-block: calc(var(--okip-navbar-h, 68px) + clamp(.25rem, .15vh, .75rem)) clamp(2rem, 5vh, 3.5rem);
     border-radius: 0;
     /* El root pineado no recorta: el clipping vive en la cinta para no pelear
        con ScrollTrigger pin. */
@@ -32,7 +32,7 @@
     isolation: isolate;
     /* Inset lateral compartido por la fila de botones y el alineado del track. */
     --okip-ic-inset: clamp(1.25rem, 5vw, 5rem);
-    --okip-ic-card-h: clamp(300px, 58svh, 470px);
+    --okip-ic-card-h: clamp(315px, 60svh, 490px);
 }
 
 /* ScrollTrigger envuelve el bloque pineado en un .pin-spacer. */
@@ -323,7 +323,7 @@
 @media (max-width: 1024px) {
     .okip-ic {
         min-height: auto;
-        padding-block: calc(var(--okip-navbar-h, 68px) + clamp(.75rem, 2.5vh, 1.5rem)) clamp(2rem, 6vh, 3.5rem);
+        padding-block: calc(var(--okip-navbar-h, 68px) + clamp(.4rem, 1.5vh, 1rem)) clamp(2rem, 6vh, 3.5rem);
         justify-content: flex-start;
         gap: clamp(1.5rem, 4vh, 2.5rem);
     }
