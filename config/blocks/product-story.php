@@ -3,21 +3,25 @@
 /**
  * Esquema / defaults del bloque Product Story (Bloque 4).
  *
- * Sección de fondo CLARO que continúa SIN transición tras el Bloque 3
- * (industry-carousel). Layout ref `bloque 4.png`: composición editorial con tres
- * filas de producto. Cada fila:
- *   - Recuadro visual a la izquierda (negro logo+título + hover con imagen).
- *   - Etiqueta gris (pill) debajo del recuadro (RIA / COVIA / GIA).
- *   - Tarjeta gris clara a la derecha: heading + descripción en monoespaciado.
+ * Sección OSCURA de ANCHO COMPLETO (ref `referencias/image.png`): fondo negro con
+ * presencia azul en el borde derecho (degradado radial), título superior izquierdo
+ * (`SOLUCIONES`, uppercase por CSS) y tarjetas apiladas verticalmente.
  *
- * Animación scroll-driven por FILA (desktop, GSAP): cada fila tiene su propio
- * ScrollTrigger con scrub. Al final puede activar un handoff pin corto para que
- * Mission se superponga. Móvil/tablet ≤disable_below, sin GSAP o reduce-motion:
- * is-static, todo legible.
+ * Cada tarjeta tiene DOS capas:
+ *   - Capa de fondo (`okip-ps__back`): tarjeta gris/clara con heading + descripción
+ *     (y media opcional, desactivada por defecto). Define la altura de la tarjeta.
+ *   - Capa cover (`okip-ps__cover`): vidrio/blur encima con un título grande
+ *     monoespaciado (`cover_title`). Al hover (desktop) o tap (touch) se desplaza
+ *     hacia arriba y descubre la capa de fondo.
  *
- * El esquema está pensado para que el FUTURO panel admin edite: lista de
- * productos, variante visual del recuadro, texto, etiqueta, tipo de animación,
- * scrub y breakpoint de desactivación. (Hoy NO hay panel: datos en este config.)
+ * Animación scroll-driven por TARJETA (desktop, GSAP): cada tarjeta hace un reveal
+ * limpio (fade/slide-up) al entrar — NO typewriter. Sin GSAP (desktop): IO añade
+ * `is-revealed`. Móvil/tablet ≤disable_below, sin GSAP o reduce-motion: `is-static`,
+ * todo legible. El cover se descubre por hover (CSS) o tap (JS) en cualquier modo.
+ *
+ * El esquema está pensado para que el FUTURO panel admin edite: título de la sección
+ * y lista de tarjetas (hasta 10) con sus campos de cover/fondo/media. (Hoy NO hay
+ * panel: datos en este config.)
  *
  * Las funciones se declaran antes del return (con function_exists) porque el
  * archivo se incluye para obtener su array de defaults.
@@ -31,25 +35,47 @@ if (! defined('ABSPATH')) {
 
 if (! function_exists('okip_ps_item_defaults')) {
     /**
-     * Defaults de un producto (fila).
+     * Defaults de una tarjeta.
      *
      * @return array
      */
     function okip_ps_item_defaults()
     {
         return array(
-            'label'          => '',           // etiqueta gris bajo el recuadro (RIA/COVIA/GIA)
-            'title_left'     => '',           // título dentro del recuadro izquierdo
-            'heading'        => '',           // título monoespaciado de la tarjeta derecha
-            'description'    => '',           // descripción de la tarjeta derecha
-            'media_type'     => 'placeholder', // image|video|svg|placeholder
-            'media'          => '',           // logo: ruta a assets/ o URL o ID de attachment
-            'alt'            => '',
-            'hover_media'    => '',           // imagen que aparece al hover/focus
-            'hover_alt'      => '',
-            'hover_placeholder' => false,      // fallback temporal cuando no existe hover_media
-            'visual_variant' => 'logo-title', // logo-title | media-caption
+            // Capa cover (vidrio/blur encima).
+            'cover_title'        => '',         // título grande monoespaciado del cover
+            'cover_blur'         => 14,         // desenfoque gaussiano del cover (px, 0..40)
+            'cover_background'   => '#0b1222',  // color base del vidrio del cover (hex)
+            'cover_opacity'      => 0.55,       // opacidad del vidrio del cover (0..1)
+            'cover_border_color' => '#33476e',  // color del borde del cover (hex)
+            // Capa de fondo (gris/clara, debajo del cover).
+            'heading'            => '',         // título de la capa de fondo
+            'description'        => '',         // descripción de la capa de fondo
+            'background_color'   => '#e7e7e7',  // color de la capa de fondo (hex)
+            // Media opcional (DESACTIVADA por defecto): si off o sin media válida,
+            // el texto absorbe el espacio (sin hueco reservado).
+            'media_enabled'      => false,
+            'media_type'         => 'image',    // image|gif|video|svg|placeholder
+            'media'              => '',         // ruta a assets/ o URL o ID de attachment
+            'alt'                => '',
         );
+    }
+}
+
+if (! function_exists('okip_ps_hex')) {
+    /**
+     * Sanea un color hex (#rgb o #rrggbb) con fallback si es inválido.
+     *
+     * @param mixed  $value
+     * @param string $fallback Color por defecto (hex válido).
+     * @return string
+     */
+    function okip_ps_hex($value, $fallback)
+    {
+        $clean = function_exists('sanitize_hex_color')
+            ? sanitize_hex_color((string) $value)
+            : '';
+        return $clean !== '' && $clean !== null ? $clean : $fallback;
     }
 }
 
@@ -62,11 +88,26 @@ if (! function_exists('okip_normalize_product_story_data')) {
      */
     function okip_normalize_product_story_data($data)
     {
-        // Content.
-        $data['content']['section_label'] = sanitize_text_field((string) $data['content']['section_label']);
+        // Content: título de la sección (uppercase visual via CSS).
+        $title = isset($data['content']['title']) ? (string) $data['content']['title'] : '';
+        $title = sanitize_text_field($title);
+        // Retrocompat: si llega el antiguo `section_label`, úsalo como título.
+        if ($title === '' && ! empty($data['content']['section_label'])) {
+            $title = sanitize_text_field((string) $data['content']['section_label']);
+        }
+        $data['content']['title'] = $title !== '' ? $title : 'SOLUCIONES';
 
         // Layout.
         $data['layout']['z_index'] = okip_clamp_int($data['layout']['z_index'], 0, 50);
+
+        // Fondo del bloque (media-driven, prioridad imagen). Sin media válida →
+        // fallback al degradado oscuro/azul por CSS.
+        $b = isset($data['background']) && is_array($data['background']) ? $data['background'] : array();
+        $b['media_enabled'] = okip_bool(isset($b['media_enabled']) ? $b['media_enabled'] : false);
+        $b['media_type']    = okip_one_of(isset($b['media_type']) ? $b['media_type'] : 'image', array('image', 'gif', 'svg', 'video'), 'image');
+        $b['media']         = sanitize_text_field((string) (isset($b['media']) ? $b['media'] : ''));
+        $b['alt']           = sanitize_text_field((string) (isset($b['alt']) ? $b['alt'] : ''));
+        $data['background'] = $b;
 
         // Animación.
         $a = $data['animation'];
@@ -74,39 +115,31 @@ if (! function_exists('okip_normalize_product_story_data')) {
         $a['use_gsap']             = okip_bool($a['use_gsap']);
         $a['use_vanilla_fallback'] = okip_bool($a['use_vanilla_fallback']);
         $a['disable_below']        = okip_clamp_int($a['disable_below'], 0, 9999);
-        $a['scrub']                = okip_clamp_float($a['scrub'], 0, 5);
-        $a['left_enter']    = okip_one_of($a['left_enter'], array('mask-slide', 'fade-up', 'scale-soft', 'none'), 'mask-slide');
-        $a['copy_bg_enter'] = okip_one_of($a['copy_bg_enter'], array('wipe-left', 'fade', 'none'), 'wipe-left');
-        $a['text_reveal']   = okip_one_of($a['text_reveal'], array('scroll-typewriter', 'fade-lines', 'none'), 'scroll-typewriter');
-        $data['animation']  = $a;
+        $a['reveal']               = okip_one_of($a['reveal'], array('fade-up', 'wipe', 'none'), 'fade-up');
+        $data['animation']         = $a;
 
-        // Transición de entrega al bloque siguiente.
-        $t = isset($data['transition']) && is_array($data['transition']) ? $data['transition'] : array();
-        $t['handoff_pin']     = okip_bool(isset($t['handoff_pin']) ? $t['handoff_pin'] : true);
-        $t['duration_vh']     = okip_clamp_int(isset($t['duration_vh']) ? $t['duration_vh'] : 40, 20, 200);
-        $t['disable_below']   = okip_clamp_int(isset($t['disable_below']) ? $t['disable_below'] : 1024, 0, 9999);
-        $data['transition']   = $t;
-
-        // Normalizar ítems (productos).
+        // Normalizar tarjetas (máximo 10).
         $item_defaults = okip_ps_item_defaults();
         if (! empty($data['items']) && is_array($data['items'])) {
-            $out = array();
-            foreach ($data['items'] as $item) {
+            $items = array_slice(array_values($data['items']), 0, 10);
+            $out   = array();
+            foreach ($items as $item) {
                 if (! is_array($item)) {
                     continue;
                 }
-                $merged                   = array_merge($item_defaults, $item);
-                $merged['label']          = sanitize_text_field((string) $merged['label']);
-                $merged['title_left']     = sanitize_text_field((string) $merged['title_left']);
-                $merged['heading']        = sanitize_text_field((string) $merged['heading']);
-                $merged['description']    = sanitize_text_field((string) $merged['description']);
-                $merged['alt']            = sanitize_text_field((string) $merged['alt']);
-                $merged['media']          = sanitize_text_field((string) $merged['media']);
-                $merged['hover_media']    = sanitize_text_field((string) $merged['hover_media']);
-                $merged['hover_alt']      = sanitize_text_field((string) $merged['hover_alt']);
-                $merged['hover_placeholder'] = okip_bool($merged['hover_placeholder']);
-                $merged['media_type']     = okip_one_of($merged['media_type'], array('image', 'gif', 'video', 'svg', 'placeholder'), 'placeholder');
-                $merged['visual_variant'] = okip_one_of($merged['visual_variant'], array('logo-title', 'media-caption'), 'logo-title');
+                $merged                       = array_merge($item_defaults, $item);
+                $merged['cover_title']        = sanitize_text_field((string) $merged['cover_title']);
+                $merged['heading']            = sanitize_text_field((string) $merged['heading']);
+                $merged['description']        = sanitize_text_field((string) $merged['description']);
+                $merged['alt']                = sanitize_text_field((string) $merged['alt']);
+                $merged['media']              = sanitize_text_field((string) $merged['media']);
+                $merged['cover_blur']         = okip_clamp_int($merged['cover_blur'], 0, 40);
+                $merged['cover_opacity']      = okip_clamp_float($merged['cover_opacity'], 0, 1);
+                $merged['cover_background']   = okip_ps_hex($merged['cover_background'], '#0b1222');
+                $merged['cover_border_color'] = okip_ps_hex($merged['cover_border_color'], '#33476e');
+                $merged['background_color']   = okip_ps_hex($merged['background_color'], '#e7e7e7');
+                $merged['media_enabled']      = okip_bool($merged['media_enabled']);
+                $merged['media_type']         = okip_one_of($merged['media_type'], array('image', 'gif', 'video', 'svg', 'placeholder'), 'image');
                 $out[] = $merged;
             }
             $data['items'] = $out;
@@ -120,70 +153,46 @@ if (! function_exists('okip_normalize_product_story_data')) {
 
 return array(
     'content' => array(
-        'section_label' => '',   // etiqueta opcional sobre la sección (no usada en ref)
+        'title' => 'SOLUCIONES',   // título superior izquierdo (uppercase via CSS)
     ),
     'layout' => array(
         'min_height'    => 'auto',   // el bloque fluye natural, sin altura forzada
-        'content_width' => '1360px', // mismo ancho que los otros bloques
+        'content_width' => '1180px', // columna de contenido sobre el fondo full-bleed
         'z_index'       => 0,        // 0 = z-index automático por orden de render (override si >0)
+    ),
+    'background' => array(
+        // Fondo del bloque editable desde el panel. PRIORIDAD imagen; admite
+        // gif/svg/video. Off por defecto → fallback al degradado oscuro/azul (CSS).
+        'media_enabled' => false,
+        'media_type'    => 'image',  // image|gif|svg|video
+        'media'         => '',
+        'alt'           => '',
     ),
     'items' => array(
         array(
-            'label'          => 'RIA',
-            'title_left'     => 'Registro de accesos',
-            'heading'        => 'Control - Automatización - Datos',
-            'description'    => 'Transforma cada ingreso en información trazable, consultable y útil para fortalecer la seguridad y operación del espacio.',
-            'media_type'     => 'image',
-            'media'          => 'assets/img/product-history/logo-ria.png',
-            'alt'            => 'RIA',
-            'hover_media'    => 'assets/img/product-history/ria-hover.png',
-            'hover_alt'      => 'Panel de registro de accesos RIA',
-            'hover_placeholder' => false,
-            'visual_variant' => 'logo-title',
+            'cover_title'      => 'Monitoreo inteligente',
+            'heading'          => 'CENTRALIZA - VISUALIZA - COORDINA',
+            'description'      => 'Información operativa en tiempo real que fortalece la seguridad y la toma de decisiones integrando IA y análisis de datos.',
+            'media_enabled'    => false,
         ),
         array(
-            'label'          => 'COVIA',
-            'title_left'     => 'Monitoreo Inteligente',
-            'heading'        => 'Centraliza - Visualiza - Coordina',
-            'description'    => 'Información operativa en tiempo real que fortalece la seguridad y toma de decisiones integrando IA + análisis de datos.',
-            'media_type'     => 'image',
-            'media'          => 'assets/img/product-history/logo-covia.png',
-            'alt'            => 'COVIA',
-            'hover_media'    => 'assets/img/product-history/covia-hover.png',
-            'hover_alt'      => 'Panel de monitoreo COVIA',
-            'hover_placeholder' => true,
-            'visual_variant' => 'logo-title',
+            'cover_title'      => 'Registro de accesos',
+            'heading'          => 'CONTROL - AUTOMATIZACIÓN - DATOS',
+            'description'      => 'Transforma cada ingreso en información trazable, consultable y útil para fortalecer la seguridad y la operación del espacio.',
+            'media_enabled'    => false,
         ),
         array(
-            'label'          => 'GIA',
-            'title_left'     => 'Mensajería segura',
-            'heading'        => 'Canal - Encriptación - Resguardo',
-            'description'    => 'Protección y cifrado de datos para fortalecer la confidencialidad de las comunicaciones y resguardar información sensible.',
-            'media_type'     => 'image',
-            'media'          => 'assets/img/product-history/logo-gia.png',
-            'alt'            => 'GIA',
-            'hover_media'    => 'assets/img/product-history/gia-hover.png',
-            'hover_alt'      => 'Aplicación de mensajería segura GIA',
-            'hover_placeholder' => false,
-            'visual_variant' => 'logo-title',
+            'cover_title'      => 'Mensajería segura',
+            'heading'          => 'CANAL - ENCRIPTACIÓN - RESGUARDO',
+            'description'      => 'Protección y cifrado de datos para reforzar la confidencialidad de las comunicaciones y resguardar información sensible.',
+            'media_enabled'    => false,
         ),
     ),
     'animation' => array(
         'enabled'              => true,
-        'use_gsap'             => true,    // si GSAP+ScrollTrigger están, anima por fila con scrub
+        'use_gsap'             => true,    // si GSAP+ScrollTrigger están, reveal por tarjeta
         'use_vanilla_fallback' => true,    // sin GSAP (pero desktop) → IO añade is-revealed
         'disable_below'        => 1024,    // ≤ este ancho px → is-static, todo legible
-        'scrub'                => 1,       // suavizado del scrub GSAP por fila
-        'left_enter'           => 'mask-slide',        // mask-slide | fade-up | scale-soft | none
-        'copy_bg_enter'        => 'wipe-left',         // wipe-left | fade | none
-        'text_reveal'          => 'scroll-typewriter', // scroll-typewriter | fade-lines | none
-    ),
-    'transition' => array(
-        'handoff_pin'   => true, // HOLD: fija la sección con el último producto centrado
-        // Distancia del HOLD (pinSpacing:true): la sección queda fija LLENANDO el
-        // viewport (pin en 'bottom bottom') ~40vh; luego Mission sube por scroll
-        // natural y la cubre (z-index mayor). Sin solape forzado ni hueco de fondo.
-        'duration_vh'   => 40,
-        'disable_below' => 1024,
+        'reveal'               => 'fade-up', // fade-up | wipe | none (NO typewriter)
     ),
 );

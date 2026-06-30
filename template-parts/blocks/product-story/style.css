@@ -1,46 +1,69 @@
 /*
  * Bloque Product Story (Bloque 4) — estilos.
- * Ref visual: bloque 4.png.
+ * Ref visual: referencias/image.png.
  *
- * Fondo CLARO, conectado visualmente con el Bloque 3 (mismo blanco, sin transición).
- * Composición editorial: tres filas de producto, mucho aire.
- *   - Izquierda: recuadro negro (logo + título) con hover a imagen + caption.
- *   - Etiqueta gris (pill) debajo del recuadro.
- *   - Derecha: tarjeta gris clara con heading + descripción monoespaciados.
+ * Sección OSCURA de ANCHO COMPLETO: fondo negro con presencia azul en el borde
+ * derecho (degradado radial). Título superior izquierdo (`SOLUCIONES`, uppercase) y
+ * tarjetas apiladas verticalmente.
  *
- * Animación (desktop, GSAP): por fila, con handoff pin opcional al final y sin
- * transform en el root.
- * Estados iniciales ocultos SOLO bajo `.okip-js .okip-ps--animated:not(.is-static)`
- * → sin JS, todo visible.
+ * Cada tarjeta = dos capas:
+ *   - .okip-ps__back  → capa de fondo gris/clara (heading + descripción + media
+ *     opcional); va en el flujo y define la altura de la tarjeta.
+ *   - .okip-ps__cover → vidrio/blur encima con título grande monoespaciado; se
+ *     desplaza hacia arriba al hover (CSS) o al tap/`is-open` (JS) y descubre el fondo.
+ *
+ * Animación (desktop, GSAP): reveal limpio por tarjeta (fade/slide-up), sin
+ * transform en el root. Estados iniciales ocultos SOLO bajo
+ * `.okip-js .okip-ps--animated:not(.is-static)` → sin JS, todo visible.
  *
  * Namespacing: .okip-ps__* — sin reglas globales que afecten otros bloques.
  */
 
 .okip-ps {
-    --okip-ps-black: #050006;
-    --okip-ps-card: #e6e6e6;
-    --okip-ps-pill: #b7b8ba;
-    --okip-ps-left-w: clamp(21rem, 32vw, 23rem);
-    --okip-ps-card-h: clamp(17.5rem, 26vw, 18.625rem);
-    --okip-ps-copy-measure: 46rem;
+    --okip-ps-bg: #000;
+    --okip-ps-glow: rgba(26, 60, 156, .7);   /* azul marino/rey */
+    --okip-ps-card-radius: 18px;
+    --okip-ps-card-minh: clamp(8.5rem, 13vw, 11rem);
+    --okip-ps-measure: 52rem;
 
     position: relative;
     z-index: var(--okip-ps-z, 4);
     min-height: var(--okip-ps-minh, auto);
-    background: var(--okip-color-surface-light);   /* mismo fondo que Industry Carousel */
-    color: #0d1520;
+    /* Fondo full-bleed: NEGRO puro con dos franjas de luz azul emergiendo de los
+       laterales — núcleo intenso en el borde que se difumina hacia el negro al crecer. */
+    background:
+        radial-gradient(46% 84% at -6% 50%, var(--okip-ps-glow), rgba(26, 60, 156, .22) 34%, transparent 66%),
+        radial-gradient(46% 84% at 106% 50%, var(--okip-ps-glow), rgba(26, 60, 156, .22) 34%, transparent 66%),
+        var(--okip-ps-bg);
+    color: #eef3fb;
     isolation: isolate;
-    /* El root NUNCA recibe transform (regla del proyecto): se animan nodos internos. */
+    /* El root NUNCA recibe transform (regla del proyecto): se animan las tarjetas. */
 }
 
-.okip-ps::before {
+/* ---- Fondo del bloque (media-driven): img/gif/svg/video a sangre completa ----
+   Solo se pinta si hay media válida (clase okip-ps--has-bg-media); si no, manda el
+   degradado oscuro/azul de .okip-ps (fallback neutro). */
+.okip-ps__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.okip-ps__bg-el {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+/* Scrim de legibilidad sobre la media (título/cards siempre legibles). */
+.okip-ps--has-bg-media::after {
     content: "";
     position: absolute;
-    inset-inline: 0;
-    top: -3px;
-    height: 6px;
+    inset: 0;
     z-index: 0;
-    background: var(--okip-color-surface-light);
+    background: linear-gradient(180deg, rgba(4, 6, 13, .72), rgba(4, 6, 13, .55));
     pointer-events: none;
 }
 
@@ -48,400 +71,213 @@
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: var(--okip-ps-cw, 1100px);
+    max-width: var(--okip-ps-cw, 1180px);
     margin-inline: auto;
     padding-inline: var(--okip-container-pad, 1.5rem);
-    padding-block: clamp(5rem, 13vh, 9rem);
+    padding-block: clamp(4rem, 11vh, 7.5rem);
 }
 
-/* Desktop animado: padding inferior extra para que, al fijar la sección en
-   'bottom bottom' durante el HOLD, el último producto quede enmarcado (no pegado
-   al borde inferior). En móvil/estático no aplica. */
-@media (min-width: 1025px) {
-    .okip-js .okip-ps--animated:not(.is-static) .okip-ps__inner {
-        padding-bottom: clamp(8rem, 24vh, 16rem);
+/* ---- Título de la sección ---- */
+.okip-ps__title {
+    margin: 0 0 clamp(1.6rem, 4vh, 2.6rem);
+    font-size: clamp(1.35rem, 2.4vw, 1.95rem);
+    font-weight: 400;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #f3f6fc;
+    overflow-wrap: break-word;
+}
+
+/* ---- Pila de tarjetas (mayor separación vertical) ---- */
+.okip-ps__cards {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.6rem, 6.5vh, 4.75rem);
+}
+
+/* ---- Tarjeta (contenedor estable de las dos capas) ---- */
+.okip-ps__card {
+    position: relative;
+    border-radius: var(--okip-ps-card-radius);
+    overflow: hidden;
+    /* Sin isolation: el cover (vidrio) debe poder fundirse con el fondo del bloque
+       cuando la capa de fondo está oculta (mientras la cubre). */
+}
+
+/* ---- Capa de fondo: gris/clara, en flujo (define la altura) ----
+   Oculta mientras el cover la cubre (así el cover se funde con el fondo del bloque
+   y NO se filtra el texto). Se descubre al hover (CSS) o al tap/`is-open` (JS).
+   Sigue ocupando espacio (opacity, no display) → sin layout shift. */
+.okip-ps__back {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(.75rem, 1.6vh, 1.05rem);
+    min-height: var(--okip-ps-card-minh);
+    /* Padding izq/der equilibrado para simetría visual. */
+    padding: clamp(1.5rem, 3vw, 2.25rem) clamp(1.6rem, 3.2vw, 2.4rem);
+    background: var(--okip-ps-card-bg, #e7e7e7);
+    color: #121620;
+    border-radius: var(--okip-ps-card-radius);
+    opacity: 0;
+    transition: opacity .45s ease;
+}
+.okip-ps__card.is-open .okip-ps__back {
+    opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+    .okip-ps__card:hover .okip-ps__back {
+        opacity: 1;
     }
 }
 
-.okip-ps__section-label {
-    margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
-    font-size: .78rem;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--okip-color-text-dark-muted);
-}
-
-/* ---- Fila ---- */
-.okip-ps__row {
-    display: grid;
-    grid-template-columns: var(--okip-ps-left-w) minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    grid-template-areas: "left copy" "label .";
-    gap: 0;
-    align-items: end;
-    position: relative;
-}
-.okip-ps__row + .okip-ps__row {
-    margin-top: clamp(3.4rem, 8vh, 4.9rem);
-}
-
-/* ---- Columna izquierda ---- */
-.okip-ps__left {
-    grid-area: left;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    position: relative;
-    z-index: 2;
-    overflow: hidden;
-}
-
-/* ---- Columna derecha ---- */
-.okip-ps__copy {
-    grid-area: copy;
-    position: relative;
-    z-index: 1;
-}
-
-/* Recuadro visual: negro, cuadrado con esquina superior-derecha curva */
-.okip-ps__visual {
-    position: relative;
-    z-index: 2;
+/* Media opcional: solo se renderiza si media_enabled + media válida (sin hueco si no). */
+.okip-ps__media {
+    flex: 0 0 auto;
     width: 100%;
-    aspect-ratio: 1;
+    max-height: clamp(5rem, 12vw, 8rem);
     overflow: hidden;
-    border-radius: 0 55px 0 0;
-    background: var(--okip-ps-black);
-    color: #f4f7fb;
-    isolation: isolate;
-    will-change: transform, clip-path, opacity;
-    transition: transform 0.52s var(--okip-ease);
+    border-radius: 8px;
+}
+.okip-ps__media-el {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: left center;
 }
 
-/* Estado base: logo arriba, título abajo a la izquierda */
-.okip-ps__visual-base {
+.okip-ps__back-text {
+    width: min(100%, var(--okip-ps-measure));
+}
+
+.okip-ps__heading {
+    margin: 0;
+    font-family: var(--okip-font-mono);
+    font-size: clamp(1.05rem, 1.6vw, 1.32rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #0c1018;
+    overflow-wrap: break-word;
+}
+.okip-ps__desc {
+    margin: clamp(.5rem, 1.2vh, .8rem) 0 0;
+    font-family: var(--okip-font-mono);
+    font-size: clamp(.92rem, 1.3vw, 1.08rem);
+    line-height: 1.55;
+    color: #20262f;
+    overflow-wrap: break-word;
+}
+
+/* ---- Capa cover: vidrio/blur encima, descubre el fondo al hover/tap ---- */
+.okip-ps__cover {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 2;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 2.6rem 1.78rem 2.03rem;
-    transition: opacity .42s ease, transform .5s var(--okip-ease);
-}
-
-/* Logo / placeholder (parte superior del recuadro logo-title) */
-.okip-ps__logo {
-    display: block;
-    align-self: center;
-    width: 8.5rem;
-    color: #f4f7fb;
-}
-.okip-ps__logo-img,
-.okip-ps__logo-ph {
-    display: block;
+    align-items: center;
+    /* Mismo padding equilibrado que la capa de fondo. */
+    padding: clamp(1.5rem, 3vw, 2.25rem) clamp(1.6rem, 3.2vw, 2.4rem);
+    margin: 0;
     width: 100%;
-    height: auto;
-}
-
-/* Video en la zona de logo (logo-title): mismo tamaño que el placeholder de logo */
-.okip-ps__logo-video {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-height: clamp(48px, 9vw, 88px);
-    object-fit: contain;
-}
-
-.okip-ps__row--product-ria .okip-ps__logo {
-    width: 8.5rem;
-}
-.okip-ps__row--product-covia .okip-ps__logo {
-    width: 8.6rem;
-}
-.okip-ps__row--product-gia .okip-ps__logo {
-    width: 10.8rem;
-    margin-top: .25rem;
-}
-
-/* Recuadro con hover/focus + contorno accesible */
-.okip-ps__row--has-hover .okip-ps__visual {
+    text-align: left;
+    background: var(--okip-ps-cover-bg, rgba(11, 18, 34, .55));
+    -webkit-backdrop-filter: blur(var(--okip-ps-cover-blur, 14px));
+    backdrop-filter: blur(var(--okip-ps-cover-blur, 14px));
+    border: 1px solid var(--okip-ps-cover-border, #33476e);
+    border-radius: var(--okip-ps-card-radius);
+    color: #f4f7fc;
     cursor: pointer;
+    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: transform .55s var(--okip-ease, cubic-bezier(.22, 1, .36, 1)),
+                opacity .45s ease;
+    will-change: transform, opacity;
 }
-.okip-ps__visual:focus-visible {
-    outline: 2px solid rgba(255, 90, 20, .55);
+.okip-ps__cover:focus-visible {
+    outline: 2px solid rgba(120, 170, 255, .7);
     outline-offset: 3px;
 }
 
-/* Título dentro del recuadro negro (bottom-left) */
-.okip-ps__title {
-    margin: 0;
-    font-size: clamp(2.6rem, 3.9vw, 3.17rem);
-    line-height: .98;
-    font-weight: 400;
-    letter-spacing: 0;
-    color: #f4f7fb;
-}
-
-/* Zona hover: imagen + caption, detrás del cuadro negro (z-index: 1) */
-.okip-ps__hover-zone {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: var(--okip-ps-row-card-h, 100%);
-    z-index: 1;
-    overflow: hidden;
-    background: var(--okip-ps-card);
-}
-/* Marco estable: la imagen completa debe caber, aunque su ratio sea panoramico. */
-.okip-ps__hover-zone-frame {
-    position: absolute;
-    top: clamp(1.25rem, 2.1vw, 1.6rem);
-    left: 1rem;
-    right: .125rem;
-    height: min(clamp(10rem, 16vw, 11.65rem), calc(100% - 7.1rem));
-    overflow: hidden;
-    background: #111318;
-}
-.okip-ps__hover-zone-img {
+.okip-ps__cover-title {
     display: block;
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: center;
-}
-.okip-ps__hover-zone-ph {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background:
-        repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0 1px, transparent 1px 24px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 1px, transparent 1px 24px),
-        linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.02)),
-        #17191e;
-}
-.okip-ps__hover-zone-ph-label {
     font-family: var(--okip-font-mono);
-    font-size: .74rem;
-    font-weight: 700;
-    letter-spacing: .14em;
-    color: rgba(255, 255, 255, .82);
-}
-.okip-ps__hover-zone-caption {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    display: flex;
-    align-items: center;
-    min-height: 3.125rem;
-    padding: 0 clamp(1.6rem, 2.4vw, 2rem);
-    background: var(--okip-ps-black);
-    color: #f4f7fb;
-    font-size: clamp(1.25rem, 1.65vw, 1.52rem);
-    line-height: 1.2;
-    border-radius: 0 5rem 0 0;
+    font-size: clamp(1.6rem, 4.4vw, 2.85rem);
+    font-weight: 500;
+    line-height: 1.02;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
-/* Hover: el cuadro negro se desliza hacia abajo (esquina curva sale la última) */
+/* Reveal del cover: se desliza hacia ABAJO y descubre el fondo. */
+.okip-ps__card.is-open .okip-ps__cover {
+    transform: translateY(101%);
+    opacity: 0;
+    pointer-events: none;
+}
 @media (hover: hover) and (pointer: fine) {
-    .okip-ps__row--has-hover:hover .okip-ps__visual,
-    .okip-ps__row--has-hover:focus-within .okip-ps__visual {
-        transform: translateY(105%);
+    .okip-ps__card:hover .okip-ps__cover {
+        transform: translateY(101%);
+        opacity: 0;
+        pointer-events: none;
     }
 }
-
-/* Etiqueta gris (pill) bajo el recuadro */
-.okip-ps__label {
-    grid-area: label;
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: min(13.875rem, 100%);
-    min-height: 2.35rem;
-    margin-top: 1rem;
-    padding: 0 clamp(1.9rem, 2.7vw, 2.3rem);
-    background: var(--okip-ps-pill);
-    color: #f4f4f4;
-    font-family: var(--okip-font-mono);
-    font-size: clamp(1.12rem, 1.85vw, 1.45rem);
-    font-weight: 600;
-    letter-spacing: .02em;
-    border-radius: 0;
-    will-change: opacity;
-}
-
-/* ---- Columna derecha: tarjeta gris ---- */
-.okip-ps__card {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    min-height: var(--okip-ps-card-h);
-    border-radius: 0;
-    padding: clamp(3.2rem, 5vw, 4.6rem) clamp(2rem, 3.7vw, 2.85rem) clamp(2rem, 3.2vw, 2.55rem) clamp(2.9rem, 4.4vw, 3.55rem);
-}
-/* Fondo de la tarjeta — se extiende a la izquierda por detrás del cuadro negro */
-.okip-ps__card-bg {
-    position: absolute;
-    top: 0; right: 0; bottom: 0;
-    left: calc(-1 * var(--okip-ps-left-w));
-    background: var(--okip-ps-card);
-    z-index: 0;
-    will-change: clip-path;
-}
-.okip-ps__card-inner {
-    position: relative;
-    z-index: 1;
-    width: min(100%, var(--okip-ps-copy-measure));
-}
-
-/* Heading monoespaciado */
-.okip-ps__heading {
-    margin: 0;
-    width: 100%;
-    font-family: var(--okip-font-mono);
-    font-size: clamp(1.55rem, 2.05vw, 1.82rem);
-    font-weight: 700;
-    letter-spacing: .01em;
-    color: #101318;
-    text-align: left;
-    overflow-wrap: break-word;
-}
-
-/* Descripción monoespaciada */
-.okip-ps__desc {
-    margin: clamp(.85rem, 1.9vh, 1.05rem) 0 0;
-    width: 100%;
-    font-family: var(--okip-font-mono);
-    font-size: clamp(1.18rem, 1.58vw, 1.34rem);
-    line-height: 1.55;
-    color: #15181d;
-    text-align: left;
-    overflow-wrap: break-word;
-}
-
-/* Texto que se anima (heading/desc). Por defecto totalmente visible. */
-.okip-ps__type {
-    display: block;
-    width: 100%;
-}
-/* Palabras: no se parten a mitad durante el typewriter */
-.okip-ps__word {
-    display: inline-block;
-    white-space: nowrap;
-}
-.okip-ps__char {
-    display: inline-block;
-    will-change: opacity;
-}
-.okip-ps__char--space {
-    display: inline;
-    white-space: normal;
-}
-
-/* Copia solo para lectores de pantalla → utilidad global .okip-sr-only (base.css).
-   El JS añade `okip-ps__sr okip-sr-only` al span del split. */
 
 /* ============================================================
    ESTADOS INICIALES OCULTOS — solo con JS, animado y NO estático.
    Sin JS / is-static → estas reglas no aplican → todo visible.
+   El reveal es por TARJETA (fade/slide-up), sin transform en el root.
    ============================================================ */
-.okip-js .okip-ps--animated:not(.is-static) .okip-ps__visual {
+.okip-js .okip-ps--animated:not(.is-static) .okip-ps__card {
     opacity: 0;
-    clip-path: inset(0 100% 0 0);
+    transform: translateY(34px);
 }
-.okip-js .okip-ps--animated:not(.is-static) .okip-ps__card-bg {
-    clip-path: inset(0 100% 0 0);
-}
-.okip-js .okip-ps--animated:not(.is-static) .okip-ps__type {
-    opacity: 0;
-}
-.okip-js .okip-ps--animated:not(.is-static) .okip-ps__label {
-    opacity: 0;
-}
-
-/* ---- Reveal del FALLBACK vanilla (sin GSAP): is-revealed por fila ---- */
-.okip-ps__row.is-revealed .okip-ps__visual {
+.okip-js .okip-ps--animated:not(.is-static) .okip-ps__card.is-revealed {
     opacity: 1;
+    transform: translateY(0);
+    transition: opacity .7s ease, transform .8s var(--okip-ease, cubic-bezier(.22, 1, .36, 1));
+}
+/* Variante wipe: la tarjeta se descubre de arriba hacia abajo (sin desplazamiento). */
+.okip-js .okip-ps--reveal-wipe:not(.is-static) .okip-ps__card {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 100% 0);
+}
+.okip-js .okip-ps--reveal-wipe:not(.is-static) .okip-ps__card.is-revealed {
     clip-path: inset(0 0 0 0);
-    transition: opacity .7s ease, clip-path .85s var(--okip-ease);
-}
-.okip-ps__row.is-revealed .okip-ps__card-bg {
-    clip-path: inset(0 0 0 0);
-    transition: clip-path .75s var(--okip-ease) .18s;
-}
-.okip-ps__row.is-revealed .okip-ps__type {
-    opacity: 1;
-    transition: opacity .6s ease .42s;
-}
-.okip-ps__row.is-revealed .okip-ps__label {
-    opacity: 1;
-    transition: opacity .5s ease .3s;
+    transition: clip-path .85s var(--okip-ease, cubic-bezier(.22, 1, .36, 1));
 }
 
 /* ============================================================
    MODO ESTÁTICO (móvil/tablet / sin GSAP+vanilla off / reduce-motion / anim off)
-   Todo visible y legible. Layout apilado en móvil.
+   Todo visible y legible. El cover sigue revelable por tap (is-open).
    ============================================================ */
-.okip-ps.is-static .okip-ps__visual,
-.okip-ps.is-static .okip-ps__card-bg,
-.okip-ps.is-static .okip-ps__type,
-.okip-ps.is-static .okip-ps__char,
-.okip-ps.is-static .okip-ps__label {
+.okip-ps.is-static .okip-ps__card {
     opacity: 1 !important;
-    transform: none !important;
-    clip-path: none !important;
-}
-/* Sin hover en modo estático (móvil) */
-.okip-ps.is-static .okip-ps__row--has-hover .okip-ps__visual {
     transform: none !important;
 }
 
 /* ---- Responsive: móvil/tablet (≤1024px) ---- */
 @media (max-width: 1024px) {
-    .okip-ps__row {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
-        grid-template-areas: "left" "copy" "label";
-        gap: clamp(1rem, 3vh, 1.6rem);
-        align-items: stretch;
+    .okip-ps {
+        --okip-ps-card-minh: clamp(7rem, 26vw, 9.5rem);
     }
-    .okip-ps__left {
-        align-items: flex-start;
+    .okip-ps__cover-title {
+        font-size: clamp(1.4rem, 7vw, 2.2rem);
     }
-    .okip-ps__visual {
-        width: min(100%, 22rem);
-        border-radius: 0 65px 0 0;
-    }
-    .okip-ps__card-bg {
-        left: 0; /* reset extensión detrás del cuadro negro */
-    }
-    .okip-ps__card {
-        min-height: auto;
-    }
-    .okip-ps__card-inner {
+    .okip-ps__back-text {
         max-width: none;
-    }
-    .okip-ps__heading {
-        font-size: clamp(1.35rem, 5.8vw, 1.75rem);
-    }
-    .okip-ps__desc {
-        font-size: clamp(1rem, 4.6vw, 1.25rem);
-        line-height: 1.5;
-        text-align: left;
     }
 }
 
 /* ---- Accesibilidad: reduce-motion ---- */
 @media (prefers-reduced-motion: reduce) {
-    .okip-ps__visual,
-    .okip-ps__visual-base,
-    .okip-ps__hover,
-    .okip-ps__card-bg,
-    .okip-ps__type,
-    .okip-ps__char,
-    .okip-ps__label {
+    .okip-ps__card,
+    .okip-ps__cover {
         transition: none !important;
     }
 }
