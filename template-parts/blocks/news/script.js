@@ -1,9 +1,10 @@
 /*
- * Bloque News — carrusel horizontal + transición cover-rise hacia Mission.
+ * Bloque News — grilla editorial desktop, fila horizontal mobile y transición cover-rise.
  *
  * Cover-rise (desktop, sin pin): News sube por scroll natural (z-index mayor,
  * fondo claro opaco) y CUBRE a Mission. Mientras lo hace:
  *   - el contenido de News entra con un fade + leve translate (orgánico),
+ *   - cada card hace reveal individual one-shot al entrar al viewport,
  *   - Mission hace "depth-out" (lift + scale + fade) para dar profundidad.
  * Móvil/tablet ≤disable_below o reduce-motion: todo visible, sin transform.
  */
@@ -39,6 +40,11 @@
     function isSmallViewport(block) {
         var disableBelow = dataInt(block, 'revealDisableBelow', 768);
         return !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
+    }
+
+    function cardsRevealDisabled(block) {
+        var disableBelow = dataInt(block, 'cardRevealDisableBelow', 0);
+        return disableBelow > 0 && !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
     }
 
     function previousMission(block) {
@@ -164,6 +170,7 @@
         requestUpdate();
 
         initCoverReveal(block);
+        initCardReveal(block, items);
     });
 
     function resetMission(mission) {
@@ -235,5 +242,44 @@
             mission.style.setProperty('--okip-ms-news-fade', fade);
             mission.classList.toggle('is-news-lifting', p > 0.001);
         }
+    }
+
+    function revealCards(items) {
+        items.forEach(function (item) {
+            item.classList.add('is-card-revealed');
+        });
+    }
+
+    function initCardReveal(block, items) {
+        if (!items.length) {
+            return;
+        }
+
+        if (block.dataset.cardReveal !== '1' || reduceMotion || cardsRevealDisabled(block) || !('IntersectionObserver' in window)) {
+            revealCards(items);
+            return;
+        }
+
+        var threshold = OKIP.clamp(dataFloat(block, 'cardRevealThreshold', .16), .01, 1);
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+                entry.target.classList.add('is-card-revealed');
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: threshold });
+
+        items.forEach(function (item) {
+            observer.observe(item);
+        });
+
+        window.addEventListener('resize', OKIP.rafThrottle(function () {
+            if (cardsRevealDisabled(block)) {
+                observer.disconnect();
+                revealCards(items);
+            }
+        }));
     }
 })();

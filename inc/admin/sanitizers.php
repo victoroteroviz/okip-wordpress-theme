@@ -160,6 +160,16 @@ function okip_admin_sanitize_page_overrides($slug, $raw_blocks)
             } else {
                 unset($overrides[$instance_id]);
             }
+        } elseif ($block['type'] === 'news') {
+            $base_data = isset($block['data']) ? $block['data'] : array();
+            $full = okip_admin_sanitize_news_data($raw_data, $base_data);
+            $base_norm = okip_normalize_block_data('news', $base_data);
+            $diff = okip_array_diff_recursive($full, $base_norm);
+            if (! empty($diff)) {
+                $overrides[$instance_id] = array('type' => 'news', 'data' => $diff);
+            } else {
+                unset($overrides[$instance_id]);
+            }
         }
     }
 
@@ -289,4 +299,32 @@ function okip_admin_sanitize_hero_data(array $raw, array $base = array())
     }
 
     return okip_normalize_block_data('hero', okip_merge_defaults($data, $current));
+}
+
+/**
+ * Sanea la data editable del bloque News.
+ *
+ * @param array $raw
+ * @param array $base
+ * @return array
+ */
+function okip_admin_sanitize_news_data(array $raw, array $base = array())
+{
+    $current = okip_normalize_block_data('news', $base);
+    $animation = isset($raw['animation']) && is_array($raw['animation']) ? $raw['animation'] : array();
+    $anim_def = isset($current['animation']) && is_array($current['animation']) ? $current['animation'] : array();
+
+    $data = array(
+        'animation' => array(
+            'enabled'       => okip_bool(isset($animation['enabled']) ? $animation['enabled'] : (isset($anim_def['enabled']) ? $anim_def['enabled'] : true)),
+            'duration_ms'   => okip_clamp_int(isset($animation['duration_ms']) ? $animation['duration_ms'] : (isset($anim_def['duration_ms']) ? $anim_def['duration_ms'] : 620), 0, 5000),
+            'delay_ms'      => okip_clamp_int(isset($animation['delay_ms']) ? $animation['delay_ms'] : (isset($anim_def['delay_ms']) ? $anim_def['delay_ms'] : 80), 0, 10000),
+            'stagger_ms'    => okip_clamp_int(isset($animation['stagger_ms']) ? $animation['stagger_ms'] : (isset($anim_def['stagger_ms']) ? $anim_def['stagger_ms'] : 95), 0, 3000),
+            'translate_y'   => okip_clamp_int(isset($animation['translate_y']) ? $animation['translate_y'] : (isset($anim_def['translate_y']) ? $anim_def['translate_y'] : 22), 0, 160),
+            'threshold'     => okip_clamp_float(isset($animation['threshold']) ? $animation['threshold'] : (isset($anim_def['threshold']) ? $anim_def['threshold'] : .16), .01, 1),
+            'disable_below' => okip_clamp_int(isset($animation['disable_below']) ? $animation['disable_below'] : (isset($anim_def['disable_below']) ? $anim_def['disable_below'] : 0), 0, 9999),
+        ),
+    );
+
+    return okip_normalize_block_data('news', okip_merge_defaults($data, $current));
 }

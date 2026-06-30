@@ -3,7 +3,7 @@
 /**
  * Esquema / defaults del bloque News (Bloque 6).
  *
- * Carrusel claro de noticias/referencias. Usa posts nativos por categoría y,
+ * Grilla editorial de noticias/referencias. Usa posts nativos por categoría y,
  * cuando no hay contenido, conserva la composición con placeholders.
  *
  * @package OKIP
@@ -64,9 +64,20 @@ if (! function_exists('okip_normalize_news_data')) {
         // Layout.
         $data['layout']['z_index'] = okip_clamp_int($data['layout']['z_index'], 0, 50);
 
-        // Behavior.
+        // Behavior (retrocompatibilidad; el layout desktop ya no usa controles).
         $data['behavior']['dots']   = okip_bool($data['behavior']['dots']);
         $data['behavior']['arrows'] = okip_bool($data['behavior']['arrows']);
+
+        // Card entry animation: reveal individual, one-shot, configurable.
+        $a = isset($data['animation']) && is_array($data['animation']) ? $data['animation'] : array();
+        $a['enabled']       = okip_bool(isset($a['enabled']) ? $a['enabled'] : true);
+        $a['duration_ms']   = okip_clamp_int(isset($a['duration_ms']) ? $a['duration_ms'] : 620, 0, 5000);
+        $a['delay_ms']      = okip_clamp_int(isset($a['delay_ms']) ? $a['delay_ms'] : 80, 0, 10000);
+        $a['stagger_ms']    = okip_clamp_int(isset($a['stagger_ms']) ? $a['stagger_ms'] : 95, 0, 3000);
+        $a['translate_y']   = okip_clamp_int(isset($a['translate_y']) ? $a['translate_y'] : 22, 0, 160);
+        $a['threshold']     = okip_clamp_float(isset($a['threshold']) ? $a['threshold'] : .16, .01, 1);
+        $a['disable_below'] = okip_clamp_int(isset($a['disable_below']) ? $a['disable_below'] : 0, 0, 9999);
+        $data['animation']  = $a;
 
         // Transition (cover-rise: News sube y cubre a Mission con fade + parallax).
         $t = isset($data['transition']) && is_array($data['transition']) ? $data['transition'] : array();
@@ -152,14 +163,24 @@ return array(
         'background'     => '#ffffff',
         'padding_top'    => '3rem',
         'padding_bottom' => '3.35rem',
-        'card_width'     => 'clamp(300px, 28vw, 520px)',
-        'card_height'    => 'clamp(330px, 32vw, 500px)',
-        'gap'            => '14px',
+        'grid_max_width' => '1120px',
+        'card_width'     => 'min(82vw, 350px)', // Mobile horizontal cards.
+        'card_height'    => 'min(112vw, 430px)',
+        'gap'            => '8px',
         'z_index'        => 0, // 0 = z-index automático por orden de render (override si >0)
     ),
     'behavior' => array(
-        'dots'   => true,
-        'arrows' => true,
+        'dots'   => false,
+        'arrows' => false,
+    ),
+    'animation' => array(
+        'enabled'       => true,
+        'duration_ms'   => 620,
+        'delay_ms'      => 80,
+        'stagger_ms'    => 95,
+        'translate_y'   => 22,
+        'threshold'     => .16,
+        'disable_below' => 0,
     ),
     'transition' => array(
         'enabled'       => true,

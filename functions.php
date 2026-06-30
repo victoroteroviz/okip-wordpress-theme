@@ -70,5 +70,6 @@ if (is_admin()) {
     /* Partials y editores por bloque (antes del controlador que los invoca). */
     okip_require('inc/admin/partials/hero-cards.php');
     okip_require('inc/admin/editors/hero.php');
+    okip_require('inc/admin/editors/news.php');
     okip_require('inc/admin/admin-pages.php');
 }

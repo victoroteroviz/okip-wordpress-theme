@@ -3,7 +3,7 @@
 /**
  * Bloque News (Bloque 6).
  *
- * Carrusel horizontal de posts nativos con fallback visual cuando no hay posts
+ * Grilla editorial de posts nativos con fallback visual cuando no hay posts
  * publicados en la categoría configurada.
  *
  * @package OKIP
@@ -19,7 +19,7 @@ $okip_data     = isset($args['data']) && is_array($args['data']) ? $args['data']
 $content  = isset($okip_data['content']) ? $okip_data['content'] : array();
 $query    = isset($okip_data['query']) ? $okip_data['query'] : array();
 $layout   = isset($okip_data['layout']) ? $okip_data['layout'] : array();
-$behavior = isset($okip_data['behavior']) ? $okip_data['behavior'] : array();
+$animation = isset($okip_data['animation']) ? $okip_data['animation'] : array();
 $transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
 $fallback = isset($okip_data['fallback_items']) && is_array($okip_data['fallback_items']) ? $okip_data['fallback_items'] : array();
 
@@ -35,6 +35,7 @@ $order          = isset($query['order']) ? $query['order'] : 'DESC';
 $background     = isset($layout['background']) ? $layout['background'] : '#f6f6f4';
 $padding_top    = isset($layout['padding_top']) ? $layout['padding_top'] : '1.45rem';
 $padding_bottom = isset($layout['padding_bottom']) ? $layout['padding_bottom'] : '2.55rem';
+$grid_max_width = isset($layout['grid_max_width']) ? $layout['grid_max_width'] : '1120px';
 $card_width     = isset($layout['card_width']) ? $layout['card_width'] : '264px';
 $card_height    = isset($layout['card_height']) ? $layout['card_height'] : '190px';
 $gap            = isset($layout['gap']) ? $layout['gap'] : '1.35rem';
@@ -43,8 +44,13 @@ $z_index        = (isset($layout['z_index']) && (int) $layout['z_index'] > 0)
     ? (int) $layout['z_index']
     : ((isset($args['order']) ? (int) $args['order'] : 0) + 1);
 
-$dots_on   = ! empty($behavior['dots']);
-$arrows_on = ! empty($behavior['arrows']);
+$cards_anim_on = ! empty($animation['enabled']);
+$cards_anim_duration_ms = isset($animation['duration_ms']) ? (int) $animation['duration_ms'] : 620;
+$cards_anim_delay_ms = isset($animation['delay_ms']) ? (int) $animation['delay_ms'] : 80;
+$cards_anim_stagger_ms = isset($animation['stagger_ms']) ? (int) $animation['stagger_ms'] : 95;
+$cards_anim_translate_y = isset($animation['translate_y']) ? (int) $animation['translate_y'] : 22;
+$cards_anim_threshold = isset($animation['threshold']) ? (float) $animation['threshold'] : .16;
+$cards_anim_disable_below = isset($animation['disable_below']) ? (int) $animation['disable_below'] : 0;
 
 $reveal_enabled = ! empty($transition['enabled']);
 $reveal_disable_below = isset($transition['disable_below']) ? (int) $transition['disable_below'] : 768;
@@ -119,19 +125,23 @@ if (empty($items)) {
 }
 
 $section_style = sprintf(
-    '--okip-news-bg:%s;--okip-news-pt:%s;--okip-news-pb:%s;--okip-news-card-w:%s;--okip-news-card-h:%s;--okip-news-gap:%s;--okip-news-z:%d;',
+    '--okip-news-bg:%s;--okip-news-pt:%s;--okip-news-pb:%s;--okip-news-grid-max:%s;--okip-news-card-w:%s;--okip-news-card-h:%s;--okip-news-gap:%s;--okip-news-z:%d;--okip-news-card-duration:%dms;--okip-news-card-offset:%dpx;',
     esc_attr($background),
     esc_attr($padding_top),
     esc_attr($padding_bottom),
+    esc_attr($grid_max_width),
     esc_attr($card_width),
     esc_attr($card_height),
     esc_attr($gap),
-    $z_index
+    $z_index,
+    $cards_anim_duration_ms,
+    $cards_anim_translate_y
 );
+$layout_pattern = array('feature', 'hero', 'feature', 'wide', 'mini', 'mini', 'feature', 'wide');
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
-    class="okip-news<?php echo $reveal_enabled ? ' okip-news--cover' : ''; ?>"
+    class="okip-news<?php echo $reveal_enabled ? ' okip-news--cover' : ''; ?><?php echo $cards_anim_on ? ' okip-news--cards-animated' : ''; ?>"
     data-block-instance="<?php echo esc_attr($okip_instance); ?>"
     data-okip-news
     data-reveal="<?php echo $reveal_enabled ? '1' : '0'; ?>"
@@ -139,6 +149,9 @@ $section_style = sprintf(
     data-reveal-start="<?php echo esc_attr((string) $reveal_start); ?>"
     data-reveal-end="<?php echo esc_attr((string) $reveal_end); ?>"
     data-reveal-mission-lift-vh="<?php echo esc_attr((string) $reveal_mission_lift_vh); ?>"
+    data-card-reveal="<?php echo $cards_anim_on ? '1' : '0'; ?>"
+    data-card-reveal-disable-below="<?php echo esc_attr((string) $cards_anim_disable_below); ?>"
+    data-card-reveal-threshold="<?php echo esc_attr((string) $cards_anim_threshold); ?>"
     style="<?php echo $section_style; ?>">
 
     <div class="okip-news__viewport" aria-label="<?php echo esc_attr($aria_label); ?>" data-okip-news-track>
@@ -153,8 +166,10 @@ $section_style = sprintf(
                 $placeholder_note = ! empty($item['placeholder_note']) ? $item['placeholder_note'] : 'Placeholder';
                 $card_classes = 'okip-news__card' . ($is_post ? ' okip-news__card--post' : ' okip-news__card--fallback');
                 $card_label   = $title !== '' ? $title : ('Referencia ' . ($idx + 1));
+                $variant = $layout_pattern[$idx % count($layout_pattern)];
+                $item_delay = $cards_anim_delay_ms + ($cards_anim_stagger_ms * $idx);
                 ?>
-                <li class="okip-news__item" data-okip-news-item>
+                <li class="okip-news__item okip-news__item--<?php echo esc_attr($variant); ?>" data-okip-news-item style="--okip-news-card-delay:<?php echo esc_attr((string) $item_delay); ?>ms;">
                     <div class="okip-news__card-shell">
                         <?php if ($url !== '') : ?>
                             <a class="<?php echo esc_attr($card_classes); ?>" href="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
@@ -203,32 +218,5 @@ $section_style = sprintf(
                 </li>
             <?php endforeach; ?>
         </ul>
-    </div>
-
-    <div class="okip-news__controls">
-        <?php if ($arrows_on) : ?>
-            <button class="okip-news__nav okip-news__nav--prev" type="button" data-okip-news-prev aria-label="<?php echo esc_attr__('Noticia anterior', 'okip'); ?>">
-                <span class="okip-news__nav-icon" aria-hidden="true"></span>
-            </button>
-        <?php endif; ?>
-
-        <?php if ($dots_on) : ?>
-            <div class="okip-news__dots" aria-label="<?php echo esc_attr__('Paginación de noticias', 'okip'); ?>" data-okip-news-dots>
-                <?php foreach ($items as $idx => $_item) : ?>
-                    <button
-                        class="okip-news__dot<?php echo $idx === 0 ? ' is-active' : ''; ?>"
-                        type="button"
-                        data-okip-news-dot="<?php echo esc_attr((string) $idx); ?>"
-                        aria-label="<?php echo esc_attr(sprintf(__('Ir a referencia %d', 'okip'), $idx + 1)); ?>"
-                        aria-current="<?php echo $idx === 0 ? 'true' : 'false'; ?>"></button>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($arrows_on) : ?>
-            <button class="okip-news__nav okip-news__nav--next" type="button" data-okip-news-next aria-label="<?php echo esc_attr__('Siguiente noticia', 'okip'); ?>">
-                <span class="okip-news__nav-icon" aria-hidden="true"></span>
-            </button>
-        <?php endif; ?>
     </div>
 </section>
