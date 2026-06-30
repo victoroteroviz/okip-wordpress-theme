@@ -89,6 +89,26 @@ $hl          = isset($content['highlighted_text']) ? $content['highlighted_text'
 $subtitle    = isset($content['subtitle']) ? $content['subtitle'] : '';
 $description = isset($content['description']) ? $content['description'] : '';
 
+// --- Cuadros de texto posicionables (modelo del editor admin) ---
+// Solo cuentan los cuadros activos CON contenido; si no hay ninguno, se cae al
+// render legacy (.okip-vwt__inner) para conservar instancias antiguas sin tocar.
+$text_boxes   = isset($okip_data['text_boxes']) && is_array($okip_data['text_boxes']) ? $okip_data['text_boxes'] : array();
+$active_boxes = array();
+foreach ($text_boxes as $box) {
+    if (! is_array($box)) {
+        continue;
+    }
+    if (! empty($box['active']) && isset($box['content']) && trim((string) $box['content']) !== '') {
+        $active_boxes[] = $box;
+    }
+}
+$use_boxes = ! empty($active_boxes);
+
+// Etiqueta HTML por rol del cuadro.
+$okip_box_tag = function ($role) {
+    return $role === 'title' ? 'h2' : 'p';
+};
+
 // Variables CSS de presentación (seguras: ya clampadas / saneadas).
 $section_style = sprintf(
     '--okip-vwt-minh:%s;--okip-vwt-cw:%s;--okip-vwt-z:%d;--okip-vwt-overlay-color:%s;--okip-vwt-overlay-opacity:%s;--okip-hold-vh:%d;',
@@ -138,7 +158,36 @@ $section_classes .= $vid_has ? ' okip-vwt--has-video' : ' okip-vwt--no-video';
             <div class="okip-vwt__overlay" aria-hidden="true"></div>
         <?php endif; ?>
 
-        <!-- Capa 3: bloque de texto. -->
+        <!-- Capa 3: cuadros de texto posicionables (si hay activos con contenido). -->
+        <?php if ($use_boxes) : ?>
+        <div class="okip-vwt__boxes">
+            <?php
+            foreach ($active_boxes as $box) :
+                $b_role  = isset($box['role']) ? $box['role'] : 'text';
+                $b_align = isset($box['align']) ? $box['align'] : 'center';
+                $b_h     = isset($box['height_px']) ? (int) $box['height_px'] : 0;
+                $box_style = okip_css_vars(array(
+                    'okip-vwtb-x'     => okip_css_number(isset($box['x']) ? $box['x'] : 50) . '%',
+                    'okip-vwtb-y'     => okip_css_number(isset($box['y']) ? $box['y'] : 50) . '%',
+                    'okip-vwtb-w'     => okip_css_number(isset($box['width_pct']) ? $box['width_pct'] : 60) . '%',
+                    'okip-vwtb-ff'    => okip_font_stack(isset($box['font_family']) ? $box['font_family'] : ''),
+                    'okip-vwtb-fs'    => okip_css_number(isset($box['font_size_px']) ? $box['font_size_px'] : 32) . 'px',
+                    'okip-vwtb-fw'    => (string) (int) (isset($box['font_weight']) ? $box['font_weight'] : 400),
+                    'okip-vwtb-lh'    => okip_css_number(isset($box['line_height']) ? $box['line_height'] : 1.2),
+                    'okip-vwtb-ls'    => okip_css_number(isset($box['letter_spacing']) ? $box['letter_spacing'] : 0) . 'px',
+                    'okip-vwtb-color' => isset($box['color']) ? $box['color'] : '#ffffff',
+                ));
+                if ($b_h > 0) {
+                    $box_style .= '--okip-vwtb-h:' . $b_h . 'px;';
+                }
+                $box_classes = 'okip-vwt__box okip-vwt__box--' . sanitize_html_class($b_role) . ' okip-vwt__box--align-' . sanitize_html_class($b_align);
+                $box_tag     = call_user_func($okip_box_tag, $b_role);
+                ?>
+                <<?php echo $box_tag; ?> class="<?php echo esc_attr($box_classes); ?>" style="<?php echo esc_attr($box_style); ?>"><?php echo esc_html($box['content']); ?></<?php echo $box_tag; ?>>
+            <?php endforeach; ?>
+        </div>
+        <?php else : ?>
+        <!-- Capa 3 (legacy): bloque de texto centrado. -->
         <div class="okip-vwt__inner">
             <div class="okip-vwt__text">
                 <?php if ($eyebrow !== '') : ?>
@@ -170,6 +219,7 @@ $section_classes .= $vid_has ? ' okip-vwt--has-video' : ' okip-vwt--no-video';
                 <?php endif; ?>
             </div>
         </div>
+        <?php endif; ?>
 
     </div>
 

@@ -492,9 +492,31 @@
     touch-action: none;
 }
 
-.okip-admin-stage__card span {
+/* Variante texto (video-w-title): caja ancha que refleja el contenido real. */
+.okip-admin-stage__card--text {
+    aspect-ratio: auto;
+    min-height: 18px;
+    background: rgba(255, 176, 32, .14);
+    border-color: rgba(255, 200, 120, .7);
+    color: #fff4e2;
+    align-items: stretch;
+    padding: 3px 5px;
+}
+
+/* El contenido no captura el puntero (para poder arrastrar el cuadro), pero los
+   tiradores de rescalado SÍ deben recibirlo: por eso se excluyen. */
+.okip-admin-stage__card span:not(.okip-admin-stage__resize) {
     pointer-events: none;
     overflow: hidden;
+}
+
+/* En la variante texto el contenido fluye (no se centra como una etiqueta).
+   Se excluyen los tiradores de rescalado (también son <span>). */
+.okip-admin-stage__card--text span:not(.okip-admin-stage__resize) {
+    width: 100%;
+    overflow: hidden;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .okip-admin-stage__card.is-dragging {
@@ -510,14 +532,36 @@
 
 .okip-admin-stage__resize {
     position: absolute;
-    right: -6px;
-    bottom: -6px;
     width: 12px;
     height: 12px;
     border-radius: 50%;
     background: #ffb020;
     border: 2px solid #fff;
+    z-index: 1;
+}
+
+/* Esquina = ambos ejes (default si no hay modificador). */
+.okip-admin-stage__resize--corner,
+.okip-admin-stage__resize:not([class*="--"]) {
+    right: -6px;
+    bottom: -6px;
     cursor: nwse-resize;
+}
+
+/* Borde derecho = ancho. */
+.okip-admin-stage__resize--e {
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: ew-resize;
+}
+
+/* Borde inferior = alto. */
+.okip-admin-stage__resize--s {
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: ns-resize;
 }
 
 .okip-admin-stage__snap {
@@ -529,6 +573,22 @@
 
 .okip-admin-stage__snap--v { top: 0; bottom: 0; width: 1px; }
 .okip-admin-stage__snap--h { left: 0; right: 0; height: 1px; }
+
+/* Toggle de magnetismo (inyectado por JS bajo la maqueta). */
+.okip-admin-snap-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: #50596b;
+    cursor: pointer;
+    user-select: none;
+}
+
+.okip-admin-snap-toggle input {
+    margin: 0;
+}
 
 @media (max-width: 900px) {
     .okip-admin-grid--two,

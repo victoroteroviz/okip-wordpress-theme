@@ -238,6 +238,8 @@ function okip_render_blocks_admin_page()
                                     <?php okip_render_admin_hero_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
                                 <?php elseif ($type === 'news') : ?>
                                     <?php okip_render_admin_news_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
+                                <?php elseif ($type === 'video-w-title') : ?>
+                                    <?php okip_render_admin_video_w_title_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
                                 <?php else : ?>
                                     <p class="description"><?php esc_html_e('Este bloque se muestra para contexto. Su editor se añadirá usando los mismos campos reutilizables.', 'okip'); ?></p>
                                 <?php endif; ?>

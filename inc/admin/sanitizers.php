@@ -170,6 +170,16 @@ function okip_admin_sanitize_page_overrides($slug, $raw_blocks)
             } else {
                 unset($overrides[$instance_id]);
             }
+        } elseif ($block['type'] === 'video-w-title') {
+            $base_data = isset($block['data']) ? $block['data'] : array();
+            $full = okip_admin_sanitize_video_w_title_data($raw_data, $base_data);
+            $base_norm = okip_normalize_block_data('video-w-title', $base_data);
+            $diff = okip_array_diff_recursive($full, $base_norm);
+            if (! empty($diff)) {
+                $overrides[$instance_id] = array('type' => 'video-w-title', 'data' => $diff);
+            } else {
+                unset($overrides[$instance_id]);
+            }
         }
     }
 
@@ -327,4 +337,54 @@ function okip_admin_sanitize_news_data(array $raw, array $base = array())
     );
 
     return okip_normalize_block_data('news', okip_merge_defaults($data, $current));
+}
+
+/**
+ * Sanea la data editable del bloque Video con Título.
+ *
+ * El editor solo expone: el video principal (video.media), el toggle de reveal
+ * (animation.enabled) y la lista de cuadros de texto (text_boxes). El resto de
+ * grupos (content legacy, overlay, layout, transition) se conservan desde el valor
+ * normalizado actual para no generar diff. El saneo fino de cada cuadro lo realiza
+ * okip_normalize_video_w_title_data() (clamps, whitelists, hex, fuente).
+ *
+ * @param array $raw
+ * @param array $base
+ * @return array
+ */
+function okip_admin_sanitize_video_w_title_data(array $raw, array $base = array())
+{
+    $current = okip_normalize_block_data('video-w-title', $base);
+    $data = array();
+
+    // Video: solo se edita la ruta del media; los flags se conservan.
+    $video   = isset($raw['video']) && is_array($raw['video']) ? $raw['video'] : array();
+    $vid_def = $current['video'];
+    $data['video'] = $vid_def;
+    $data['video']['media'] = okip_admin_sanitize_media_ref(isset($video['media']) ? $video['media'] : $vid_def['media']);
+
+    // Animación: toggle de reveal de entrada.
+    $animation = isset($raw['animation']) && is_array($raw['animation']) ? $raw['animation'] : array();
+    $an_def    = $current['animation'];
+    $data['animation'] = array(
+        'enabled' => okip_bool(isset($animation['enabled']) ? $animation['enabled'] : $an_def['enabled']),
+    );
+
+    // Cuadros de texto: se pasan los crudos (solo arrays, con tope) y el normalizador
+    // del bloque sanea cada campo. La lista reemplaza por completo a la base (merge de
+    // listas atómico), así un cuadro eliminado no reaparece desde los defaults.
+    $raw_boxes = isset($raw['text_boxes']) && is_array($raw['text_boxes']) ? $raw['text_boxes'] : array();
+    $boxes = array();
+    foreach ($raw_boxes as $box) {
+        if (! is_array($box)) {
+            continue;
+        }
+        if (count($boxes) >= 12) {
+            break;
+        }
+        $boxes[] = $box;
+    }
+    $data['text_boxes'] = $boxes;
+
+    return okip_normalize_block_data('video-w-title', okip_merge_defaults($data, $current));
 }

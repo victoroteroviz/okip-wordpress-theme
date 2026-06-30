@@ -136,18 +136,59 @@
     color: var(--okip-color-text-muted, #b9c4d4);
 }
 
+/* ---------- Capa 3 (modelo nuevo): cuadros de texto posicionables ---------- */
+.okip-vwt__boxes {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.okip-vwt__box {
+    position: absolute;
+    left: var(--okip-vwtb-x, 50%);
+    top: var(--okip-vwtb-y, 50%);
+    width: var(--okip-vwtb-w, 60%);
+    height: var(--okip-vwtb-h, auto);
+    transform: translate(-50%, -50%);
+    margin: 0;
+    font-family: var(--okip-vwtb-ff, var(--okip-font-base));
+    font-size: var(--okip-vwtb-fs, 2rem);
+    font-weight: var(--okip-vwtb-fw, 400);
+    line-height: var(--okip-vwtb-lh, 1.2);
+    letter-spacing: var(--okip-vwtb-ls, 0);
+    color: var(--okip-vwtb-color, #ffffff);
+}
+
+.okip-vwt__box--align-left { text-align: left; }
+.okip-vwt__box--align-center { text-align: center; }
+.okip-vwt__box--align-right { text-align: right; }
+
+.okip-vwt__box--subtitle { text-transform: uppercase; }
+
 /* ---------- Reveal de entrada (armado por JS: .is-anim-armed) ---------- */
-.okip-vwt--animated.is-anim-armed .okip-vwt__text > * {
+.okip-vwt--animated.is-anim-armed .okip-vwt__text > *,
+.okip-vwt--animated.is-anim-armed .okip-vwt__box {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translate(-50%, calc(-50% + 18px));
     transition:
         opacity 0.7s ease,
         transform 0.7s ease;
 }
 
+/* El texto legacy no usa el centrado por transform: anima solo en Y. */
+.okip-vwt--animated.is-anim-armed .okip-vwt__text > * {
+    transform: translateY(18px);
+}
+
 .okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__text > * {
     opacity: 1;
     transform: none;
+}
+
+.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__box {
+    opacity: 1;
+    transform: translate(-50%, -50%);
 }
 
 /* Escalonado suave por orden de aparición. */
@@ -170,6 +211,25 @@
     .okip-vwt__title {
         max-width: 100%;
     }
+
+    /* En móvil las posiciones absolutas no caben: los cuadros se apilan en flujo. */
+    .okip-vwt__boxes {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: var(--okip-space-3, 1rem);
+        align-items: center;
+        justify-content: center;
+        min-height: var(--okip-vwt-minh, 100svh);
+        padding: var(--okip-space-5, 2.5rem) var(--okip-space-3, 1rem);
+    }
+
+    .okip-vwt__box {
+        position: static;
+        width: min(100%, 40ch);
+        height: auto;
+        transform: none;
+    }
 }
 
 /* ---------- Accesibilidad ---------- */
@@ -177,6 +237,12 @@
     .okip-vwt--animated.is-anim-armed .okip-vwt__text > * {
         opacity: 1;
         transform: none;
+        transition: none;
+    }
+
+    .okip-vwt--animated.is-anim-armed .okip-vwt__box {
+        opacity: 1;
+        transform: translate(-50%, -50%);
         transition: none;
     }
 }

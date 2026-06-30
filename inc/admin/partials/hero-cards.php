@@ -90,9 +90,9 @@ function okip_admin_render_hero_card($card_base, array $card, $legend)
         <?php okip_admin_section_open(__('Posición', 'okip'), __('Coordenadas y ancho en escritorio (en móvil el Hero apila las tarjetas).', 'okip')); ?>
         <div class="okip-admin-grid okip-admin-grid--two">
             <?php
-            okip_admin_number_field(__('X %', 'okip'), $card_base . '[x]', $card['x'], '', array('min' => 0, 'max' => 100, 'step' => '.5'));
-            okip_admin_number_field(__('Y %', 'okip'), $card_base . '[y]', $card['y'], '', array('min' => 0, 'max' => 100, 'step' => '.5'));
-            okip_admin_number_field(__('Ancho vw', 'okip'), $card_base . '[width_pct]', $card['width_pct'], '', array('min' => 6, 'max' => 30, 'step' => '.5'));
+            okip_admin_number_field(__('X %', 'okip'), $card_base . '[x]', $card['x'], '', array('min' => 0, 'max' => 100, 'step' => 'any'));
+            okip_admin_number_field(__('Y %', 'okip'), $card_base . '[y]', $card['y'], '', array('min' => 0, 'max' => 100, 'step' => 'any'));
+            okip_admin_number_field(__('Ancho vw', 'okip'), $card_base . '[width_pct]', $card['width_pct'], '', array('min' => 6, 'max' => 30, 'step' => 'any'));
             ?>
         </div>
         <?php okip_admin_section_close(); ?>

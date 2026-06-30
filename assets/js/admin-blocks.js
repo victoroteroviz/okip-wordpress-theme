@@ -224,6 +224,14 @@
         var countEl = group.querySelector('[data-okip-card-count]');
         var tpl = group.querySelector('[data-okip-card-template]');
         var max = parseInt(group.getAttribute('data-okip-max'), 10) || 10;
+        // Colección configurable: el Hero usa la default `cards`; otros bloques
+        // (p.ej. video-w-title) declaran su propia clave/prefijo/variante de maqueta.
+        var collKey = group.getAttribute('data-okip-cards-key') || 'cards';
+        var idPrefix = group.getAttribute('data-okip-cards-idprefix') || 'card';
+        var variant = group.getAttribute('data-okip-cards-variant') || '';
+        var collRe = new RegExp('\\[' + collKey + '\\]\\[[^\\]]*\\]');
+        // Referencias para mapear medidas en px del bloque (viewport real) a la maqueta.
+        var REF_VW = 1440, REF_VH = 900;
         if (!list || !tpl) { return; }
 
         function cards() {
@@ -257,7 +265,7 @@
         function reindex() {
             cards().forEach(function (card, i) {
                 card.querySelectorAll('[name]').forEach(function (el) {
-                    el.name = el.name.replace(/\[cards\]\[[^\]]*\]/, '[cards][' + i + ']');
+                    el.name = el.name.replace(collRe, '[' + collKey + '][' + i + ']');
                 });
             });
         }
@@ -278,7 +286,7 @@
             list.appendChild(node);
             reindex();
             var idField = getInput(node, 'id');
-            if (idField) { idField.value = uniqueId('card-' + cards().length); }
+            if (idField) { idField.value = uniqueId(idPrefix + '-' + cards().length); }
             var lg = node.querySelector('[data-okip-card-legend]');
             if (lg && idField) { lg.textContent = idField.value; }
             applyCardType(node);
@@ -302,7 +310,7 @@
             card.parentNode.insertBefore(clone, card.nextSibling);
             reindex();
             var idField = getInput(clone, 'id');
-            if (idField) { idField.value = uniqueId((idField.value || 'card') + '-copy'); }
+            if (idField) { idField.value = uniqueId((idField.value || idPrefix) + '-copy'); }
             var lg = clone.querySelector('[data-okip-card-legend]');
             if (lg && idField) { lg.textContent = idField.value; }
             applyCardType(clone);
@@ -331,26 +339,89 @@
             }
             return value;
         }
+
+        // ---- Magnetismo (snap) on/off ----
+        // Es una ayuda de edición, no un dato del bloque: no se envía en el POST; se
+        // recuerda en localStorage por colección (hero / text_boxes independientes).
+        var snapToggle = null;
+        function snapOn() { return !snapToggle || snapToggle.checked; }
+        function buildSnapToggle() {
+            if (!stage || snapToggle) { return; }
+            var lsKey = 'okipSnap:' + collKey;
+            var wrap = document.createElement('label');
+            wrap.className = 'okip-admin-snap-toggle';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            var saved = null;
+            try { saved = window.localStorage.getItem(lsKey); } catch (e) {}
+            cb.checked = (saved === null) ? true : (saved === '1');
+            cb.addEventListener('change', function () {
+                try { window.localStorage.setItem(lsKey, cb.checked ? '1' : '0'); } catch (e) {}
+            });
+            var span = document.createElement('span');
+            span.textContent = 'Magnetismo (ajustar a la cuadrícula)';
+            wrap.appendChild(cb);
+            wrap.appendChild(span);
+            stage.parentNode.insertBefore(wrap, stage.nextSibling);
+            snapToggle = cb;
+        }
         function buildStage() {
             if (!stage) { return; }
             stage.querySelectorAll('.okip-admin-stage__card, .okip-admin-stage__snap').forEach(function (n) { n.remove(); });
+            var rect0 = stage.getBoundingClientRect();
             cards().forEach(function (card) {
                 var mini = document.createElement('div');
-                mini.className = 'okip-admin-stage__card';
+                mini.className = 'okip-admin-stage__card' + (variant ? ' okip-admin-stage__card--' + variant : '');
                 var box = activeBox(card);
                 if (box && !box.checked) { mini.classList.add('is-inactive'); }
+                var hasHeight = !!getInput(card, 'height_px');
+
+                // Etiqueta: en la variante texto refleja el CONTENIDO real (con su
+                // alineación, color, peso y tamaño proporcional) → preview fiel al bloque.
                 var label = document.createElement('span');
                 var idField = getInput(card, 'id');
-                label.textContent = idField ? idField.value : '';
+                if (variant === 'text') {
+                    var contentField = getInput(card, 'content');
+                    var text = (contentField && contentField.value.trim() !== '') ? contentField.value : (idField ? idField.value : '');
+                    label.textContent = text;
+                    var alignField = getInput(card, 'align');
+                    label.style.textAlign = alignField ? alignField.value : 'center';
+                    var colorField = getInput(card, 'color');
+                    if (colorField && colorField.value) { mini.style.color = colorField.value; }
+                    mini.style.fontWeight = num(card, 'font_weight', 400);
+                    label.style.lineHeight = num(card, 'line_height', 1.2);
+                    label.style.fontSize = Math.max(7, num(card, 'font_size_px', 32) * (rect0.width / REF_VW)) + 'px';
+                } else {
+                    label.textContent = idField ? idField.value : '';
+                }
                 mini.appendChild(label);
+
+                // Tiradores: esquina = ambos ejes; bordes = un eje (solo si hay alto editable).
                 var handle = document.createElement('span');
-                handle.className = 'okip-admin-stage__resize';
+                handle.className = 'okip-admin-stage__resize okip-admin-stage__resize--corner';
                 mini.appendChild(handle);
+                var handleE = null, handleS = null;
+                if (hasHeight) {
+                    handleE = document.createElement('span');
+                    handleE.className = 'okip-admin-stage__resize okip-admin-stage__resize--e';
+                    mini.appendChild(handleE);
+                    handleS = document.createElement('span');
+                    handleS.className = 'okip-admin-stage__resize okip-admin-stage__resize--s';
+                    mini.appendChild(handleS);
+                }
+
                 mini.style.left = num(card, 'x', 50) + '%';
                 mini.style.top = num(card, 'y', 50) + '%';
                 mini.style.width = num(card, 'width_pct', 14) + '%';
+                if (hasHeight) {
+                    var hpx = num(card, 'height_px', 0);
+                    mini.style.height = hpx > 0 ? (hpx / REF_VH * 100) + '%' : 'auto';
+                }
+
                 mini.addEventListener('pointerdown', function (e) {
-                    if (e.target === handle) { startResize(mini, card, e); }
+                    if (e.target === handle) { startResize(mini, card, e, 'both'); }
+                    else if (e.target === handleE) { startResize(mini, card, e, 'x'); }
+                    else if (e.target === handleS) { startResize(mini, card, e, 'y'); }
                     else { startDrag(mini, card, e); }
                 });
                 stage.appendChild(mini);
@@ -367,10 +438,12 @@
             function move(ev) {
                 var rawx = (ev.clientX - rect.left) / rect.width * 100;
                 var rawy = (ev.clientY - rect.top) / rect.height * 100;
-                var sx = applySnap(rawx), sy = applySnap(rawy);
+                var on = snapOn();
+                var sx = on ? applySnap(rawx) : rawx;
+                var sy = on ? applySnap(rawy) : rawy;
                 clearSnap();
-                if (CARD_SNAP.indexOf(sx) !== -1) { addSnapLine('v', sx); }
-                if (CARD_SNAP.indexOf(sy) !== -1) { addSnapLine('h', sy); }
+                if (on && CARD_SNAP.indexOf(sx) !== -1) { addSnapLine('v', sx); }
+                if (on && CARD_SNAP.indexOf(sy) !== -1) { addSnapLine('h', sy); }
                 var px = clamp(sx, halfW, 100 - halfW);
                 var py = clamp(sy, halfH, 100 - halfH);
                 setVal(card, 'x', round1(px));
@@ -387,17 +460,32 @@
             document.addEventListener('pointermove', move);
             document.addEventListener('pointerup', up);
         }
-        function startResize(mini, card, e) {
+        function startResize(mini, card, e, axis) {
             if (!stage) { return; }
             e.preventDefault();
             e.stopPropagation();
+            axis = axis || 'both';
             var rect = stage.getBoundingClientRect();
+            var hasHeight = !!getInput(card, 'height_px');
+            // Rango de ancho por variante (coincide con el clamp del servidor).
+            var wMin = variant === 'text' ? 5 : 6;
+            var wMax = variant === 'text' ? 100 : 30;
             function move(ev) {
-                var cx = num(card, 'x', 50);
-                var px = (ev.clientX - rect.left) / rect.width * 100;
-                var w = clamp(round1(Math.abs(px - cx) * 2), 6, 30);
-                setVal(card, 'width_pct', w);
-                mini.style.width = w + '%';
+                if (axis === 'both' || axis === 'x') {
+                    var cx = num(card, 'x', 50);
+                    var px = (ev.clientX - rect.left) / rect.width * 100;
+                    var w = clamp(round1(Math.abs(px - cx) * 2), wMin, wMax);
+                    setVal(card, 'width_pct', w);
+                    mini.style.width = w + '%';
+                }
+                if ((axis === 'both' || axis === 'y') && hasHeight) {
+                    var cy = num(card, 'y', 50);
+                    var py = (ev.clientY - rect.top) / rect.height * 100;
+                    // % del alto de la maqueta → px del bloque (vía viewport de referencia).
+                    var hpx = clamp(Math.round(Math.abs(py - cy) * 2 / 100 * REF_VH), 0, 1200);
+                    setVal(card, 'height_px', hpx);
+                    mini.style.height = hpx > 0 ? (hpx / REF_VH * 100) + '%' : 'auto';
+                }
             }
             function up() {
                 document.removeEventListener('pointermove', move);
@@ -416,11 +504,12 @@
             else if (rem) { e.preventDefault(); removeCard(rem.closest('[data-okip-card]')); }
         });
         function syncFromInput(target) {
-            if (/\]\[(x|y|width_pct|id|active)\]$/.test(target.name || '')) { buildStage(); }
+            if (/\]\[(x|y|width_pct|height_px|id|active|content|align|color|font_weight|font_size_px|line_height)\]$/.test(target.name || '')) { buildStage(); }
         }
         list.addEventListener('input', function (e) { syncFromInput(e.target); });
         list.addEventListener('change', function (e) { syncFromInput(e.target); });
 
+        buildSnapToggle();
         reindex();
         updateCount();
         buildStage();
