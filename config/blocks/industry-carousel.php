@@ -75,8 +75,8 @@ if (! function_exists('okip_normalize_industry_carousel_data')) {
                 if (! is_array($item)) {
                     continue;
                 }
-                if (count($out) >= 20) {
-                    break; // Tope de 20 tarjetas por instancia.
+                if (count($out) >= 10) {
+                    break; // Tope de 10 tarjetas por instancia.
                 }
                 $merged                = array_merge($item_defaults, $item);
                 $merged['title']       = sanitize_text_field((string) $merged['title']);
@@ -116,59 +116,35 @@ return array(
     ),
     'items' => array(
         array(
-            'title'       => 'Gasolineras',
-            'orange_text' => 'Gasolineras',
+            'title'       => 'Militar',
+            'orange_text' => 'Militar',
             'title_color' => '#960003',
             'image'       => 'img/industry-carousel/GASOLINERAS.png',
-            'alt'         => 'Estación de gasolina con dispensadores de combustible',
+            'alt'         => 'Centro de monitoreo para operación de seguridad',
             'video'       => '',
         ),
         array(
-            'title'       => 'Hospitales',
-            'orange_text' => 'Hospitales',
+            'title'       => 'Interinstitucional',
+            'orange_text' => 'Interinstitucional',
             'title_color' => '#5B7E7B',
             'image'       => 'img/industry-carousel/HOSPITALES.png',
-            'alt'         => 'Sala de hospital con camas de atención médica',
+            'alt'         => 'Operación coordinada entre instituciones',
             'video'       => '',
         ),
         array(
-            'title'       => 'Fraccionamientos',
-            'orange_text' => 'Fraccionamientos',
+            'title'       => 'Empresarial',
+            'orange_text' => 'Empresarial',
             'title_color' => '#899E27',
             'image'       => 'img/industry-carousel/FRACCIONAMIENTOS.png',
-            'alt'         => 'Vista aérea de un fraccionamiento residencial',
+            'alt'         => 'Ecosistema de seguridad para operación empresarial',
             'video'       => '',
         ),
         array(
-            'title'       => 'Escuelas',
-            'orange_text' => 'Escuelas',
+            'title'       => 'Social',
+            'orange_text' => 'Social',
             'title_color' => '#D1CBC8',
             'image'       => 'img/industry-carousel/ESCUELAS.png',
-            'alt'         => 'Aula escolar con estudiantes y profesor frente al pizarrón',
-            'video'       => '',
-        ),
-        array(
-            'title'       => 'Hoteles',
-            'orange_text' => 'Hoteles',
-            'title_color' => '#7BB8DB',
-            'image'       => 'img/industry-carousel/HOTELES.png',
-            'alt'         => 'Hotel con alberca y palmeras',
-            'video'       => '',
-        ),
-        array(
-            'title'       => 'Ferias',
-            'orange_text' => 'Ferias',
-            'title_color' => '#014285',
-            'image'       => 'img/industry-carousel/FERIAS.png',
-            'alt'         => 'Feria iluminada con rueda de la fortuna',
-            'video'       => '',
-        ),
-        array(
-            'title'       => 'Estadios',
-            'orange_text' => 'Estadios',
-            'title_color' => '#0B0C0E',
-            'image'       => 'img/industry-carousel/ESTADIOS.png',
-            'alt'         => 'Estadio iluminado durante un evento deportivo',
+            'alt'         => 'Soluciones de seguridad para entornos sociales',
             'video'       => '',
         ),
     ),

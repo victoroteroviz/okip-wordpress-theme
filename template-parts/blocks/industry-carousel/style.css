@@ -22,22 +22,22 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;
-    gap: clamp(2.5rem, 6vh, 4.5rem);
-    border-radius: clamp(2.5rem, 5vw, 4rem) clamp(2.5rem, 5vw, 4rem) 0 0;
+    justify-content: flex-start;
+    gap: var(--okip-ic-gap, clamp(2rem, 4vh, 3rem));
+    padding-block: calc(var(--okip-navbar-h, 68px) + clamp(.55rem, 1.8vh, 1.35rem)) clamp(2rem, 5vh, 3.5rem);
+    border-radius: 0;
     /* El root pineado no recorta: el clipping vive en la cinta para no pelear
        con ScrollTrigger pin. */
     overflow: visible;
     isolation: isolate;
     /* Inset lateral compartido por la fila de botones y el alineado del track. */
     --okip-ic-inset: clamp(1.25rem, 5vw, 5rem);
+    --okip-ic-card-h: clamp(300px, 58svh, 470px);
 }
 
-/* ScrollTrigger envuelve el bloque pineado en un .pin-spacer.
-   El spacer queda transparente para conservar visibles las esquinas redondeadas
-   contra el bloque oscuro anterior. */
+/* ScrollTrigger envuelve el bloque pineado en un .pin-spacer. */
 .pin-spacer:has(> .okip-ic) {
-    background: transparent;
+    background: #000;
 }
 
 /* ============================================================
@@ -47,12 +47,17 @@
     position: relative;
     z-index: 2;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: clamp(.6rem, 1.2vw, 1rem);
     padding-inline: var(--okip-ic-inset);
     flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
+.okip-ic__nav::-webkit-scrollbar { display: none; }
 
 .okip-ic__nav-btn {
     position: relative;
@@ -60,6 +65,7 @@
     align-items: center;
     justify-content: center;
     min-width: 210px;
+    flex: 0 0 auto;
     height: 40px;
     padding-inline: 1.1rem;
     border: 1px solid rgba(255, 255, 255, .45);
@@ -114,7 +120,10 @@
     width: 100%;
     /* en desktop el track se mueve con transform (JS); el overflow se recorta aquí */
     overflow: clip;
-    flex-shrink: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: flex-start;
 }
 
 .okip-ic__track {
@@ -127,6 +136,7 @@
     /* Padding 0 en desktop: el alineado a la izquierda lo aplica el JS (startX).
        En is-static se reintroduce el inset para no pegar la 1ª tarjeta al borde. */
     padding: 0;
+    height: var(--okip-ic-card-h);
     width: max-content;
     will-change: transform;
 }
@@ -135,11 +145,9 @@
 .okip-ic__item {
     position: relative;
     flex: 0 0 auto;
-    width: clamp(280px, 66vw, 1100px);
+    width: auto;
+    height: 100%;
     aspect-ratio: 16 / 9;
-    /* Cap de alto: en viewports anchos y bajos evita que la tarjeta desborde el
-       100svh del pin (object-fit:cover recorta si se rompe el ratio). */
-    max-height: 72svh;
     border-radius: clamp(20px, 2.4vw, 32px);
     overflow: hidden;
     background: #111316;
@@ -315,22 +323,22 @@
 @media (max-width: 1024px) {
     .okip-ic {
         min-height: auto;
-        padding-block: calc(var(--okip-navbar-h, 68px) + clamp(1.5rem, 4vh, 2.5rem)) clamp(2rem, 6vh, 3.5rem);
+        padding-block: calc(var(--okip-navbar-h, 68px) + clamp(.75rem, 2.5vh, 1.5rem)) clamp(2rem, 6vh, 3.5rem);
         justify-content: flex-start;
         gap: clamp(1.5rem, 4vh, 2.5rem);
     }
     .okip-ic__nav {
-        overflow-x: auto;
         flex-wrap: nowrap;
-        scrollbar-width: none;
     }
-    .okip-ic__nav::-webkit-scrollbar { display: none; }
     .okip-ic__nav-btn {
         min-width: 150px;
-        flex: 0 0 auto;
+    }
+    .okip-ic__track {
+        height: auto;
     }
     .okip-ic__item {
         width: clamp(260px, 82vw, 560px);
+        height: auto;
     }
 }
 

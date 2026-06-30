@@ -3,7 +3,7 @@
 /**
  * Editor admin del bloque Industry Carousel (industry-carousel).
  *
- * Pestañas: Tarjetas (repeater de ítems = botón + media, hasta 20) y Animación
+ * Pestañas: Tarjetas (repeater de ítems = botón + media, hasta 10) y Animación
  * (toggles del pin/scroll-driven y el flag del bloque legacy show_intro). El render
  * de cada tarjeta vive en inc/admin/partials/ic-items.php (okip_admin_render_ic_item).
  *
@@ -47,8 +47,8 @@ function okip_render_admin_industry_carousel_editor($instance_id, array $data)
                 data-okip-cards
                 data-okip-cards-key="items"
                 data-okip-cards-idprefix="item"
-                data-okip-max="20">
-                <p class="description"><?php esc_html_e('Cada tarjeta es un botón (su título) y una media en el carrusel. Hasta 20.', 'okip'); ?></p>
+                data-okip-max="10">
+                <p class="description"><?php esc_html_e('Cada tarjeta es un botón (su título) y una media en el carrusel. Hasta 10.', 'okip'); ?></p>
                 <div class="okip-admin-cards__list" data-okip-cards-list>
                     <?php foreach ($items as $i => $item) : ?>
                         <?php

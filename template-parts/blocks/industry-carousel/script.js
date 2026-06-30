@@ -179,6 +179,26 @@
             return (section.clientWidth || window.innerWidth) * 0.05;
         }
 
+        function navbarOffset() {
+            var raw = window.getComputedStyle(document.documentElement).getPropertyValue('--okip-navbar-h');
+            var h = parseFloat(raw);
+            return isFinite(h) ? h : 68;
+        }
+
+        function measureCardHeight() {
+            if (!track) { return; }
+            var cs = window.getComputedStyle(section);
+            var navH = nav ? nav.offsetHeight : 0;
+            var padTop = parseFloat(cs.paddingTop) || 0;
+            var padBottom = parseFloat(cs.paddingBottom) || 0;
+            var gap = parseFloat(cs.rowGap || cs.gap) || 0;
+            var available = (section.clientHeight || window.innerHeight) - padTop - padBottom - navH - gap;
+            var fallback = Math.min(window.innerHeight * 0.58, 470);
+            var desired = isFinite(available) ? Math.min(available * 0.94, fallback) : fallback;
+            var cardH = OKIP.clamp(desired, 300, 470);
+            section.style.setProperty('--okip-ic-card-h', Math.floor(cardH) + 'px');
+        }
+
         // Calcula el x inicial (1ª tarjeta alineada al inset) y el x final (última
         // tarjeta alineada al inset). Retorna { startX, endX, travel }.
         function calcCentering() {
@@ -197,6 +217,7 @@
         }
 
         // Inicializar la posición del track (1ª tarjeta alineada) sin animación.
+        measureCardHeight();
         var initC = calcCentering();
         gsap.set(track, { x: initC.startX });
 
@@ -233,7 +254,9 @@
             scrollTrigger: {
                 id:                  icId + '-pin',
                 trigger:             section,
-                start:               'top top',
+                start: function () {
+                    return 'top top+=' + navbarOffset();
+                },
                 end: function () {
                     return '+=' + calcCentering().travel;
                 },
@@ -242,6 +265,7 @@
                 scrub:               scrub,
                 anticipatePin:       1,
                 invalidateOnRefresh: true,
+                onRefreshInit: measureCardHeight,
                 onUpdate: function (self) {
                     setActive(progressToIdx(self.progress));
                     updateFills(self.progress);
@@ -287,6 +311,7 @@
                     fillUpTo(0);
                 } else {
                     // Reposicionar el track al x inicial antes de refresh.
+                    measureCardHeight();
                     var c = calcCentering();
                     gsap.set(track, { x: c.startX });
                     ST.refresh();
@@ -296,6 +321,7 @@
 
         setActive(0);
         updateFills(0);
+        measureCardHeight();
     }
 
     function init() {

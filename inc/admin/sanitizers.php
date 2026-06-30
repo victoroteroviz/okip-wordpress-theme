@@ -406,7 +406,7 @@ function okip_admin_sanitize_video_w_title_data(array $raw, array $base = array(
  * animación (enabled, pin_enabled) y el flag del bloque legacy (layout.show_intro).
  * El resto de grupos (content, cta, transition, demás claves de layout/animation) se
  * conservan desde el valor normalizado actual. El saneo fino de cada ítem (clamps,
- * hex, tope de 20) lo realiza okip_normalize_industry_carousel_data().
+ * hex, tope de 10) lo realiza okip_normalize_industry_carousel_data().
  *
  * @param array $raw
  * @param array $base
@@ -440,7 +440,7 @@ function okip_admin_sanitize_industry_carousel_data(array $raw, array $base = ar
         if (! is_array($item)) {
             continue;
         }
-        if (count($items) >= 20) {
+        if (count($items) >= 10) {
             break;
         }
         $items[] = array(
