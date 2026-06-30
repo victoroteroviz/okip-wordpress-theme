@@ -171,9 +171,13 @@
 
 .okip-vwt__box--subtitle { text-transform: uppercase; }
 
-/* ---------- Reveal de entrada (armado por JS: .is-anim-armed) ---------- */
-.okip-vwt--animated.is-anim-armed .okip-vwt__text > *,
-.okip-vwt--animated.is-anim-armed .okip-vwt__box {
+/* ---------- Reveal de entrada (armado por JS: .is-anim-armed) ----------
+   Dos modos coexisten:
+   - Bloque: elementos NO divididos (.okip-vwt__desc, eyebrow…) → fade + translateY.
+   - Letra: elementos con `.is-split` (título, subtítulo, cuadros) animan sus
+     `.okip-vwt__char` en cascada; el contenedor se queda quieto. */
+.okip-vwt--animated.is-anim-armed .okip-vwt__text > *:not(.is-split),
+.okip-vwt--animated.is-anim-armed .okip-vwt__box:not(.is-split) {
     opacity: 0;
     transform: translate(-50%, calc(-50% + 18px));
     transition:
@@ -182,18 +186,45 @@
 }
 
 /* El texto legacy no usa el centrado por transform: anima solo en Y. */
-.okip-vwt--animated.is-anim-armed .okip-vwt__text > * {
+.okip-vwt--animated.is-anim-armed .okip-vwt__text > *:not(.is-split) {
     transform: translateY(18px);
 }
 
-.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__text > * {
+.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__text > *:not(.is-split) {
     opacity: 1;
     transform: none;
 }
 
-.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__box {
+.okip-vwt--animated.is-anim-armed.is-revealed .okip-vwt__box:not(.is-split) {
     opacity: 1;
     transform: translate(-50%, -50%);
+}
+
+/* ---------- Reveal por letra (.is-split, dividido por JS) ---------- */
+/* La palabra es inline-block para no cortar a mitad; el salto cae en los espacios. */
+.okip-vwt__word {
+    display: inline-block;
+    white-space: pre;
+}
+
+.okip-vwt__char {
+    display: inline-block;
+    will-change: opacity, transform;
+}
+
+.okip-vwt--animated.is-anim-armed .is-split .okip-vwt__char {
+    opacity: 0;
+    transform: translateY(0.55em);
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    /* Cascada por índice de carácter (lo fija el JS en --okip-char-i). */
+    transition-delay: calc(var(--okip-char-i, 0) * 0.028s);
+}
+
+.okip-vwt--animated.is-anim-armed.is-revealed .is-split .okip-vwt__char {
+    opacity: 1;
+    transform: none;
 }
 
 /* Escalonado suave por orden de aparición. */
@@ -249,5 +280,12 @@
         opacity: 1;
         transform: translate(-50%, -50%);
         transition: none;
+    }
+
+    .okip-vwt--animated.is-anim-armed .okip-vwt__char {
+        opacity: 1;
+        transform: none;
+        transition: none;
+        transition-delay: 0s;
     }
 }

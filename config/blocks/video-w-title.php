@@ -177,8 +177,8 @@ return array(
         ),
     ),
     'video' => array(
-        // Ruta convencional del video de fondo. Si no existe → fallback sobrio (color sólido).
-        'media'       => 'assets/video/video-w-title/background.mp4',
+        // Video de fondo por defecto. Si no existe → fallback sobrio (color sólido).
+        'media'       => 'assets/video/video-w-title/loop-video.mp4',
         'poster'      => '',
         'autoplay'    => true,
         'loop'        => true,

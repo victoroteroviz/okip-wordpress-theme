@@ -21,9 +21,74 @@
 
     var REVEAL_RATIO = 0.15; // top del bloque bajo el 15% superior = cubre ~85%
 
+    // Elementos cuyo texto se anima LETRA a LETRA (el resto anima por bloque).
+    var SPLIT_SELECTOR = '.okip-vwt__title, .okip-vwt__subtitle, .okip-vwt__box';
+
     function reduceMotion() {
         return (window.OKIP && window.OKIP.reduceMotion) ||
             (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+
+    // Reparte un nodo de texto en palabras (inline-block, no se cortan) y cada
+    // palabra en `.okip-vwt__char`. Conserva los espacios para que el salto de
+    // línea caiga entre palabras. `ctx.i` es el índice global → cascada del CSS.
+    function splitTextNode(textNode, ctx) {
+        var text = textNode.nodeValue;
+        if (!text) { return; }
+        var frag  = document.createDocumentFragment();
+        var parts = text.split(/(\s+)/); // conserva los grupos de espacios
+        for (var p = 0; p < parts.length; p++) {
+            var part = parts[p];
+            if (part === '') { continue; }
+            if (/^\s+$/.test(part)) {
+                frag.appendChild(document.createTextNode(part));
+                continue;
+            }
+            var word = document.createElement('span');
+            word.className = 'okip-vwt__word';
+            for (var c = 0; c < part.length; c++) {
+                var ch = document.createElement('span');
+                ch.className = 'okip-vwt__char';
+                ch.style.setProperty('--okip-char-i', ctx.i);
+                ch.textContent = part.charAt(c);
+                word.appendChild(ch);
+                ctx.i++;
+            }
+            frag.appendChild(word);
+        }
+        textNode.parentNode.replaceChild(frag, textNode);
+    }
+
+    // Recorre los hijos: los nodos de texto se parten; los elementos (p.ej. el
+    // `.okip-vwt__highlight`) se conservan y se recorren para no perder su estilo.
+    function splitNode(node, ctx) {
+        var children = Array.prototype.slice.call(node.childNodes);
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child.nodeType === 3) {
+                splitTextNode(child, ctx);
+            } else if (child.nodeType === 1) {
+                splitNode(child, ctx);
+            }
+        }
+    }
+
+    function splitElement(el) {
+        // aria-label con el texto íntegro → el lector lo anuncia como una frase,
+        // no letra a letra; los spans generados quedan decorativos.
+        var full = el.textContent;
+        if (full && !el.getAttribute('aria-label')) {
+            el.setAttribute('aria-label', full);
+        }
+        splitNode(el, { i: 0 });
+        el.classList.add('is-split');
+    }
+
+    function splitSection(section) {
+        var targets = section.querySelectorAll(SPLIT_SELECTOR);
+        for (var i = 0; i < targets.length; i++) {
+            splitElement(targets[i]);
+        }
     }
 
     function reveal(section) {
@@ -44,6 +109,9 @@
 
         // Armar el estado inicial oculto SOLO ahora (por JS).
         section.classList.add('is-anim-armed');
+
+        // Partir en letras los elementos marcados (título, subtítulo, cuadros).
+        splitSection(section);
 
         // Caso "ya en vista": si el top ya cruzó el umbral, revelar sin esperar al IO.
         if (section.getBoundingClientRect().top <= window.innerHeight * REVEAL_RATIO) {
