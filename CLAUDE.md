@@ -260,6 +260,17 @@ Capas: **1) background media limpio (video|image|svg)** → **2) overlay opciona
   NO llama `play()`. Solo se activa por interacción: `play_mode` = `hover|tap|manual`
   (`setupCards()`). `reset_on_leave=false` (default) → al salir del hover NO reinicia
   (continúa). Placeholder (sin `<video>`) se ignora sin error.
+- **Tarjetas — activación AUTOMÁTICA (grupo `autoplay`):** además del hover, un
+  planificador (`setupCardsAutoplay()`) dispara una tarjeta al azar cada intervalo
+  aleatorio (`autoplay.min_delay_ms`..`max_delay_ms`, primer disparo a `start_delay_ms`),
+  reutilizando las MISMAS `play()/stop()` del hover (el video se detiene tras `holdMs` =
+  `play_duration_ms`||3500; el GIF se autofinaliza). Se **apaga desde el admin** con
+  `autoplay.enabled=false` (override en `wp_options` vía `okip_page_blocks`, igual que el
+  resto de la data; el panel admin sigue en stubs pero el flag está cableado de extremo a
+  extremo: config → data-attrs `data-cards-autoplay*` → JS). También se pausa con
+  `reduce-motion`, con la pestaña oculta, con el Hero cubierto (`is-hero-paused`) y —si
+  `pause_on_hover`— mientras el ratón está sobre `[data-okip-hero-cards]`. `setupGifCard()`
+  ahora **devuelve** su `play()` (antes no retornaba) para que hover y autoplay lo compartan.
 - **Secuencia de entrada (JS) — escena dual-video:**
   1. **Intro** (`background.intro_media`): se reproduce UNA vez; tarjetas y texto permanecen ocultos.
   2. Al terminar (o al fallar antes de `intro.fail_timeout`, 2500 ms): crossfade al **loop**

@@ -29,6 +29,7 @@ $intro      = isset($okip_data['intro']) ? $okip_data['intro'] : array();
 $loop       = isset($okip_data['loop']) ? $okip_data['loop'] : array();
 $overlay    = isset($okip_data['overlay']) ? $okip_data['overlay'] : array();
 $transition = isset($okip_data['transition']) ? $okip_data['transition'] : array();
+$autoplay   = isset($okip_data['autoplay']) && is_array($okip_data['autoplay']) ? $okip_data['autoplay'] : array();
 $cards      = isset($okip_data['cards']) && is_array($okip_data['cards']) ? $okip_data['cards'] : array();
 $motion     = okip_normalize_motion(isset($okip_data['motion']) ? $okip_data['motion'] : array(), array('background', 'text', 'cards'));
 $typography = isset($okip_data['typography']) ? $okip_data['typography'] : array();
@@ -102,6 +103,13 @@ $crossfade    = ! empty($transition['intro_to_loop_crossfade']);
 $crossfade_ms = isset($transition['crossfade_duration']) ? (int) $transition['crossfade_duration'] : 700;
 $effective_crossfade_ms = $crossfade ? $crossfade_ms : 0;
 $content_entry_delay = isset($transition['content_entry_delay']) ? (int) $transition['content_entry_delay'] : 900;
+
+// Activación automática de tarjetas (disparos aleatorios sin interacción).
+$autoplay_on       = ! empty($autoplay['enabled']);
+$autoplay_min      = isset($autoplay['min_delay_ms']) ? (int) $autoplay['min_delay_ms'] : 2500;
+$autoplay_max      = isset($autoplay['max_delay_ms']) ? (int) $autoplay['max_delay_ms'] : 6500;
+$autoplay_start    = isset($autoplay['start_delay_ms']) ? (int) $autoplay['start_delay_ms'] : 1200;
+$autoplay_on_hover = ! empty($autoplay['pause_on_hover']);
 
 // Fallback de fondo disponible para el crossfade de FALLO (solo en modo video).
 $has_fallback_layer = $has_video_layer && $fallback_url !== '';
@@ -179,6 +187,11 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     data-crossfade="<?php echo $crossfade ? '1' : '0'; ?>"
     data-crossfade-ms="<?php echo esc_attr((string) $crossfade_ms); ?>"
     data-content-entry-delay="<?php echo esc_attr((string) max(0, $content_entry_delay)); ?>"
+    data-cards-autoplay="<?php echo $autoplay_on ? '1' : '0'; ?>"
+    data-cards-autoplay-min="<?php echo esc_attr((string) max(0, $autoplay_min)); ?>"
+    data-cards-autoplay-max="<?php echo esc_attr((string) max(0, $autoplay_max)); ?>"
+    data-cards-autoplay-start="<?php echo esc_attr((string) max(0, $autoplay_start)); ?>"
+    data-cards-autoplay-hover="<?php echo $autoplay_on_hover ? '1' : '0'; ?>"
     style="<?php echo $hero_style; ?>">
     <script type="application/json" data-okip-motion-config><?php echo $motion_json; ?></script>
 

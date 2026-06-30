@@ -223,6 +223,8 @@
     function setupCards(hero) {
         var cards = hero.querySelectorAll('[data-okip-hero-card]');
         var finePointer = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+        // Tarjetas activables por el autoplay aleatorio (mismo mecanismo que el hover).
+        var players = [];
 
         cards.forEach(function (card) {
             var video = card.querySelector('video');
@@ -231,7 +233,9 @@
             var resetOnLeave = card.getAttribute('data-reset-on-leave') === '1';
 
             if (gif) {
-                setupGifCard(card, gif, finePointer);
+                var gifPlay = setupGifCard(card, gif, finePointer);
+                // El GIF se autofinaliza tras su duración → no necesita stop().
+                if (gifPlay) { players.push({ play: gifPlay }); }
             }
 
             if (!video) { return; }
@@ -260,17 +264,91 @@
                     if (video.paused) { play(); } else { pause(); }
                 });
             }
+
+            // El video se reproduce en bucle; el autoplay lo detiene tras un rato.
+            var holdMs = readMs(card.getAttribute('data-play-duration-ms'), 0) || 3500;
+            players.push({ play: play, stop: pause, holdMs: holdMs });
         });
+
+        setupCardsAutoplay(hero, players);
     }
 
+    /*
+     * Activación AUTOMÁTICA de tarjetas: dispara una tarjeta al azar cada cierto
+     * intervalo aleatorio, reutilizando las funciones play()/stop() del hover. Se
+     * apaga desde el admin (data-cards-autoplay="0"), con reduce-motion, o mientras
+     * el ratón está sobre las tarjetas / la pestaña está oculta / el Hero cubierto.
+     */
+    function setupCardsAutoplay(hero, players) {
+        if (reduceMotion || !players.length) { return; }
+        var d = hero.dataset;
+        if (d.cardsAutoplay !== '1') { return; }
+
+        var minDelay = readMs(d.cardsAutoplayMin, 2500);
+        var maxDelay = readMs(d.cardsAutoplayMax, 6500);
+        if (maxDelay < minDelay) { maxDelay = minDelay; }
+        var startDelay = readMs(d.cardsAutoplayStart, 1200);
+        var pauseOnHover = d.cardsAutoplayHover === '1';
+
+        var timer = null;
+        var hovering = false;
+        var lastIndex = -1;
+
+        function pickIndex() {
+            if (players.length === 1) { return 0; }
+            var i;
+            do { i = Math.floor(Math.random() * players.length); } while (i === lastIndex);
+            return i;
+        }
+
+        function tick() {
+            var blocked = hovering || document.hidden || hero.classList.contains('is-hero-paused');
+            if (!blocked) {
+                lastIndex = pickIndex();
+                var player = players[lastIndex];
+                try { player.play(); } catch (e) {}
+                if (player.stop) {
+                    window.setTimeout(function () {
+                        try { player.stop(); } catch (e) {}
+                    }, player.holdMs || 3500);
+                }
+            }
+            schedule();
+        }
+
+        function schedule() {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(tick, minDelay + Math.random() * (maxDelay - minDelay));
+        }
+
+        if (pauseOnHover) {
+            var wrap = hero.querySelector('[data-okip-hero-cards]');
+            if (wrap) {
+                wrap.addEventListener('mouseenter', function () { hovering = true; });
+                wrap.addEventListener('mouseleave', function () { hovering = false; });
+            }
+        }
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) { window.clearTimeout(timer); }
+            else { schedule(); }
+        });
+
+        window.setTimeout(schedule, startDelay);
+    }
+
+    /*
+     * Prepara una tarjeta GIF y devuelve su función `play()` (o null si no aplica),
+     * para que el hover Y el autoplay aleatorio compartan el MISMO mecanismo de
+     * reproducción. El hover solo se enlaza en puntero fino con modo hover.
+     */
     function setupGifCard(card, gif, finePointer) {
         var src = card.getAttribute('data-gif-src') || gif.getAttribute('data-gif-src') || '';
         var playMode = card.getAttribute('data-play-mode') || 'hover';
         var playDuration = readMs(card.getAttribute('data-play-duration-ms'), 4000);
         var token = 0;
         var playing = false;
-        if (!src) { return; }
-        if (playMode !== 'hover' || !finePointer || reduceMotion) { return; }
+        if (!src || playMode === 'disabled') { return null; }
 
         function finish(current) {
             if (current !== token) { return; }
@@ -301,7 +379,10 @@
             }, playDuration);
         }
 
-        card.addEventListener('mouseenter', play);
+        if (playMode === 'hover' && finePointer && !reduceMotion) {
+            card.addEventListener('mouseenter', play);
+        }
+        return play;
     }
 
     function init() {

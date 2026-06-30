@@ -161,6 +161,16 @@ if (! function_exists('okip_normalize_hero_data')) {
             60000
         );
 
+        // Activación automática de tarjetas (disparos aleatorios opcionales).
+        $data['autoplay']['enabled']        = okip_bool($data['autoplay']['enabled']);
+        $data['autoplay']['pause_on_hover'] = okip_bool($data['autoplay']['pause_on_hover']);
+        $data['autoplay']['min_delay_ms']   = okip_clamp_int($data['autoplay']['min_delay_ms'], 200, 60000);
+        $data['autoplay']['max_delay_ms']   = okip_clamp_int($data['autoplay']['max_delay_ms'], 200, 120000);
+        $data['autoplay']['start_delay_ms'] = okip_clamp_int($data['autoplay']['start_delay_ms'], 0, 60000);
+        if ($data['autoplay']['max_delay_ms'] < $data['autoplay']['min_delay_ms']) {
+            $data['autoplay']['max_delay_ms'] = $data['autoplay']['min_delay_ms'];
+        }
+
         // Animaciones reusables.
         $data['motion'] = okip_normalize_motion(isset($data['motion']) ? $data['motion'] : array(), array('background', 'text', 'cards'));
         unset($data['reveal'], $data['animation']);
@@ -267,6 +277,16 @@ return array(
         'intro_to_loop_crossfade' => true, // crossfade suave intro → loop (sin parpadeo)
         'crossfade_duration'      => 700,  // ms del crossfade
         'content_entry_delay'     => 900,  // ms desde que inicia el Hero hasta texto/tarjetas
+    ),
+    // Activación AUTOMÁTICA de tarjetas (sin interacción del ratón). Las tarjetas
+    // siguen respondiendo al hover; esto solo añade disparos aleatorios encima.
+    // `enabled=false` (editable desde el admin) las deja solo-hover, como antes.
+    'autoplay' => array(
+        'enabled'        => true,  // dispara tarjetas al azar sin interacción
+        'min_delay_ms'   => 2500,  // espera mínima entre disparos aleatorios
+        'max_delay_ms'   => 6500,  // espera máxima entre disparos aleatorios
+        'start_delay_ms' => 1200,  // espera inicial tras entrar el contenido
+        'pause_on_hover' => true,  // pausar los disparos mientras el ratón está sobre las tarjetas
     ),
     'cards' => array(
         array(
