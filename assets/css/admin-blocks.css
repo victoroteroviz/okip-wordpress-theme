@@ -235,6 +235,16 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.okip-admin-grid--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.okip-admin-row {
+    align-items: end;
+    padding: 10px 0;
+    border-bottom: 1px solid #eaecf0;
+}
+
 .okip-admin-field,
 .okip-admin-check {
     display: grid;

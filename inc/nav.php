@@ -23,8 +23,7 @@ if (! defined('ABSPATH')) {
  */
 function okip_navbar_config()
 {
-    $defaults = okip_block_defaults('navbar');
-    return is_array($defaults) ? $defaults : array();
+    return okip_layout_config('navbar');
 }
 
 /**

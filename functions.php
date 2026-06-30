@@ -53,6 +53,7 @@ okip_require('inc/animation-controls.php');
 okip_require('inc/media.php');
 okip_require('inc/data.php');
 okip_require('inc/blocks.php');
+okip_require('inc/layout-settings.php');
 okip_require('inc/block-loader.php');
 okip_require('inc/nav.php');
 okip_require('inc/setup.php');
@@ -67,11 +68,14 @@ if (is_admin()) {
     okip_require('inc/admin/notices.php');
     okip_require('inc/admin/repositories.php');
     okip_require('inc/admin/save-handlers.php');
+    okip_require('inc/admin/layout-settings.php');
     /* Partials y editores por bloque (antes del controlador que los invoca). */
     okip_require('inc/admin/partials/hero-cards.php');
     okip_require('inc/admin/partials/vwt-text-boxes.php');
+    okip_require('inc/admin/partials/ic-items.php');
     okip_require('inc/admin/editors/hero.php');
     okip_require('inc/admin/editors/news.php');
     okip_require('inc/admin/editors/video-w-title.php');
+    okip_require('inc/admin/editors/industry-carousel.php');
     okip_require('inc/admin/admin-pages.php');
 }

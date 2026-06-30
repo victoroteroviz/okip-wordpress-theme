@@ -110,8 +110,8 @@ function okip_admin_render_block_order_panel($blocks, array $base_order)
 function okip_register_admin_pages()
 {
     $hook = add_menu_page(
-        __('OKIP Blocks', 'okip'),
-        __('OKIP Blocks', 'okip'),
+        __('OKIP', 'okip'),
+        __('OKIP', 'okip'),
         'manage_options',
         'okip-blocks',
         'okip_render_blocks_admin_page',
@@ -119,10 +119,31 @@ function okip_register_admin_pages()
         58
     );
 
+    add_submenu_page(
+        'okip-blocks',
+        __('OKIP Blocks', 'okip'),
+        __('Blocks', 'okip'),
+        'manage_options',
+        'okip-blocks',
+        'okip_render_blocks_admin_page'
+    );
+
+    $layout_hook = add_submenu_page(
+        'okip-blocks',
+        __('OKIP Layout', 'okip'),
+        __('Layout', 'okip'),
+        'manage_options',
+        'okip-layout',
+        'okip_render_layout_admin_page'
+    );
+
     // El POST se procesa en load-{hook} (antes de imprimir HTML) para poder
     // redirigir (PRG) y evitar el reenvío del formulario al recargar.
     if ($hook) {
         add_action('load-' . $hook, 'okip_admin_handle_load');
+    }
+    if ($layout_hook) {
+        add_action('load-' . $layout_hook, 'okip_admin_handle_layout_load');
     }
 }
 add_action('admin_menu', 'okip_register_admin_pages');
@@ -135,7 +156,7 @@ add_action('admin_menu', 'okip_register_admin_pages');
  */
 function okip_admin_enqueue_assets($hook)
 {
-    if ($hook !== 'toplevel_page_okip-blocks') {
+    if (! in_array($hook, array('toplevel_page_okip-blocks', 'okip_page_okip-layout'), true)) {
         return;
     }
 
@@ -240,6 +261,8 @@ function okip_render_blocks_admin_page()
                                     <?php okip_render_admin_news_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
                                 <?php elseif ($type === 'video-w-title') : ?>
                                     <?php okip_render_admin_video_w_title_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
+                                <?php elseif ($type === 'industry-carousel') : ?>
+                                    <?php okip_render_admin_industry_carousel_editor($instance_id, isset($block['data']) ? $block['data'] : array()); ?>
                                 <?php else : ?>
                                     <p class="description"><?php esc_html_e('Este bloque se muestra para contexto. Su editor se añadirá usando los mismos campos reutilizables.', 'okip'); ?></p>
                                 <?php endif; ?>

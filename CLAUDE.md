@@ -327,36 +327,39 @@ de scroll, sin los glitches del antiguo pin de ScrollTrigger.
   `okip_page_block_order_remap()`, filtrable) para que un orden guardado antiguo conserve la
   posición en lugar de anexar el bloque nuevo al final.
 
-### Industry Carousel (`industry-carousel`) — instancia `home-industry-carousel` · ref `bloque 3.png`
-Sección con **fondo claro** (blanco/gris muy claro) — opuesto al Bloque 2. Estructura visual:
-texto centrado arriba + cinta de imágenes a ancho completo abajo.
+### Industry Carousel (`industry-carousel`) — instancia `home-industry-carousel` · ref `referencias/image copy.png`
+**Rediseño oscuro** (sustituye al diseño claro previo con heading + texto naranja + dots, que
+vive en el historial de git). Sección **fondo negro** (`#000`). Estructura visual:
 
-**Layout (ref `bloque 3.png`):**
-- `heading_main` en uppercase bold centrado ("ECOSISTEMAS DE SEGURIDAD")
-- `heading_sub` debajo en peso normal ("físicos y virtuales a la medida")
-- Texto naranja en su **propia línea centrada grande** (NO inline en el heading); cambia con el ítem activo
-- Botón CTA pequeño bajo el naranja ("SABER MÁS")
-- Cinta de imágenes full-width al fondo; sin texto debajo de cada tarjeta
-
-**Tarjetas:**
-- Activa: a color, escala mayor (`scale(1.08)`), centrada en viewport
-- Inactivas: escala de grises (`filter: grayscale(0.85)`), escala menor (`scale(0.92)`)
-- Proporción landscape ancha (4/3 aprox.), sin borde card body
+**Layout (ref `image copy.png`):**
+- Fila superior de **botones tipo tabs/progreso** (uno por tarjeta, `item.title` como label):
+  borde blanco, texto uppercase monospace, fondo oscuro, ~210×40px, radius 6px.
+- El botón activo tiene un **relleno gris** (`.okip-ic__nav-fill`, `scaleX` por `--okip-ic-fill`)
+  que avanza de izquierda a derecha con el progreso del scroll.
+- **Track horizontal de tarjetas grandes** (radius ~32px): la activa es protagonista (~66vw,
+  a plena luz); se asoma parte de la siguiente a la derecha (oscurecida `brightness(.4)`).
+- **Sin heading/subtítulo/texto naranja/CTA visibles.** Ese bloque legacy queda detrás del flag
+  `layout.show_intro` (default `false`).
 
 **Scroll-driven (desktop, GSAP):**
-- **Un solo ScrollTrigger** (`icId-pin`): `pin:true`, `pinSpacing:true`, `scrub:1`
-- `start: 'top top'`, `end` calculado por la distancia real para centrar del primer al último ítem:
-  `end = Math.abs(firstItemCenterX - lastItemCenterX)` (via `invalidateOnRefresh`)
-- Índice activo: `Math.round(progress * (itemCount - 1))` (no `Math.floor`)
-- Track empieza con el primer ítem centrado; termina con el último ítem centrado
-- **SIN** ST separado de overlay (causaba conflicto con el pin)
+- **Un solo ScrollTrigger** (`icId-pin`): `pin:true`, `pinSpacing:true`, `scrub:1`.
+- `start: 'top top'`, `end` por distancia real (offsetLeft de 1ª/última tarjeta, alineadas al
+  inset izquierdo `--okip-ic-inset`, via `invalidateOnRefresh`). El scroll vertical mueve el
+  track con `x: startX→endX`.
+- **Progreso segmentado:** `segment = progress*(N-1)`; índice activo (tarjeta + botón resaltado)
+  = `Math.round(segment)`; relleno de botones = anteriores 100%, `floor(segment)` con el progreso
+  local (`segment-floor`), posteriores 0%; en el último slide el último botón al 100%.
+- Botones = navegación: click → `scrollTo` al punto del segmento (`idx/(N-1)`).
 
-**Fallback / móvil ≤1024px:** modo `is-static`, scroll horizontal nativo, IO actualiza activo.
+**Fallback / móvil ≤1024px:** modo `is-static`, scroll horizontal nativo, IO actualiza activo,
+relleno escalonado (`fillUpTo`). El track reintroduce el `--okip-ic-inset` lateral por CSS.
 
-**Config:** `config/blocks/industry-carousel.php`. Grupos: `content` (`heading_main`, `heading_sub`,
-`cta_label`, `cta_url`, `eyebrow`), `items` (lista; cada ítem: `title`, `orange_text`,
-`description`, `image`, `alt`, `video`), `animation` (`enabled`, `pin_enabled`,
-`scroll_distance_vh`, `disable_below`, `scrub`).
+**Config:** `config/blocks/industry-carousel.php`. Grupos: `content`/`cta` (legacy, solo con
+`show_intro`), `layout` (`min_height`, `z_index=0` → auto por orden, `show_intro=false`),
+`items` (lista, **máx. 20**; cada ítem: `title`, `image`, `video`, `alt`, + legacy `orange_text`,
+`title_color`), `animation` (`enabled`, `pin_enabled`, `disable_below`, `scrub`).
+**Admin:** editor `inc/admin/editors/industry-carousel.php` + partial `inc/admin/partials/ic-items.php`
+(repeater de hasta 20 ítems, sin maqueta) + saneo `okip_admin_sanitize_industry_carousel_data()`.
 
 ---
 
@@ -446,6 +449,15 @@ texto centrado arriba + cinta de imágenes a ancho completo abajo.
 - **Bloque 3 — `overflow:hidden` en el bloque raíz interfiere con pin:** GSAP pin necesita
   que el bloque no corte su contenido. Usar `overflow:clip` solo en el track-outer o
   quitar el overflow del raíz en desktop.
-- **Bloque 3 — fondo claro, no oscuro:** la referencia `bloque 3.png` usa fondo blanco/
-  claro. El texto naranja y el heading son oscuros. Es el bloque de mayor contraste con
-  el Bloque 2 (que es oscuro).
+- **Bloque 3 — fondo NEGRO (rediseño):** la referencia vigente es `referencias/image copy.png`
+  (fondo `#000`, botones tab/progreso + tarjetas grandes). El diseño claro previo (heading +
+  texto naranja + dots) ya NO aplica; vive en el historial de git. El heading/naranja/CTA solo
+  reaparecen con `layout.show_intro=true` (off por defecto).
+- **Bloque 3 — relleno de botones: índice activo con `round`, relleno con `floor`+local.** Son
+  dos cálculos distintos sobre `segment=progress*(N-1)`: `Math.round` resalta la tarjeta/botón;
+  `Math.floor`+`(segment-floor)` rellena. No unificarlos. En el último slide forzar el último
+  relleno al 100% (si no, `floor=N-1` daría local 0).
+- **Bloque 3 — alineado a la IZQUIERDA por inset, no centrado:** la tarjeta activa alinea su
+  borde izquierdo a `--okip-ic-inset` (mismo que la fila de botones) para que se asome la
+  siguiente a la derecha. `startX = inset - items[0].offsetLeft` (medida real). En desktop el
+  inset lo aporta el `startX` del JS (track sin padding); en `is-static` lo aporta el CSS.

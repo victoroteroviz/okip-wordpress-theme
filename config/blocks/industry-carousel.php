@@ -44,7 +44,10 @@ if (! function_exists('okip_normalize_industry_carousel_data')) {
     function okip_normalize_industry_carousel_data($data)
     {
         // Layout.
-        $data['layout']['z_index'] = okip_clamp_int($data['layout']['z_index'], 0, 50);
+        $data['layout']['z_index']    = okip_clamp_int($data['layout']['z_index'], 0, 50);
+        // show_intro: muestra/oculta el bloque legacy de heading + subtítulo + texto
+        // dinámico + CTA. Apagado por defecto (el rediseño oscuro no lo usa).
+        $data['layout']['show_intro'] = okip_bool(isset($data['layout']['show_intro']) ? $data['layout']['show_intro'] : false);
 
         // CTA.
         $data['cta']['enabled'] = okip_bool($data['cta']['enabled']);
@@ -71,6 +74,9 @@ if (! function_exists('okip_normalize_industry_carousel_data')) {
             foreach ($data['items'] as $item) {
                 if (! is_array($item)) {
                     continue;
+                }
+                if (count($out) >= 20) {
+                    break; // Tope de 20 tarjetas por instancia.
                 }
                 $merged                = array_merge($item_defaults, $item);
                 $merged['title']       = sanitize_text_field((string) $merged['title']);
@@ -105,7 +111,8 @@ return array(
     ),
     'layout' => array(
         'min_height' => '100svh',
-        'z_index'    => 0, // 0 = z-index automático por orden de render (override si >0)
+        'z_index'    => 0,     // 0 = z-index automático por orden de render (override si >0)
+        'show_intro' => false, // muestra el bloque legacy (heading + naranja + CTA); off por defecto
     ),
     'items' => array(
         array(

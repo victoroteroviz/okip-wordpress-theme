@@ -33,7 +33,7 @@ if (! function_exists('okip_footer_social_icon')) {
     }
 }
 
-$okip_footer  = okip_block_defaults('footer');
+$okip_footer  = okip_layout_config('footer');
 $okip_logo    = isset($okip_footer['logo']) && is_array($okip_footer['logo']) ? $okip_footer['logo'] : array();
 $okip_logo_img = ! empty($okip_logo['image']) ? okip_media_url($okip_logo['image']) : '';
 $okip_logo_alt = ! empty($okip_logo['alt']) ? $okip_logo['alt'] : get_bloginfo('name');

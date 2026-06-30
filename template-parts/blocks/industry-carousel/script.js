@@ -1,16 +1,17 @@
 /*
- * Bloque Industry Carousel (Bloque 3) — scroll-driven.
+ * Bloque Industry Carousel (Bloque 3) — scroll-driven (rediseño oscuro).
  * Scope por instancia via [data-okip-ic].
  *
  * Desktop con GSAP + ScrollTrigger (>disable_below px):
  *   UN SOLO ScrollTrigger pin+scrub.
  *   - start: 'top top' (cuando el bloque toca el tope del viewport).
- *   - end: calculado para que la cinta recorra desde el primer ítem centrado
- *     hasta el último ítem centrado (medidas reales, invalidateOnRefresh).
- *   - La cinta se mueve con transform inline (GSAP tween).
- *   - Índice activo: Math.round(progress * (itemCount-1)).
- *   - Texto naranja: cambia con setActive(idx).
- *   No hay ST separado de overlay (causa conflicto con el pin).
+ *   - end: distancia real para alinear desde la primera hasta la última tarjeta a la
+ *     izquierda del inset (medidas reales offsetLeft, invalidateOnRefresh).
+ *   - El track se mueve con transform inline (GSAP tween).
+ *   - Índice activo (tarjeta + botón resaltado): Math.round(progress * (N-1)).
+ *   - Relleno de los botones (progreso segmentado): anteriores 100%, el actual con
+ *     el progreso local (segment - floor), posteriores 0%. En el último slide el
+ *     último botón se llena 100%.
  *
  * Móvil / sin GSAP: is-static, scroll horizontal nativo, IO para activo.
  *
@@ -40,10 +41,11 @@
         var icId    = section.id || d.blockInstance || 'ic';
         var isSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
 
+        var nav         = section.querySelector('.okip-ic__nav');
         var track       = section.querySelector('.okip-ic__track');
         var items       = OKIP.toArray(section.querySelectorAll('.okip-ic__item'));
         var orangeTexts = OKIP.toArray(section.querySelectorAll('.okip-ic__orange-text'));
-        var dots        = OKIP.toArray(section.querySelectorAll('.okip-ic__dot'));
+        var navBtns     = OKIP.toArray(section.querySelectorAll('.okip-ic__nav-btn'));
         var orangeSr    = section.querySelector('.okip-ic__orange-sr');
 
         // DOM como única fuente de verdad: el conteo y los índices salen de los nodos
@@ -51,9 +53,9 @@
         var itemCount = items.length || 1;
         items.forEach(function (el, i) { el.dataset.index = String(i); });
         orangeTexts.forEach(function (el, i) { el.dataset.index = String(i); });
-        dots.forEach(function (el, i) { el.dataset.index = String(i); });
+        navBtns.forEach(function (el, i) { el.dataset.index = String(i); });
 
-        /* ---- Estado activo ---- */
+        /* ---- Estado activo (tarjeta + botón resaltado + texto naranja) ---- */
         var prevIdx = -1;
         function setActive(idx) {
             idx = OKIP.clamp(idx, 0, itemCount - 1);
@@ -75,7 +77,7 @@
             orangeTexts.forEach(function (el) {
                 el.classList.toggle('is-active', OKIP.readInt(el.dataset.index, -1) === idx);
             });
-            dots.forEach(function (el) {
+            navBtns.forEach(function (el) {
                 var di = OKIP.readInt(el.dataset.index, -1);
                 el.classList.toggle('is-active', di === idx);
                 el.setAttribute('aria-selected', di === idx ? 'true' : 'false');
@@ -85,6 +87,30 @@
                 var active = section.querySelector('.okip-ic__orange-text[data-index="' + idx + '"]');
                 if (active) { orangeSr.textContent = active.textContent; }
             }
+        }
+
+        // Relleno de los botones según el progreso global (0..1).
+        // segment = progress * (N-1); el botón floor(segment) se llena con el progreso
+        // local, los anteriores al 100% y los posteriores a 0%. En el último slide el
+        // último botón se rellena por completo.
+        function setFill(btn, f) {
+            btn.style.setProperty('--okip-ic-fill', f.toFixed(4));
+        }
+        function updateFills(progress) {
+            if (!navBtns.length) { return; }
+            var seg      = progress * (itemCount - 1);
+            var floorIdx = Math.floor(seg + 1e-6);
+            var local    = seg - floorIdx;
+            navBtns.forEach(function (btn, j) {
+                setFill(btn, j < floorIdx ? 1 : (j === floorIdx ? local : 0));
+            });
+            if (progress >= 0.999) {
+                setFill(navBtns[navBtns.length - 1], 1);
+            }
+        }
+        // Relleno escalonado para el modo estático (sin progreso continuo).
+        function fillUpTo(idx) {
+            navBtns.forEach(function (btn, j) { setFill(btn, j <= idx ? 1 : 0); });
         }
 
         var canAnimate = animOn && !reduceMotion && !isSmall && itemCount > 1 && pinOn;
@@ -106,24 +132,26 @@
                             bestIdx   = OKIP.readInt(e.target.dataset.index, -1);
                         }
                     });
-                    if (bestIdx >= 0) { setActive(bestIdx); }
+                    if (bestIdx >= 0) { setActive(bestIdx); fillUpTo(bestIdx); }
                 }, { threshold: [0, 0.5, 1], root: strip });
                 items.forEach(function (el) { io.observe(el); });
             }
 
-            // Dots: scroll horizontal al ítem.
-            dots.forEach(function (dot) {
-                dot.addEventListener('click', function () {
-                    var idx    = OKIP.readInt(dot.dataset.index, 0);
+            // Botones: scroll horizontal al ítem.
+            navBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var idx    = OKIP.readInt(btn.dataset.index, 0);
                     var target = items[idx];
                     if (target && track && track.parentElement) {
                         track.parentElement.scrollTo({ left: target.offsetLeft - 24, behavior: 'smooth' });
                     }
                     setActive(idx);
+                    fillUpTo(idx);
                 });
             });
 
             setActive(0);
+            fillUpTo(0);
             return;
         }
 
@@ -132,27 +160,35 @@
 
            Un solo ScrollTrigger maestro:
              start: 'top top'
-             end:   distancia real para centrar del primer al último ítem
+             end:   distancia real para alinear de la primera a la última tarjeta
              pin:   true
              scrub: {scrub}
 
-           La cinta (.okip-ic__track) se mueve con x: startX → endX.
+           El track (.okip-ic__track) se mueve con x: startX → endX.
            ============================================================ */
         var gsap = window.gsap;
         var ST   = window.ScrollTrigger;
 
-        // Calcula el x inicial (ítem 0 centrado) y el x final (ítem N-1 centrado).
-        // Retorna { startX, endX, travel }.
+        // Inset lateral resuelto (el mismo que la fila de botones). La tarjeta activa
+        // alinea su borde izquierdo a este inset; se asoma la siguiente a la derecha.
+        function inset() {
+            if (nav) {
+                var pl = parseFloat(window.getComputedStyle(nav).paddingLeft);
+                if (isFinite(pl)) { return pl; }
+            }
+            return (section.clientWidth || window.innerWidth) * 0.05;
+        }
+
+        // Calcula el x inicial (1ª tarjeta alineada al inset) y el x final (última
+        // tarjeta alineada al inset). Retorna { startX, endX, travel }.
         function calcCentering() {
             if (!track || !items.length) { return { startX: 0, endX: 0, travel: 0 }; }
-            var vw      = section.clientWidth || window.innerWidth;
-            var first   = items[0];
-            var last    = items[items.length - 1];
+            var pad   = inset();
+            var first = items[0];
+            var last  = items[items.length - 1];
             // offsetLeft es relativo al padre del ítem (el track), no al viewport.
-            var firstCenter = first.offsetLeft + first.offsetWidth / 2;
-            var lastCenter  = last.offsetLeft  + last.offsetWidth  / 2;
-            var startX = vw / 2 - firstCenter;
-            var endX   = vw / 2 - lastCenter;
+            var startX = pad - first.offsetLeft;
+            var endX   = pad - last.offsetLeft;
             return {
                 startX: startX,
                 endX:   endX,
@@ -160,16 +196,15 @@
             };
         }
 
-        // Inicializar la posición del track (ítem 0 centrado) sin animación.
+        // Inicializar la posición del track (1ª tarjeta alineada) sin animación.
         var initC = calcCentering();
         gsap.set(track, { x: initC.startX });
 
         // ENTRADA del Bloque 3 sobre el Bloque 2: el contenido aparece TARDE, solo cuando
-        // el panel blanco ya cubre casi todo el viewport (≈85%), no al asomar. Por eso el
-        // start es `top 15%` y no `top 80%` (no es un pin; no toca `.okip-pm`). Con `from`,
-        // si GSAP faltara no habría estado oculto → nunca queda invisible/atascado.
-        var enterTargets = [section.querySelector('.okip-ic__content'), section.querySelector('.okip-ic__strip')]
-            .filter(Boolean);
+        // el panel ya cubre casi todo el viewport (≈85%), no al asomar. Por eso el start
+        // es `top 15%`. Con `from`, si GSAP faltara no habría estado oculto → nunca queda
+        // invisible/atascado.
+        var enterTargets = [nav, section.querySelector('.okip-ic__strip')].filter(Boolean);
         if (enterTargets.length) {
             gsap.from(enterTargets, {
                 y: 40,
@@ -191,7 +226,7 @@
             return Math.round(p * (itemCount - 1));
         }
 
-        // ScrollTrigger maestro: pin + movimiento de cinta.
+        // ScrollTrigger maestro: pin + movimiento de cinta + relleno de botones.
         var pinTween = gsap.to(track, {
             x: function () { return calcCentering().endX; },
             ease: 'none',
@@ -209,16 +244,17 @@
                 invalidateOnRefresh: true,
                 onUpdate: function (self) {
                     setActive(progressToIdx(self.progress));
+                    updateFills(self.progress);
                 },
-                onLeave:     function () { setActive(itemCount - 1); },
-                onLeaveBack: function () { setActive(0); }
+                onLeave:     function () { setActive(itemCount - 1); updateFills(1); },
+                onLeaveBack: function () { setActive(0); updateFills(0); }
             }
         });
 
-        // Dots: navegar haciendo scroll al punto correcto.
-        dots.forEach(function (dot) {
-            dot.addEventListener('click', function () {
-                var idx   = OKIP.readInt(dot.dataset.index, 0);
+        // Botones: navegar haciendo scroll al punto correcto del segmento.
+        navBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var idx   = OKIP.readInt(btn.dataset.index, 0);
                 var stPin = ST.getById(icId + '-pin');
                 if (!stPin) { return; }
                 var progress = itemCount > 1 ? idx / (itemCount - 1) : 0;
@@ -248,6 +284,7 @@
                     }
                     section.classList.add('is-static');
                     setActive(0);
+                    fillUpTo(0);
                 } else {
                     // Reposicionar el track al x inicial antes de refresh.
                     var c = calcCentering();
@@ -258,6 +295,7 @@
         }, { passive: true });
 
         setActive(0);
+        updateFills(0);
     }
 
     function init() {

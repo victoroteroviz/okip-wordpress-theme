@@ -1,17 +1,15 @@
 /*
- * Bloque Industry Carousel (Bloque 3) — estilos.
- * Ref visual: bloque 3.png.
+ * Bloque Industry Carousel (Bloque 3) — estilos (rediseño oscuro).
+ * Ref visual: referencias/image copy.png.
  *
- * Fondo CLARO (blanco/gris suave) — contraste con el Bloque 2 oscuro.
- * Layout: texto centrado arriba + cinta de imágenes full-width abajo.
+ * Fondo NEGRO. Fila de botones tipo tabs/progreso arriba (el activo se rellena de
+ * gris según el progreso del scroll) + track horizontal de tarjetas grandes con
+ * bordes muy redondeados. La activa es protagonista y se asoma la siguiente.
  *
- * Activa: a color, scale mayor.
- * Inactivas: grayscale, scale menor.
- *
- * En desktop con GSAP: el bloque se pina, la cinta se mueve con transform inline (JS).
+ * En desktop con GSAP: el bloque se pina, el track se mueve con transform inline (JS).
  * En móvil/tablet (≤1024px): is-static, scroll horizontal nativo.
  *
- * Namespacing: .okip-ic__* — sin reglas globales que afecten Bloque 2 (.okip-pm__*).
+ * Namespacing: .okip-ic__* — sin reglas globales que afecten a otros bloques.
  */
 
 /* ---- Raíz del bloque ---- */
@@ -19,17 +17,20 @@
     position: relative;
     min-height: var(--okip-ic-minh, 100svh);
     z-index: var(--okip-ic-z, 3);
-    background: var(--okip-color-surface-light);
-    color: #05070a;
+    background: #000;
+    color: #fff;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    border-radius: clamp(4.75rem, 8vw, 7.25rem) clamp(4.75rem, 8vw, 7.25rem) 0 0;
+    gap: clamp(2.5rem, 6vh, 4.5rem);
+    border-radius: clamp(2.5rem, 5vw, 4rem) clamp(2.5rem, 5vw, 4rem) 0 0;
     /* El root pineado no recorta: el clipping vive en la cinta para no pelear
        con ScrollTrigger pin. */
     overflow: visible;
     isolation: isolate;
+    /* Inset lateral compartido por la fila de botones y el alineado del track. */
+    --okip-ic-inset: clamp(1.25rem, 5vw, 5rem);
 }
 
 /* ScrollTrigger envuelve el bloque pineado en un .pin-spacer.
@@ -39,12 +40,156 @@
     background: transparent;
 }
 
-/* El retardo de cobertura B2→B3 (esperar a que el depth-entry de B2 termine + el hold
-   estático) lo aplica el JS de B2 como `margin-top` INLINE sobre este bloque. NO se usa
-   un selector adyacente (`.okip-pm + .okip-ic`) porque ScrollTrigger envuelve B2 en un
-   `.pin-spacer` al pinearlo y rompería la adyacencia. */
+/* ============================================================
+   FILA DE BOTONES TIPO TABS / PROGRESO
+   ============================================================ */
+.okip-ic__nav {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: clamp(.6rem, 1.2vw, 1rem);
+    padding-inline: var(--okip-ic-inset);
+    flex-shrink: 0;
+}
 
-/* ---- Contenido de texto centrado ---- */
+.okip-ic__nav-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 210px;
+    height: 40px;
+    padding-inline: 1.1rem;
+    border: 1px solid rgba(255, 255, 255, .45);
+    border-radius: 6px;
+    background: #0d0e10;
+    color: #fff;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color .25s ease, background .25s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.okip-ic__nav-btn:hover,
+.okip-ic__nav-btn:focus-visible {
+    border-color: rgba(255, 255, 255, .8);
+    outline: none;
+}
+.okip-ic__nav-btn.is-active {
+    border-color: rgba(255, 255, 255, .9);
+}
+
+/* Relleno gris que avanza de izquierda a derecha (scaleX por JS via --okip-ic-fill). */
+.okip-ic__nav-fill {
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform: scaleX(var(--okip-ic-fill, 0));
+    background: rgba(255, 255, 255, .26);
+    transition: transform .12s linear;
+    pointer-events: none;
+}
+
+.okip-ic__nav-label {
+    position: relative;
+    z-index: 1;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: .82rem;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   TRACK DE TARJETAS
+   ============================================================ */
+.okip-ic__strip {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    /* en desktop el track se mueve con transform (JS); el overflow se recorta aquí */
+    overflow: clip;
+    flex-shrink: 0;
+}
+
+.okip-ic__track {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(1rem, 2.2vw, 2rem);
+    list-style: none;
+    margin: 0;
+    /* Padding 0 en desktop: el alineado a la izquierda lo aplica el JS (startX).
+       En is-static se reintroduce el inset para no pegar la 1ª tarjeta al borde. */
+    padding: 0;
+    width: max-content;
+    will-change: transform;
+}
+
+/* ---- Tarjeta individual (solo media, sin cuerpo de texto) ---- */
+.okip-ic__item {
+    position: relative;
+    flex: 0 0 auto;
+    width: clamp(280px, 66vw, 1100px);
+    aspect-ratio: 16 / 9;
+    /* Cap de alto: en viewports anchos y bajos evita que la tarjeta desborde el
+       100svh del pin (object-fit:cover recorta si se rompe el ratio). */
+    max-height: 72svh;
+    border-radius: clamp(20px, 2.4vw, 32px);
+    overflow: hidden;
+    background: #111316;
+    /* Inactiva: oscurecida + ligeramente menor */
+    filter: brightness(.4);
+    transform: scale(.965);
+    transition: filter .45s ease, transform .45s var(--okip-ease, ease);
+    will-change: transform, filter;
+}
+/* Activa: a plena luz, protagonista */
+.okip-ic__item.is-active {
+    filter: brightness(1);
+    transform: scale(1);
+    z-index: 1;
+}
+
+/* Media dentro de la tarjeta */
+.okip-ic__item-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Placeholder geométrico cuando no hay media real (tema oscuro) */
+.okip-ic__item-ph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 44px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 44px),
+        #15181c;
+}
+.okip-ic__item-ph-label {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: .9rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .55);
+    text-align: center;
+    padding: .5rem;
+}
+
+/* ============================================================
+   BLOQUE LEGACY (heading + naranja + CTA) — solo si layout.show_intro
+   ============================================================ */
 .okip-ic__content {
     position: relative;
     z-index: 2;
@@ -52,50 +197,36 @@
     max-width: 940px;
     margin-inline: auto;
     padding-inline: var(--okip-container-pad, 1.5rem);
-    padding-block: clamp(4.75rem, 12vh, 8.25rem) 0;
     text-align: center;
     flex-shrink: 0;
 }
-
 .okip-ic__eyebrow {
     margin: 0 0 .75rem;
     font-size: .78rem;
-    letter-spacing: 0;
     text-transform: uppercase;
-    color: var(--okip-color-text-dark-muted);
+    color: rgba(255, 255, 255, .6);
 }
-
-/* Título principal uppercase (ref: "ECOSISTEMAS DE SEGURIDAD") */
 .okip-ic__heading-main {
     margin: 0;
     font-size: clamp(2rem, 3vw, 3rem);
     line-height: 1.1;
     font-weight: 500;
-    letter-spacing: 0;
     text-transform: uppercase;
-    color: #05070a;
+    color: #fff;
 }
-
-/* Subtítulo en peso normal (ref: "físicos y virtuales a la medida") */
 .okip-ic__heading-sub {
     margin: .2rem 0 0;
     font-size: clamp(1.45rem, 2.8vw, 2.55rem);
     line-height: 1.08;
     font-weight: 300;
-    color: #111111;
-    letter-spacing: 0;
+    color: rgba(255, 255, 255, .85);
 }
-
-/* ---- Texto de industria: línea propia centrada grande ---- */
 .okip-ic__orange-line {
     position: relative;
     margin: clamp(.9rem, 2.2vh, 1.35rem) 0 0;
-    /* el contenedor toma la altura del texto más largo para evitar layout shift */
     display: block;
     min-height: 1.15em;
 }
-
-/* Todos los textos de industria apilados en la misma celda de grid */
 .okip-ic__orange-wrap {
     display: inline-grid;
     vertical-align: top;
@@ -103,14 +234,11 @@
 .okip-ic__orange-wrap > * {
     grid-area: 1 / 1;
 }
-
-/* Texto de industria individual */
 .okip-ic__orange-text {
     display: block;
     font-size: clamp(2.5rem, 4.6vw, 4.4rem);
     line-height: 1;
     font-weight: 400;
-    letter-spacing: 0;
     color: var(--okip-ic-title-color, var(--okip-color-accent, #ff5a14));
     opacity: 0;
     transform: translateY(6px);
@@ -125,10 +253,6 @@
     pointer-events: auto;
     user-select: auto;
 }
-
-/* (Solo lectores de pantalla → utilidad global .okip-sr-only en base.css) */
-
-/* CTA */
 .okip-ic__cta {
     display: inline-block;
     margin-top: clamp(1.05rem, 2.4vh, 1.55rem);
@@ -136,124 +260,19 @@
     padding: .58rem 1.75rem .62rem;
     font-size: 1rem;
     line-height: 1.1;
-    font-weight: 400;
-    letter-spacing: 0;
     text-transform: uppercase;
     text-decoration: none;
-    color: #6d6f73;
-    background: var(--okip-color-surface-light);
-    border: 1px solid rgba(18, 24, 32, .08);
+    color: #fff;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .25);
     border-radius: 9px;
-    box-shadow: 0 5px 10px rgba(4, 8, 15, .18);
-    transition: transform .2s ease, box-shadow .2s ease, color .2s ease;
+    transition: transform .2s ease, background .2s ease;
 }
 .okip-ic__cta:hover,
 .okip-ic__cta:focus-visible {
-    color: #05070a;
     transform: translateY(-1px);
-    box-shadow: 0 7px 16px rgba(4, 8, 15, .22);
+    background: rgba(255, 255, 255, .12);
     outline: none;
-}
-
-/* ---- Cinta de imágenes ---- */
-.okip-ic__strip {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    margin-top: clamp(3.75rem, 9vh, 6rem);
-    /* en desktop el track se mueve con transform (JS); el overflow se recorta aquí */
-    overflow: clip;
-    flex-shrink: 0;
-}
-
-.okip-ic__track {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: clamp(1rem, 2vw, 1.8rem);
-    list-style: none;
-    margin: 0;
-    padding: clamp(1rem, 3vh, 2rem) var(--okip-container-pad, 1.5rem) clamp(1.25rem, 3vh, 2.25rem);
-    width: max-content;
-    will-change: transform;
-}
-
-/* ---- Ítem individual (solo media, sin cuerpo de texto) ---- */
-.okip-ic__item {
-    flex: 0 0 auto;
-    width: clamp(250px, 25vw, 360px);
-    aspect-ratio: 16 / 9;
-    border-radius: 8px;
-    overflow: hidden;
-    /* Inactivo: escala de grises + pequeño */
-    filter: grayscale(1) brightness(0.86);
-    transform: scale(0.92);
-    transition: filter .4s ease, transform .4s var(--okip-ease),
-                box-shadow .4s ease;
-    cursor: default;
-    background: #d0d5dd; /* placeholder color claro cuando no hay media */
-    will-change: transform, filter;
-}
-/* Activo: a color, escala mayor, sombra */
-.okip-ic__item.is-active {
-    filter: grayscale(0) brightness(1);
-    transform: scale(1.02);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, .22);
-    z-index: 1;
-}
-
-/* Media dentro del ítem */
-.okip-ic__item-media {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-/* Placeholder geométrico cuando no hay media real */
-.okip-ic__item-ph {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background:
-        repeating-linear-gradient(0deg, rgba(0,0,0,.04) 0 1px, transparent 1px 40px),
-        repeating-linear-gradient(90deg, rgba(0,0,0,.04) 0 1px, transparent 1px 40px),
-        #e0e5ec;
-}
-.okip-ic__item-ph-label {
-    font-size: .82rem;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--okip-color-text-dark-muted);
-    text-align: center;
-    padding: .5rem;
-}
-
-/* ---- Puntos indicadores ---- */
-.okip-ic__dots {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    justify-content: center;
-    gap: .45rem;
-    padding-block: clamp(.75rem, 2.5vh, 1.5rem);
-    flex-shrink: 0;
-}
-.okip-ic__dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    border: none;
-    padding: 0;
-    background: #c4cad4;
-    cursor: pointer;
-    transition: background .25s ease, transform .25s ease;
-}
-.okip-ic__dot.is-active {
-    background: var(--okip-color-accent, #ff5a14);
-    transform: scale(1.45);
 }
 
 /* ============================================================
@@ -262,28 +281,22 @@
 .okip-ic.is-static {
     transform: none !important;
 }
+/* Reintroduce el inset lateral (en desktop animado lo aporta el startX del JS). */
+.okip-ic.is-static .okip-ic__track {
+    padding-inline: var(--okip-ic-inset);
+}
 /* Scroll horizontal nativo */
 .okip-ic.is-static .okip-ic__strip {
     overflow-x: auto;
     overflow-y: clip;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 90, 20, .4) transparent;
+    scrollbar-color: rgba(255, 255, 255, .3) transparent;
 }
 .okip-ic.is-static .okip-ic__strip::-webkit-scrollbar { height: 3px; }
 .okip-ic.is-static .okip-ic__strip::-webkit-scrollbar-thumb {
-    background: rgba(255, 90, 20, .4);
+    background: rgba(255, 255, 255, .3);
     border-radius: 2px;
-}
-/* En is-static el track no se mueve con JS; los ítems no escalan tanto */
-.okip-ic.is-static .okip-ic__item {
-    filter: none;
-    transform: none;
-}
-.okip-ic.is-static .okip-ic__item.is-active {
-    box-shadow: 0 4px 20px rgba(0,0,0,.14);
-    outline: 2px solid var(--okip-color-accent, #ff5a14);
-    outline-offset: 2px;
 }
 /* En is-static mostrar solo el texto naranja activo */
 .okip-ic.is-static .okip-ic__orange-wrap {
@@ -302,29 +315,36 @@
 @media (max-width: 1024px) {
     .okip-ic {
         min-height: auto;
-        padding-block-start: calc(var(--okip-navbar-h, 68px) + clamp(1.5rem, 4vh, 2.5rem));
-        padding-block-end: clamp(2rem, 6vh, 3.5rem);
+        padding-block: calc(var(--okip-navbar-h, 68px) + clamp(1.5rem, 4vh, 2.5rem)) clamp(2rem, 6vh, 3.5rem);
         justify-content: flex-start;
+        gap: clamp(1.5rem, 4vh, 2.5rem);
     }
-    .okip-ic__content {
-        padding-block: clamp(1.5rem, 4vh, 2.5rem) 0;
+    .okip-ic__nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+    }
+    .okip-ic__nav::-webkit-scrollbar { display: none; }
+    .okip-ic__nav-btn {
+        min-width: 150px;
+        flex: 0 0 auto;
     }
     .okip-ic__item {
-        width: clamp(200px, 65vw, 300px);
-    }
-    .okip-ic__track {
-        padding-inline: var(--okip-container-pad, 1.5rem);
+        width: clamp(260px, 82vw, 560px);
     }
 }
 
 /* ---- Accesibilidad: reduce-motion ---- */
 @media (prefers-reduced-motion: reduce) {
+    .okip-ic__nav-fill {
+        transition: none;
+    }
     .okip-ic__orange-text {
         transition: opacity .15s ease;
         transform: none !important;
     }
     .okip-ic__item {
-        transition: filter .15s ease, box-shadow .15s ease;
+        transition: filter .15s ease;
         transform: none !important;
     }
     .okip-ic__item.is-active {

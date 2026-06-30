@@ -180,6 +180,16 @@ function okip_admin_sanitize_page_overrides($slug, $raw_blocks)
             } else {
                 unset($overrides[$instance_id]);
             }
+        } elseif ($block['type'] === 'industry-carousel') {
+            $base_data = isset($block['data']) ? $block['data'] : array();
+            $full = okip_admin_sanitize_industry_carousel_data($raw_data, $base_data);
+            $base_norm = okip_normalize_block_data('industry-carousel', $base_data);
+            $diff = okip_array_diff_recursive($full, $base_norm);
+            if (! empty($diff)) {
+                $overrides[$instance_id] = array('type' => 'industry-carousel', 'data' => $diff);
+            } else {
+                unset($overrides[$instance_id]);
+            }
         }
     }
 
@@ -387,4 +397,62 @@ function okip_admin_sanitize_video_w_title_data(array $raw, array $base = array(
     $data['text_boxes'] = $boxes;
 
     return okip_normalize_block_data('video-w-title', okip_merge_defaults($data, $current));
+}
+
+/**
+ * Sanea la data editable del bloque Industry Carousel.
+ *
+ * El editor expone: la lista de tarjetas (items = botón + media), los toggles de
+ * animación (enabled, pin_enabled) y el flag del bloque legacy (layout.show_intro).
+ * El resto de grupos (content, cta, transition, demás claves de layout/animation) se
+ * conservan desde el valor normalizado actual. El saneo fino de cada ítem (clamps,
+ * hex, tope de 20) lo realiza okip_normalize_industry_carousel_data().
+ *
+ * @param array $raw
+ * @param array $base
+ * @return array
+ */
+function okip_admin_sanitize_industry_carousel_data(array $raw, array $base = array())
+{
+    $current = okip_normalize_block_data('industry-carousel', $base);
+    $data = array();
+
+    // Animación: solo toggles; los demás campos (disable_below, scrub) se conservan.
+    $animation = isset($raw['animation']) && is_array($raw['animation']) ? $raw['animation'] : array();
+    $an_def    = $current['animation'];
+    $data['animation'] = array(
+        'enabled'     => okip_bool(isset($animation['enabled']) ? $animation['enabled'] : false),
+        'pin_enabled' => okip_bool(isset($animation['pin_enabled']) ? $animation['pin_enabled'] : false),
+    );
+
+    // Layout: solo el flag del bloque legacy; el resto (min_height, z_index) se conserva.
+    $layout = isset($raw['layout']) && is_array($raw['layout']) ? $raw['layout'] : array();
+    $data['layout'] = array(
+        'show_intro' => okip_bool(isset($layout['show_intro']) ? $layout['show_intro'] : false),
+    );
+
+    // Tarjetas: la lista reemplaza por completo a la base (merge de listas atómico).
+    // Se pasan crudas (solo arrays, con tope) y el normalizador del bloque sanea cada
+    // campo (sanitize_text_field, hex, media ref).
+    $raw_items = isset($raw['items']) && is_array($raw['items']) ? $raw['items'] : array();
+    $items = array();
+    foreach ($raw_items as $item) {
+        if (! is_array($item)) {
+            continue;
+        }
+        if (count($items) >= 20) {
+            break;
+        }
+        $items[] = array(
+            'title'       => isset($item['title']) ? sanitize_text_field((string) $item['title']) : '',
+            'orange_text' => isset($item['orange_text']) ? sanitize_text_field((string) $item['orange_text']) : '',
+            'title_color' => isset($item['title_color']) ? (sanitize_hex_color((string) $item['title_color']) ?: '') : '',
+            'alt'         => isset($item['alt']) ? sanitize_text_field((string) $item['alt']) : '',
+            'image'       => okip_admin_sanitize_media_ref(isset($item['image']) ? $item['image'] : ''),
+            'video'       => okip_admin_sanitize_media_ref(isset($item['video']) ? $item['video'] : ''),
+        );
+    }
+    $data['items'] = $items;
+
+    return okip_normalize_block_data('industry-carousel', okip_merge_defaults($data, $current));
 }
