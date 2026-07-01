@@ -104,6 +104,10 @@ $crossfade_ms = isset($transition['crossfade_duration']) ? (int) $transition['cr
 $effective_crossfade_ms = $crossfade ? $crossfade_ms : 0;
 $content_entry_delay = isset($transition['content_entry_delay']) ? (int) $transition['content_entry_delay'] : 900;
 
+// Snap del traspaso Hero → bloque siguiente (scroll-jack, solo desktop; ver script.js).
+$snap_cover    = ! empty($transition['snap_cover']);
+$snap_duration = isset($transition['snap_duration']) ? (int) $transition['snap_duration'] : 700;
+
 // Activación automática de tarjetas (disparos aleatorios sin interacción).
 $autoplay_on       = ! empty($autoplay['enabled']);
 $autoplay_min      = isset($autoplay['min_delay_ms']) ? (int) $autoplay['min_delay_ms'] : 2500;
@@ -192,6 +196,8 @@ $loop_attrs  = (! empty($loop['muted']) ? ' muted' : '')
     data-cards-autoplay-max="<?php echo esc_attr((string) max(0, $autoplay_max)); ?>"
     data-cards-autoplay-start="<?php echo esc_attr((string) max(0, $autoplay_start)); ?>"
     data-cards-autoplay-hover="<?php echo $autoplay_on_hover ? '1' : '0'; ?>"
+    data-snap-cover="<?php echo $snap_cover ? '1' : '0'; ?>"
+    data-snap-duration="<?php echo esc_attr((string) max(0, $snap_duration)); ?>"
     style="<?php echo $hero_style; ?>">
     <script type="application/json" data-okip-motion-config><?php echo $motion_json; ?></script>
 

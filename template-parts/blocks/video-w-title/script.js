@@ -5,6 +5,10 @@
  * `position: sticky` por CSS (transition.mode = sticky-cover; ver style.css +
  * assets/css/transitions.css) → suave a cualquier velocidad, sin ScrollTrigger.
  *
+ * NOTA: este bloque NO usa el snap (OKIP.snapCover): el bloque siguiente
+ * (industry-carousel) usa un pin de ScrollTrigger, incompatible con el scroll-jack.
+ * El traspaso de salida al carousel se deja gradual (sticky-cover puro).
+ *
  * Reveal robusto:
  *  - El estado inicial oculto lo ARMA este script (clase `is-anim-armed`). Si el
  *    script no corre, el texto queda visible (nunca oculto permanentemente).

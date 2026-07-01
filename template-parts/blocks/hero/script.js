@@ -183,6 +183,14 @@
 
         setupCards(hero);
         setupCoverPause(hero);
+        // Snap del traspaso Hero → bloque siguiente (helper global compartido; ver app.js).
+        // Solo desktop + forward; el inverso queda nativo. Apagable con data-snap-cover="0".
+        if (window.OKIP && OKIP.snapCover) {
+            OKIP.snapCover(hero, {
+                enabled: hero.dataset.snapCover === '1',
+                duration: window.OKIP.readInt(hero.dataset.snapDuration, 700)
+            });
+        }
     }
 
     /*

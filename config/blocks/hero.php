@@ -160,6 +160,14 @@ if (! function_exists('okip_normalize_hero_data')) {
             0,
             60000
         );
+        $data['transition']['snap_cover']              = okip_bool(
+            isset($data['transition']['snap_cover']) ? $data['transition']['snap_cover'] : true
+        );
+        $data['transition']['snap_duration']           = okip_clamp_int(
+            isset($data['transition']['snap_duration']) ? $data['transition']['snap_duration'] : 700,
+            150,
+            3000
+        );
 
         // Activación automática de tarjetas (disparos aleatorios opcionales).
         $data['autoplay']['enabled']        = okip_bool($data['autoplay']['enabled']);
@@ -277,6 +285,11 @@ return array(
         'intro_to_loop_crossfade' => true, // crossfade suave intro → loop (sin parpadeo)
         'crossfade_duration'      => 700,  // ms del crossfade
         'content_entry_delay'     => 900,  // ms desde que inicia el Hero hasta texto/tarjetas
+        // Snap del traspaso Hero → bloque siguiente (solo desktop, scroll-jack): un
+        // pequeño giro de rueda hace que el bloque siguiente cubra el Hero de golpe.
+        // false / reduce-motion / ≤1024px → traspaso por scroll normal.
+        'snap_cover'              => true,
+        'snap_duration'           => 700,  // ms de la animación del snap
     ),
     // Activación AUTOMÁTICA de tarjetas (sin interacción del ratón). Las tarjetas
     // siguen respondiendo al hover; esto solo añade disparos aleatorios encima.

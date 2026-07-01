@@ -60,6 +60,20 @@
             var REVEAL_RATIO = 0.15; // muestra el navbar cuando el bloque-cubierta tapa ~85%
             var docEl = document.documentElement;
 
+            // Revelado forzado durante un snap de traspaso (evento okip:cover-snap, emitido
+            // por OKIP.snapCover). El bloque siguiente se ancla BAJO el navbar, así que sin
+            // esto la franja superior dejaría ver el Hero hasta que el navbar termine de
+            // bajar (~400ms) → parpadeo. Mantenemos el navbar visible durante el snap.
+            var forceShowUntil = 0;
+            function nowMs() {
+                return (window.performance && performance.now) ? performance.now() : Date.now();
+            }
+            document.addEventListener('okip:cover-snap', function (e) {
+                var ms = (e.detail && e.detail.ms) || 700;
+                forceShowUntil = nowMs() + ms + 120;
+                show();
+            });
+
             function setByPmCovered(covered) {
                 if (covered) { show(); } else { hide(); }
             }
@@ -93,6 +107,10 @@
             var navTicking = false;
             var evalNav = function () {
                 navTicking = false;
+
+                // Durante un snap de traspaso, el navbar se mantiene visible (evita el
+                // parpadeo de la franja superior mientras el bloque siguiente sube).
+                if (nowMs() < forceShowUntil) { show(); return; }
 
                 // Camino preferente: el bloque que cubre al Hero. UNA sola lectura de layout
                 // (getBoundingClientRect) por frame; sin recorrer offsetParent.

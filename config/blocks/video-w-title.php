@@ -120,10 +120,13 @@ if (! function_exists('okip_normalize_video_w_title_data')) {
         // Animación de entrada (reveal).
         $data['animation']['enabled'] = okip_bool($data['animation']['enabled']);
 
-        // Traspaso de salida (sistema híbrido): sticky-cover por CSS.
+        // Traspaso de salida (sistema híbrido): sticky-cover por CSS. Traspaso GRADUAL,
+        // SIN snap: el bloque siguiente (industry-carousel) usa un pin de ScrollTrigger,
+        // incompatible con el scroll-jack (el window.scrollTo pelea con el pin/scrub y
+        // corrompe el apilado). El snap solo se usa entre bloques sticky-cover.
         $data['transition'] = okip_normalize_transition(
             isset($data['transition']) ? $data['transition'] : array(),
-            array('enabled' => true, 'mode' => 'sticky-cover', 'disable_below' => 1024, 'hold_vh' => 100)
+            array('enabled' => true, 'mode' => 'sticky-cover', 'disable_below' => 1024, 'hold_vh' => 50)
         );
 
         return $data;
@@ -203,6 +206,6 @@ return array(
         'enabled'       => true,
         'mode'          => 'sticky-cover', // CSS sticky: queda fijo y el siguiente bloque lo cubre
         'disable_below' => 1024,           // breakpoint informativo (el sticky CSS usa 1025px)
-        'hold_vh'       => 100,            // scroll extra de visibilidad antes del traspaso
+        'hold_vh'       => 50,             // traspaso GRADUAL al carousel (sin snap: usa pin de ScrollTrigger)
     ),
 );
