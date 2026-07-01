@@ -209,6 +209,12 @@
 
 .okip-vwt__char {
     display: inline-block;
+}
+
+/* will-change SOLO mientras la letra está armada y aún sin revelar (a punto de
+   animar). Al añadir .is-revealed se suelta la capa → sin capas GPU ociosas por
+   cada carácter tras el reveal de una sola vez. */
+.okip-vwt--animated.is-anim-armed:not(.is-revealed) .okip-vwt__char {
     will-change: opacity, transform;
 }
 

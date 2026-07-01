@@ -157,7 +157,7 @@ return array(
     ),
     'layout' => array(
         'min_height'    => 'auto',   // el bloque fluye natural, sin altura forzada
-        'content_width' => '1180px', // columna de contenido sobre el fondo full-bleed
+        'content_width' => '1360px', // columna de contenido sobre el fondo full-bleed
         'z_index'       => 0,        // 0 = z-index automático por orden de render (override si >0)
     ),
     'background' => array(

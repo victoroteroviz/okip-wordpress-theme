@@ -168,10 +168,19 @@
         }
 
         /* ---------- Realce al hacer scroll ---------- */
-        var onScroll = function () {
-            navbar.classList.toggle('is-scrolled', window.scrollY > 8);
+        // rAF-throttled + cache de estado: 1 lectura/escritura por frame como mucho,
+        // y no toca el DOM si `is-scrolled` no cambió (antes: 1 write por evento).
+        var scrolledState = null;
+        var evalScrolled = function () {
+            var s = window.scrollY > 8;
+            if (s === scrolledState) { return; }
+            scrolledState = s;
+            navbar.classList.toggle('is-scrolled', s);
         };
-        onScroll();
+        var onScroll = (window.OKIP && window.OKIP.rafThrottle)
+            ? window.OKIP.rafThrottle(evalScrolled)
+            : evalScrolled;
+        evalScrolled();
         window.addEventListener('scroll', onScroll, { passive: true });
     }
 

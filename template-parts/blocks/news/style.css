@@ -90,6 +90,11 @@
         opacity var(--okip-news-card-duration, 620ms) var(--okip-ease),
         transform var(--okip-news-card-duration, 620ms) var(--okip-ease);
     transition-delay: var(--okip-news-card-delay, 0ms);
+}
+
+/* will-change solo mientras la tarjeta está pendiente de revelar; al añadir
+   .is-card-revealed (IO, una vez) se suelta la capa GPU. */
+.okip-js .okip-news--cards-animated .okip-news__item:not(.is-card-revealed) {
     will-change: opacity, transform;
 }
 

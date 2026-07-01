@@ -124,7 +124,8 @@
     margin: 0 auto;
     text-align: center;
     z-index: 3;
-    will-change: opacity, transform, filter;
+    /* Sin will-change permanente: el inner solo se transforma en .is-news-lifting,
+       que ya declara su propio will-change scoped (ver arriba). */
 }
 
 .okip-ms__statement {
@@ -145,6 +146,13 @@
 .okip-ms__char {
     display: inline-block;
     white-space: pre;
+}
+
+/* will-change SOLO mientras la letra está armada y aún no visible (a punto de
+   animar). Al añadir .is-visible se suelta la capa → sin capas GPU ociosas (con
+   filter, lo más caro) por cada carácter tras el reveal de una sola vez. */
+.okip-js .okip-ms--animated:not(.is-visible) .okip-ms__char,
+.okip-js .okip-ms--animated:not(.is-visible) .okip-ms__kicker {
     will-change: opacity, transform, filter;
 }
 

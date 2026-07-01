@@ -84,7 +84,7 @@
         /* ---- reveal: none → mostrar todo sin animar ---- */
         if (revealMode === 'none') {
             revealAll(section);
-            attachResizeStatic(section, disableBelow);
+            attachResize(section, disableBelow, function () { section.classList.add('is-static'); });
             return;
         }
 
@@ -104,13 +104,24 @@
                     onEnter: function () { reveal(card); }
                 });
             });
-            attachResizeDismount(section, cards, disableBelow, triggerIds);
+            attachResize(section, disableBelow, function () {
+                if (window.ScrollTrigger) {
+                    window.ScrollTrigger.getAll().forEach(function (st) {
+                        if (st.vars && st.vars.id && triggerIds.indexOf(String(st.vars.id)) !== -1) {
+                            st.kill();
+                        }
+                    });
+                }
+                cards.forEach(reveal);
+                section.classList.add('is-static');
+            });
             return;
         }
 
         /* ---- Fallback vanilla (desktop, sin GSAP): IO añade is-revealed ---- */
+        var io = null;
         if (useVanilla && 'IntersectionObserver' in window) {
-            var io = new IntersectionObserver(function (entries) {
+            io = new IntersectionObserver(function (entries) {
                 entries.forEach(function (e) {
                     if (e.isIntersecting) {
                         reveal(e.target);
@@ -123,39 +134,32 @@
             // Sin IO ni vanilla: no dejar nada oculto.
             section.classList.add('is-static');
         }
-        attachResizeStatic(section, disableBelow);
+        attachResize(section, disableBelow, function () {
+            if (io) { io.disconnect(); }
+            revealAll(section);
+            section.classList.add('is-static');
+        });
     }
 
-    /* Si la ventana encoge bajo el breakpoint: matar ST y dejar todo legible. */
-    function attachResizeDismount(section, cards, disableBelow, triggerIds) {
+    /*
+     * Un solo helper de resize. El bloque solo degrada a estático (una vía: nunca
+     * re-sube), así que en cuanto la ventana cruza bajo el breakpoint ejecuta
+     * `onSmall` UNA vez y SE AUTO-REMUEVE (sin listener colgando el resto de la vida
+     * de la página). El debounce evita trabajo en cada tick del resize.
+     */
+    function attachResize(section, disableBelow, onSmall) {
         var rt;
-        window.addEventListener('resize', function () {
+        function handler() {
             window.clearTimeout(rt);
             rt = window.setTimeout(function () {
                 var nowSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
-                if (nowSmall && window.ScrollTrigger) {
-                    window.ScrollTrigger.getAll().forEach(function (st) {
-                        if (st.vars && st.vars.id && triggerIds.indexOf(String(st.vars.id)) !== -1) {
-                            st.kill();
-                        }
-                    });
-                    cards.forEach(reveal);
-                    section.classList.add('is-static');
+                if (nowSmall) {
+                    window.removeEventListener('resize', handler);
+                    onSmall();
                 }
             }, 200);
-        }, { passive: true });
-    }
-
-    /* Garantiza legibilidad si la ventana encoge bajo el breakpoint (rama vanilla). */
-    function attachResizeStatic(section, disableBelow) {
-        var rt;
-        window.addEventListener('resize', function () {
-            window.clearTimeout(rt);
-            rt = window.setTimeout(function () {
-                var nowSmall = !!(window.matchMedia && window.matchMedia('(max-width: ' + disableBelow + 'px)').matches);
-                if (nowSmall) { section.classList.add('is-static'); }
-            }, 200);
-        }, { passive: true });
+        }
+        window.addEventListener('resize', handler, { passive: true });
     }
 
     function init() {

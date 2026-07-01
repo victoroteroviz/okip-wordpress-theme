@@ -98,6 +98,13 @@
         var entered = {};
         var exited = false;
         var exitObserver = null;
+        // Timers del stagger CSS (fallback sin GSAP). Se cancelan al cambiar de fase
+        // (salida/re-entrada) para que en `replay` no se acumulen ni se pisen fases.
+        var cssTimers = [];
+        function clearCssTimers() {
+            cssTimers.forEach(function (id) { window.clearTimeout(id); });
+            cssTimers = [];
+        }
 
         function elements(target) {
             var selector = selectors[target];
@@ -139,10 +146,10 @@
             var to = styleFor(stageConfig, side || 'to');
 
             items.forEach(function (el, i) {
-                window.setTimeout(function () {
+                cssTimers.push(window.setTimeout(function () {
                     el.style.transition = 'opacity ' + duration + 'ms ease, transform ' + duration + 'ms ease, filter ' + duration + 'ms ease';
                     applyStyle(el, to);
-                }, delay + (stagger * i));
+                }, delay + (stagger * i)));
             });
         }
 
@@ -283,8 +290,10 @@
                 entries.forEach(function (entry) {
                     if (!entry.isIntersecting && !exited) {
                         exited = true;
+                        clearCssTimers();
                         exitAll(targets);
                     } else if (entry.isIntersecting && exited) {
+                        clearCssTimers();
                         if (motion.replay_mode === 'replay') {
                             entered = {};
                             prepareAll(targets);

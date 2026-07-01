@@ -23,8 +23,8 @@
     --okip-ps-bg: #000;
     --okip-ps-glow: rgba(26, 60, 156, .7);   /* azul marino/rey */
     --okip-ps-card-radius: 18px;
-    --okip-ps-card-minh: clamp(8.5rem, 13vw, 11rem);
-    --okip-ps-measure: 52rem;
+    --okip-ps-card-minh: clamp(10.5rem, 15vw, 13.5rem);
+    --okip-ps-measure: 58rem;
 
     position: relative;
     z-index: var(--okip-ps-z, 4);
@@ -154,7 +154,7 @@
 .okip-ps__heading {
     margin: 0;
     font-family: var(--okip-font-mono);
-    font-size: clamp(1.05rem, 1.6vw, 1.32rem);
+    font-size: clamp(1.18rem, 1.85vw, 1.5rem);
     font-weight: 700;
     letter-spacing: .04em;
     color: #0c1018;
@@ -163,7 +163,7 @@
 .okip-ps__desc {
     margin: clamp(.5rem, 1.2vh, .8rem) 0 0;
     font-family: var(--okip-font-mono);
-    font-size: clamp(.92rem, 1.3vw, 1.08rem);
+    font-size: clamp(1.02rem, 1.45vw, 1.2rem);
     line-height: 1.55;
     color: #20262f;
     overflow-wrap: break-word;
@@ -193,7 +193,16 @@
     -webkit-appearance: none;
     transition: transform .55s var(--okip-ease, cubic-bezier(.22, 1, .36, 1)),
                 opacity .45s ease;
+}
+/* will-change solo cuando la tarjeta está por descubrirse (hover/tap): promoción
+   justo a tiempo, sin capa GPU permanente por cada cover en reposo. */
+.okip-ps__card.is-open .okip-ps__cover {
     will-change: transform, opacity;
+}
+@media (hover: hover) and (pointer: fine) {
+    .okip-ps__card:hover .okip-ps__cover {
+        will-change: transform, opacity;
+    }
 }
 .okip-ps__cover:focus-visible {
     outline: 2px solid rgba(120, 170, 255, .7);
@@ -204,7 +213,7 @@
     display: block;
     width: 100%;
     font-family: var(--okip-font-mono);
-    font-size: clamp(1.6rem, 4.4vw, 2.85rem);
+    font-size: clamp(1.85rem, 4.9vw, 3.3rem);
     font-weight: 500;
     line-height: 1.02;
     letter-spacing: .01em;
@@ -264,10 +273,10 @@
 /* ---- Responsive: móvil/tablet (≤1024px) ---- */
 @media (max-width: 1024px) {
     .okip-ps {
-        --okip-ps-card-minh: clamp(7rem, 26vw, 9.5rem);
+        --okip-ps-card-minh: clamp(8.5rem, 30vw, 11.5rem);
     }
     .okip-ps__cover-title {
-        font-size: clamp(1.4rem, 7vw, 2.2rem);
+        font-size: clamp(1.6rem, 7.6vw, 2.55rem);
     }
     .okip-ps__back-text {
         max-width: none;
