@@ -116,6 +116,7 @@ if ($news_query->have_posts()) {
             'thumb_url'        => $image_url,
             'thumb_alt'        => isset($item['alt']) ? $item['alt'] : '',
             'placeholder_note' => isset($item['placeholder_note']) ? $item['placeholder_note'] : 'Placeholder',
+            'variant'          => isset($item['variant']) ? $item['variant'] : '',
         );
     }
 }
@@ -137,7 +138,9 @@ $section_style = sprintf(
     $cards_anim_duration_ms,
     $cards_anim_translate_y
 );
-$layout_pattern = array('feature', 'hero', 'feature', 'wide', 'mini', 'mini', 'feature', 'wide');
+// Patrón posicional (para posts de WP, que no traen variante propia). Los ítems
+// de fallback pueden sobrescribirlo con su clave 'variant'.
+$layout_pattern = array('text', 'feature', 'feature', 'mini', 'mini', 'mini', 'wide', 'mini');
 ?>
 <section
     id="<?php echo esc_attr($okip_instance); ?>"
@@ -164,19 +167,47 @@ $layout_pattern = array('feature', 'hero', 'feature', 'wide', 'mini', 'mini', 'f
                 $thumb_url = isset($item['thumb_url']) ? $item['thumb_url'] : '';
                 $thumb_alt = isset($item['thumb_alt']) ? $item['thumb_alt'] : '';
                 $placeholder_note = ! empty($item['placeholder_note']) ? $item['placeholder_note'] : 'Placeholder';
-                $card_classes = 'okip-news__card' . ($is_post ? ' okip-news__card--post' : ' okip-news__card--fallback');
+                // Variante: la del ítem (fallback) manda; si no, patrón posicional.
+                $variant = ! empty($item['variant']) ? $item['variant'] : $layout_pattern[$idx % count($layout_pattern)];
+                $is_text = ($variant === 'text');      // Solo texto, sin media.
+                $is_overlay = ($variant === 'wide');   // Título superpuesto sobre la imagen.
+                $card_classes = 'okip-news__card'
+                    . ($is_post ? ' okip-news__card--post' : ' okip-news__card--fallback')
+                    . ($is_text ? ' okip-news__card--text' : '')
+                    . ($is_overlay ? ' okip-news__card--overlay' : '');
                 $card_label   = $title !== '' ? $title : ('Referencia ' . ($idx + 1));
-                $variant = $layout_pattern[$idx % count($layout_pattern)];
                 $item_delay = $cards_anim_delay_ms + ($cards_anim_stagger_ms * $idx);
+
+                // Bloque de categoría (pill con badge), reutilizado en media y en texto.
+                ob_start();
+                if ($category !== '') : ?>
+                    <span class="okip-news__category">
+                        <span class="okip-news__category-icon" aria-hidden="true">
+                            <svg viewBox="0 0 28 20" focusable="false">
+                                <path d="M14 1.5c5.8 0 10.3 4.4 12.2 8.5-1.9 4.1-6.4 8.5-12.2 8.5S3.7 14.1 1.8 10C3.7 5.9 8.2 1.5 14 1.5Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="14" cy="10" r="3.4" fill="currentColor" />
+                            </svg>
+                        </span>
+                        <span class="okip-news__category-text"><?php echo esc_html($category); ?></span>
+                    </span>
+                <?php endif;
+                $category_html = ob_get_clean();
                 ?>
                 <li class="okip-news__item okip-news__item--<?php echo esc_attr($variant); ?>" data-okip-news-item style="--okip-news-card-delay:<?php echo esc_attr((string) $item_delay); ?>ms;">
-                    <div class="okip-news__card-shell">
-                        <?php if ($url !== '') : ?>
-                            <a class="<?php echo esc_attr($card_classes); ?>" href="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
-                        <?php else : ?>
-                            <div class="<?php echo esc_attr($card_classes); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
-                        <?php endif; ?>
+                    <?php if ($url !== '') : ?>
+                        <a class="<?php echo esc_attr($card_classes); ?>" href="<?php echo esc_url($url); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
+                    <?php else : ?>
+                        <div class="<?php echo esc_attr($card_classes); ?>" aria-label="<?php echo esc_attr($card_label); ?>">
+                    <?php endif; ?>
 
+                        <?php if ($is_text) : ?>
+                            <span class="okip-news__text-inner">
+                                <?php echo $category_html; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                                <?php if ($title !== '') : ?>
+                                    <span class="okip-news__title"><?php echo esc_html($title); ?></span>
+                                <?php endif; ?>
+                            </span>
+                        <?php else : ?>
                             <span class="okip-news__media">
                                 <?php if ($thumb_url !== '') : ?>
                                     <img
@@ -190,31 +221,25 @@ $layout_pattern = array('feature', 'hero', 'feature', 'wide', 'mini', 'mini', 'f
                                     </span>
                                 <?php endif; ?>
 
-                                <?php if ($category !== '') : ?>
-                                    <span class="okip-news__category">
-                                        <span class="okip-news__category-icon" aria-hidden="true">
-                                            <svg viewBox="0 0 28 20" focusable="false">
-                                                <path d="M14 1.5c5.8 0 10.3 4.4 12.2 8.5-1.9 4.1-6.4 8.5-12.2 8.5S3.7 14.1 1.8 10C3.7 5.9 8.2 1.5 14 1.5Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-                                                <circle cx="14" cy="10" r="3.4" fill="currentColor" />
-                                            </svg>
-                                        </span>
-                                        <span class="okip-news__category-text"><?php echo esc_html($category); ?></span>
-                                    </span>
+                                <?php echo $category_html; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+
+                                <?php if ($is_overlay && $title !== '') : ?>
+                                    <span class="okip-news__title okip-news__title--overlay"><?php echo esc_html($title); ?></span>
                                 <?php endif; ?>
                             </span>
 
-                            <?php if ($title !== '') : ?>
+                            <?php if (! $is_overlay && $title !== '') : ?>
                                 <span class="okip-news__body">
                                     <span class="okip-news__title"><?php echo esc_html($title); ?></span>
                                 </span>
                             <?php endif; ?>
-
-                        <?php if ($url !== '') : ?>
-                            </a>
-                        <?php else : ?>
-                            </div>
                         <?php endif; ?>
-                    </div>
+
+                    <?php if ($url !== '') : ?>
+                        </a>
+                    <?php else : ?>
+                        </div>
+                    <?php endif; ?>
                 </li>
             <?php endforeach; ?>
         </ul>

@@ -28,6 +28,9 @@ if (! function_exists('okip_news_fallback_item_defaults')) {
             'alt'              => '',
             'placeholder_note' => 'Placeholder',
             'url'              => '',
+            // Variante de maqueta (tamaño + presentación). Vacío = por posición
+            // (patrón en block.php). Whitelist: text | feature | wide | mini.
+            'variant'          => '',
         );
     }
 }
@@ -106,6 +109,7 @@ if (! function_exists('okip_normalize_news_data')) {
                 $merged['alt']              = sanitize_text_field((string) $merged['alt']);
                 $merged['placeholder_note'] = sanitize_text_field((string) $merged['placeholder_note']);
                 $merged['url']              = esc_url_raw((string) $merged['url']);
+                $merged['variant']          = okip_one_of((string) $merged['variant'], array('text', 'feature', 'wide', 'mini'), '');
                 $items[] = $merged;
             }
             $data['fallback_items'] = $items;
@@ -129,33 +133,73 @@ return array(
         'orderby'        => 'date',
         'order'          => 'DESC',
     ),
+    // Maqueta tipo "bento" editorial (ref referencias/image.png). El orden y la
+    // variante definen el acomodo: text (solo texto), feature (imagen grande,
+    // título debajo), wide (imagen ancha, título superpuesto), mini (imagen
+    // chica, título debajo). Sin media real → placeholder/gris (media-driven).
     'fallback_items' => array(
         array(
-            'title'    => 'Seguridad mundialista en México',
-            'category' => 'Nacional',
+            'variant'  => 'text',
+            'title'    => 'Presentamos OKIP Labs',
+            'category' => 'Investigación',
+            'image'    => '',
+            'alt'      => '',
+            'url'      => '',
+        ),
+        array(
+            'variant'  => 'feature',
+            'title'    => 'Cómo las instituciones despliegan inteligencia que sí funciona',
+            'category' => 'Institucional',
             'image'    => 'img/news/new-1.png',
-            'alt'      => 'Elementos de Guardia Nacional en un operativo de seguridad',
+            'alt'      => 'Centro de monitoreo institucional con analistas frente a pantallas',
             'url'      => '',
         ),
         array(
-            'title'    => 'Seguridad democrática ¿qué es?',
-            'category' => 'Formación',
+            'variant'  => 'feature',
+            'title'    => 'La siguiente fase de la política de seguridad en México',
+            'category' => 'Sector público',
             'image'    => 'img/news/new-2.png',
-            'alt'      => 'Equipo revisando un mapa de seguridad en un centro de monitoreo',
+            'alt'      => 'Edificio institucional bajo un cielo despejado',
             'url'      => '',
         ),
         array(
-            'title'    => 'La feria más segura de México',
-            'category' => 'Caso de éxito',
+            'variant'  => 'mini',
+            'title'    => 'OKIP y aliados unen fuerzas para modernizar el borde táctico',
+            'category' => 'Sector público',
             'image'    => 'img/news/new-3.png',
-            'alt'      => 'Feria iluminada durante la noche con juegos mecánicos y visitantes',
+            'alt'      => 'Operativo táctico en terreno abierto',
             'url'      => '',
         ),
         array(
-            'title'    => 'Estrategia de seguridad con tecnologia biometrica',
-            'category' => 'Sector publico',
+            'variant'  => 'mini',
+            'title'    => 'Inteligencia confiable para el futuro de la salud',
+            'category' => 'Salud',
             'image'    => 'img/news/new-4.png',
-            'alt'      => 'Tecnología biométrica aplicada a una estrategia de seguridad pública',
+            'alt'      => 'Personal médico caminando por un pasillo hospitalario',
+            'url'      => '',
+        ),
+        array(
+            'variant'  => 'mini',
+            'title'    => 'Elevando el estándar de la seguridad democrática',
+            'category' => 'Investigación',
+            'image'    => 'img/news/new-5.png',
+            'alt'      => 'Panel de métricas y evaluación de desempeño',
+            'url'      => '',
+        ),
+        array(
+            'variant'  => 'wide',
+            'title'    => 'Pavimentando el futuro digital de la seguridad nacional',
+            'category' => 'Institucional',
+            'image'    => 'img/news/new-6.png',
+            'alt'      => 'Vista aérea de una ciudad con infraestructura moderna',
+            'url'      => '',
+        ),
+        array(
+            'variant'  => 'mini',
+            'title'    => 'Ampliando el motor de datos para la inteligencia física',
+            'category' => 'Producto',
+            'image'    => 'img/news/new-7.png',
+            'alt'      => 'Brazo robótico operando en un entorno controlado',
             'url'      => '',
         ),
     ),
