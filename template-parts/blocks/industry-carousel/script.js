@@ -289,7 +289,7 @@
                 pin:                 true,
                 pinSpacing:          true,
                 scrub:               scrub,
-                anticipatePin:       1,
+                anticipatePin:       0,
                 invalidateOnRefresh: true,
                 onRefreshInit: measureCardHeight,
                 // will-change dinámico: solo activo mientras el bloque está pineado.
