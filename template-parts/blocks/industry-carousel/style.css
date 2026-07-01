@@ -32,7 +32,7 @@
     isolation: isolate;
     /* Inset lateral compartido por la fila de botones y el alineado del track. */
     --okip-ic-inset: clamp(1.25rem, 5vw, 5rem);
-    --okip-ic-card-h: clamp(315px, 60svh, 490px);
+    --okip-ic-card-h: clamp(340px, 78svh, 820px);
 }
 
 /* ScrollTrigger envuelve el bloque pineado en un .pin-spacer. */
@@ -138,7 +138,6 @@
     padding: 0;
     height: var(--okip-ic-card-h);
     width: max-content;
-    will-change: transform;
 }
 
 /* ---- Tarjeta individual (solo media, sin cuerpo de texto) ---- */
@@ -155,6 +154,15 @@
     filter: brightness(.4);
     transform: scale(.965);
     transition: filter .45s ease, transform .45s var(--okip-ease, ease);
+}
+
+/* will-change dinámico: solo mientras el bloque está pineado (JS añade .is-pinned).
+   Evita capas de composición permanentes en cada tarjeta cuando el bloque está
+   fuera de pantalla o en móvil. */
+.okip-ic.is-pinned .okip-ic__track {
+    will-change: transform;
+}
+.okip-ic.is-pinned .okip-ic__item {
     will-change: transform, filter;
 }
 /* Activa: a plena luz, protagonista */

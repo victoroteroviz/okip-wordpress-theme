@@ -55,6 +55,10 @@
         orangeTexts.forEach(function (el, i) { el.dataset.index = String(i); });
         navBtns.forEach(function (el, i) { el.dataset.index = String(i); });
 
+        // Cache de <video> por ítem: se resuelve una vez (evita querySelector por
+        // ítem en cada cambio de activo). null si el ítem no tiene vídeo.
+        var itemVideos = items.map(function (el) { return el.querySelector('video'); });
+
         /* ---- Estado activo (tarjeta + botón resaltado + texto naranja) ---- */
         var prevIdx = -1;
         function setActive(idx) {
@@ -64,8 +68,8 @@
 
             items.forEach(function (el, i) {
                 el.classList.toggle('is-active', i === idx);
-                // Vídeo: reproducir solo el activo.
-                var v = el.querySelector('video');
+                // Vídeo: reproducir solo el activo (ref cacheada).
+                var v = itemVideos[i];
                 if (!v) { return; }
                 if (i === idx) {
                     var pr = v.play();
@@ -89,24 +93,14 @@
             }
         }
 
-        // Relleno de los botones según el progreso global (0..1).
-        // segment = progress * (N-1); el botón floor(segment) se llena con el progreso
-        // local, los anteriores al 100% y los posteriores a 0%. En el último slide el
-        // último botón se rellena por completo.
+        // Relleno de un botón (0..1) vía --okip-ic-fill. El cálculo de los rellenos del
+        // modo animado vive en applyFrame (más abajo); aquí solo la escritura con cache.
         function setFill(btn, f) {
+            // Salta la escritura si el valor no cambió: en cada frame solo el botón
+            // activo varía; los demás (0 o 1) dejan de tocar el DOM.
+            if (btn.__okipFill === f) { return; }
+            btn.__okipFill = f;
             btn.style.setProperty('--okip-ic-fill', f.toFixed(4));
-        }
-        function updateFills(progress) {
-            if (!navBtns.length) { return; }
-            var seg      = progress * (itemCount - 1);
-            var floorIdx = Math.floor(seg + 1e-6);
-            var local    = seg - floorIdx;
-            navBtns.forEach(function (btn, j) {
-                setFill(btn, j < floorIdx ? 1 : (j === floorIdx ? local : 0));
-            });
-            if (progress >= 0.999) {
-                setFill(navBtns[navBtns.length - 1], 1);
-            }
         }
         // Relleno escalonado para el modo estático (sin progreso continuo).
         function fillUpTo(idx) {
@@ -192,10 +186,15 @@
             var padTop = parseFloat(cs.paddingTop) || 0;
             var padBottom = parseFloat(cs.paddingBottom) || 0;
             var gap = parseFloat(cs.rowGap || cs.gap) || 0;
+            var vw = section.clientWidth || window.innerWidth;
             var available = (section.clientHeight || window.innerHeight) - padTop - padBottom - navH - gap;
-            var fallback = Math.min(window.innerHeight * 0.6, 500);
-            var desired = isFinite(available) ? Math.min(available * 0.94, fallback) : fallback;
-            var cardH = OKIP.clamp(desired, 330, 500);
+            // Alto: llenar el espacio vertical disponible (sin cap artificial).
+            var byHeight = isFinite(available) ? available * 0.96 : window.innerHeight * 0.72;
+            // Guarda de ancho: la tarjeta 16:9 no debe comerse todo el viewport; deja
+            // asomar la siguiente (minPeek) para no romper el diseño del carrusel.
+            var minPeek = 120;
+            var byWidth = (vw - inset() - minPeek) * 9 / 16;
+            var cardH = OKIP.clamp(Math.min(byHeight, byWidth), 340, 900);
             section.style.setProperty('--okip-ic-card-h', Math.floor(cardH) + 'px');
         }
 
@@ -216,10 +215,30 @@
             };
         }
 
-        // Inicializar la posición del track (1ª tarjeta alineada) sin animación.
+        // Geometría cacheada (startX/endX/travel). Se recalcula SOLO en cada refresh de
+        // ScrollTrigger (dentro de `end`), nunca por frame → sin reflows durante el scroll.
         measureCardHeight();
-        var initC = calcCentering();
-        gsap.set(track, { x: initC.startX });
+        var geom     = calcCentering();
+        // La cinta recorre `travel` durante los primeros (N-1)/N del progreso; el último
+        // 1/N es un "hold": la cinta queda quieta y el ÚLTIMO botón se rellena de forma
+        // gradual mientras el bloque sigue pineado (antes se llenaba de golpe al despinear).
+        var moveFrac = itemCount > 1 ? (itemCount - 1) / itemCount : 1;
+        gsap.set(track, { x: geom.startX });
+
+        // Aplica un progreso [0..1] a TODO (cinta + activo + rellenos) desde un ÚNICO valor
+        // suavizado por el scrub → cinta y rellenos van perfectamente sincronizados (antes
+        // los rellenos usaban el progreso crudo y "saltaban" respecto a la cinta scrubbeada).
+        function applyFrame(p) {
+            var tp = moveFrac > 0 ? Math.min(p / moveFrac, 1) : 1;
+            gsap.set(track, { x: geom.startX + (geom.endX - geom.startX) * tp });
+            var seg      = p * itemCount;
+            var floorIdx = Math.min(Math.floor(seg + 1e-6), itemCount - 1);
+            var local    = OKIP.clamp(seg - floorIdx, 0, 1);
+            setActive(floorIdx);
+            navBtns.forEach(function (btn, j) {
+                setFill(btn, j < floorIdx ? 1 : (j === floorIdx ? local : 0));
+            });
+        }
 
         // ENTRADA del Bloque 3 sobre el Bloque 2: el contenido aparece TARDE, solo cuando
         // el panel ya cubre casi todo el viewport (≈85%), no al asomar. Por eso el start
@@ -242,15 +261,14 @@
             });
         }
 
-        // Índice activo por progreso.
-        function progressToIdx(p) {
-            return Math.round(p * (itemCount - 1));
-        }
-
-        // ScrollTrigger maestro: pin + movimiento de cinta + relleno de botones.
-        var pinTween = gsap.to(track, {
-            x: function () { return calcCentering().endX; },
+        // ScrollTrigger maestro: pin + un ÚNICO driver scrubbeado (driver.p) del que
+        // cuelgan la cinta, el ítem activo y los rellenos (ver applyFrame). El onUpdate
+        // va en el TWEEN (no en el scrollTrigger) para leer el valor ya suavizado.
+        var driver = { p: 0 };
+        var pinTween = gsap.to(driver, {
+            p: 1,
             ease: 'none',
+            onUpdate: function () { applyFrame(driver.p); },
             scrollTrigger: {
                 id:                  icId + '-pin',
                 trigger:             section,
@@ -258,7 +276,11 @@
                     return 'top top+=' + navbarOffset();
                 },
                 end: function () {
-                    return '+=' + calcCentering().travel;
+                    // Recalcula la geometría en cada refresh (tras onRefreshInit, ya con el
+                    // card-h aplicado) y añade el hold (un segmento) al final del recorrido.
+                    geom = calcCentering();
+                    var hold = itemCount > 1 ? geom.travel / (itemCount - 1) : 0;
+                    return '+=' + (geom.travel + hold);
                 },
                 pin:                 true,
                 pinSpacing:          true,
@@ -266,12 +288,12 @@
                 anticipatePin:       1,
                 invalidateOnRefresh: true,
                 onRefreshInit: measureCardHeight,
-                onUpdate: function (self) {
-                    setActive(progressToIdx(self.progress));
-                    updateFills(self.progress);
+                // will-change dinámico: solo activo mientras el bloque está pineado.
+                onToggle: function (self) {
+                    section.classList.toggle('is-pinned', self.isActive);
                 },
-                onLeave:     function () { setActive(itemCount - 1); updateFills(1); },
-                onLeaveBack: function () { setActive(0); updateFills(0); }
+                onLeave:     function () { applyFrame(1); },
+                onLeaveBack: function () { applyFrame(0); }
             }
         });
 
@@ -281,7 +303,7 @@
                 var idx   = OKIP.readInt(btn.dataset.index, 0);
                 var stPin = ST.getById(icId + '-pin');
                 if (!stPin) { return; }
-                var progress = itemCount > 1 ? idx / (itemCount - 1) : 0;
+                var progress = itemCount > 0 ? idx / itemCount : 0;
                 window.scrollTo({
                     top:      stPin.start + (stPin.end - stPin.start) * progress,
                     behavior: 'smooth'
@@ -306,21 +328,21 @@
                     if (enterTargets.length) {
                         gsap.set(enterTargets, { clearProps: 'opacity,transform' });
                     }
+                    section.classList.remove('is-pinned');
                     section.classList.add('is-static');
                     setActive(0);
                     fillUpTo(0);
                 } else {
                     // Reposicionar el track al x inicial antes de refresh.
                     measureCardHeight();
-                    var c = calcCentering();
-                    gsap.set(track, { x: c.startX });
+                    geom = calcCentering();
+                    gsap.set(track, { x: geom.startX });
                     ST.refresh();
                 }
             }, 200);
         }, { passive: true });
 
-        setActive(0);
-        updateFills(0);
+        applyFrame(0);
         measureCardHeight();
     }
 
