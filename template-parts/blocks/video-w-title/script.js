@@ -137,10 +137,61 @@
         io.observe(section);
     }
 
+    // ---- Pausa/reanuda el vídeo de fondo según el bloque esté ENFOCADO ----
+    // "Enfocado" = la escena está realmente a la vista: ni por debajo del fold, ni
+    // cubierta por el bloque siguiente. El bloque es sticky-cover, así que un IO simple
+    // no basta (sigue intersectando mientras el carousel lo tapa): se compara por
+    // scroll/rAF, igual que el cover-pause del Hero. Libera la decodificación del vídeo
+    // cuando el bloque no se ve. Sin media real (sin <video>) no hace nada.
+    function setupBgVideo(section) {
+        if (section.__okipVwtBgInit) { return; }
+        section.__okipVwtBgInit = true;
+
+        var video = section.querySelector('.okip-vwt__bg-media');
+        if (!video) { return; }
+
+        var next    = section.nextElementSibling;
+        var focused = null;
+        var ticking = false;
+
+        function navbarH() {
+            var raw = window.getComputedStyle(document.documentElement).getPropertyValue('--okip-navbar-h');
+            var h = parseFloat(raw);
+            return isFinite(h) ? h : 68;
+        }
+
+        function evaluate() {
+            ticking = false;
+            var rect       = section.getBoundingClientRect();
+            var belowFold  = rect.top >= window.innerHeight;
+            var covered    = next
+                ? next.getBoundingClientRect().top <= navbarH()
+                : rect.bottom <= 0;
+            var isFocused = !belowFold && !covered;
+            if (isFocused === focused) { return; }
+            focused = isFocused;
+            if (isFocused) {
+                var p = video.play();
+                if (p && typeof p.catch === 'function') { p.catch(function () {}); }
+            } else {
+                try { video.pause(); } catch (e) {}
+            }
+        }
+
+        function onScroll() {
+            if (!ticking) { ticking = true; window.requestAnimationFrame(evaluate); }
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        evaluate();
+    }
+
     function init() {
         var sections = document.querySelectorAll('[data-okip-vwt]');
         for (var i = 0; i < sections.length; i++) {
             setupSection(sections[i]);
+            setupBgVideo(sections[i]);
         }
     }
 

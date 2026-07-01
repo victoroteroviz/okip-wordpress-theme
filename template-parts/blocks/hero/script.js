@@ -182,7 +182,19 @@
         }
 
         setupCards(hero);
-        setupCoverPause(hero);
+        // Pausa/reanuda el vídeo de fondo (intro/loop) según el Hero esté enfocado:
+        // cubierto por el bloque siguiente → pause (libera decodificación); de vuelta a
+        // la vista → resume. El autoplay de GIFs de las tarjetas ya está gateado por la
+        // misma señal `is-hero-paused` (ver setupCardsAutoplay), así que también se pausa.
+        setupCoverPause(hero, function (covered) {
+            var bg = (loopStarted && loop) ? loop : intro;
+            if (!bg) { return; }
+            if (covered) {
+                try { bg.pause(); } catch (e) {}
+            } else if (!reduceMotion) {
+                safePlay(bg);
+            }
+        });
         // Snap del traspaso Hero → bloque siguiente (helper global compartido; ver app.js).
         // Solo desktop + forward; el inverso queda nativo. Apagable con data-snap-cover="0".
         if (window.OKIP && OKIP.snapCover) {
@@ -200,7 +212,7 @@
      * comparación por scroll/rAF: cubierto = el bloque siguiente alcanzó el top del
      * viewport (o, sin bloque siguiente, el Hero ya pasó de largo).
      */
-    function setupCoverPause(hero) {
+    function setupCoverPause(hero, onChange) {
         var next = hero.nextElementSibling;
         var paused = false;
         var ticking = false;
@@ -213,6 +225,7 @@
             if (covered !== paused) {
                 paused = covered;
                 hero.classList.toggle('is-hero-paused', covered);
+                if (onChange) { onChange(covered); }
             }
         }
 
