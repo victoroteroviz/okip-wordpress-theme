@@ -140,6 +140,24 @@
         }, { passive: true });
     }
 
+    /* Perf: congela las animaciones del fondo (glow + viscous) cuando el bloque
+       queda fuera del viewport, añadiendo/quitando .is-bg-paused. Es independiente
+       del reveal (aplica en cualquier modo) y solo para el fondo gradiente (el modo
+       media no anima). Sin IntersectionObserver no hace nada → el fondo sigue vivo. */
+    function initBgVisibility(block) {
+        if (!('IntersectionObserver' in window) ||
+            !block.classList.contains('okip-ms--gradient')) {
+            return;
+        }
+
+        var io = new IntersectionObserver(function (entries) {
+            var entry = entries[0];
+            block.classList.toggle('is-bg-paused', !entry.isIntersecting);
+        }, { rootMargin: '200px 0px' });
+
+        io.observe(block);
+    }
+
     function initOneShotReveal(block) {
         if (!('IntersectionObserver' in window)) {
             revealStatic(block);
@@ -166,6 +184,8 @@
             return;
         }
         block.__okipMissionStatementInit = true;
+
+        initBgVisibility(block);
 
         if (block.dataset.anim !== '1' || reduceMotion || isSmallViewport(block)) {
             revealStatic(block);

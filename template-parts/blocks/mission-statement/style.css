@@ -108,6 +108,15 @@
     will-change: background-position, transform, filter;
 }
 
+/* Perf: cuando el bloque queda fuera del viewport, el JS añade .is-bg-paused y se
+   CONGELAN las animaciones de fondo (glow + viscous, que repintan background-position
+   en 5 capas) → sin compositing/repaint continuo off-screen. Sin JS la clase nunca se
+   añade → el fondo sigue animando (comportamiento base intacto). */
+.okip-ms.is-bg-paused .okip-ms__background::before,
+.okip-ms.is-bg-paused .okip-ms__background::after {
+    animation-play-state: paused;
+}
+
 .okip-ms__media {
     width: 100%;
     height: 100%;
@@ -131,7 +140,7 @@
 .okip-ms__statement {
     margin: 0;
     color: rgba(255, 255, 255, .9);
-    font-size: clamp(1.85rem, 4vw, 3.15rem);
+    font-size: clamp(2.05rem, 4.2vw, 3.4rem);
     font-weight: 300;
     letter-spacing: 0;
     line-height: 1.12;
@@ -168,7 +177,7 @@
 .okip-ms__kicker {
     margin: clamp(1rem, 2.4vh, 1.55rem) 0 0;
     color: rgba(255, 255, 255, .62);
-    font-size: 1.4rem;
+    font-size: clamp(1.4rem, 1.7vw, 1.6rem);
     font-weight: 600;
     letter-spacing: .16em;
     line-height: 1.4;
