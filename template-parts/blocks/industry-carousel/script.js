@@ -252,6 +252,10 @@
                 duration: 0.7,
                 ease: 'power2.out',
                 stagger: 0.12,
+                // Limpia el transform/opacity inline al terminar: si no, .okip-ic__strip
+                // (subárbol con todas las imágenes) queda en una capa de composición
+                // permanente. El estado final == CSS natural → sin cambio visual.
+                clearProps: 'transform,opacity',
                 scrollTrigger: {
                     id:            icId + '-enter',
                     trigger:       section,

@@ -150,10 +150,21 @@
     border-radius: clamp(20px, 2.4vw, 32px);
     overflow: hidden;
     background: #111316;
-    /* Inactiva: oscurecida + ligeramente menor */
-    filter: brightness(.4);
+    /* Inactiva: ligeramente menor (el oscurecido lo hace el overlay ::after). */
     transform: scale(.965);
-    transition: filter .45s ease, transform .45s var(--okip-ease, ease);
+    transition: transform .45s var(--okip-ease, ease);
+}
+/* Oscurecido de la tarjeta inactiva vía overlay de opacidad (compositor, sin repaint).
+   opacity:.6 sobre negro == filter:brightness(.4): 0.4·color + 0.6·negro = 0.4·color.
+   Antes se animaba `filter` sobre imágenes 1920×1080 → repaint por frame. */
+.okip-ic__item::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: .6;
+    transition: opacity .45s ease;
+    pointer-events: none;
 }
 
 /* will-change dinámico: solo mientras el bloque está pineado (JS añade .is-pinned).
@@ -163,13 +174,15 @@
     will-change: transform;
 }
 .okip-ic.is-pinned .okip-ic__item {
-    will-change: transform, filter;
+    will-change: transform;
 }
 /* Activa: a plena luz, protagonista */
 .okip-ic__item.is-active {
-    filter: brightness(1);
     transform: scale(1);
     z-index: 1;
+}
+.okip-ic__item.is-active::after {
+    opacity: 0;
 }
 
 /* Media dentro de la tarjeta */
@@ -360,8 +373,11 @@
         transform: none !important;
     }
     .okip-ic__item {
-        transition: filter .15s ease;
+        transition: none;
         transform: none !important;
+    }
+    .okip-ic__item::after {
+        transition: opacity .15s ease;
     }
     .okip-ic__item.is-active {
         transform: none !important;
